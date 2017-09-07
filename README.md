@@ -6,7 +6,9 @@ These social actors together maintain a replicated deterministic state machine w
 
 Replicas of the state machine are kept consistent using the [Delegated Proof-of-Stake](http://wiki.bitshares.org/index.php/DPOS_or_Delegated_Proof_of_Stake) distributed consensus protocol, which depends on market operations by a special class of market participants colloquially known as shareholders. Resource ownership is secured using digital signatures and inputs to the state machine are shared amongst actors using a peer-to-peer mesh network.
 
-For more information about NEO, please read the [Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf)|[Business White Paper](https://www.achain.com/Achain_business_white_paper.pdf).
+For more information about NEO, please read the 
+[Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf) 
+[Business White Paper](https://www.achain.com/Achain_business_white_paper.pdf).
 
 Building
 --------
