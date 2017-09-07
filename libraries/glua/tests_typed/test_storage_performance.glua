@@ -1,0 +1,28 @@
+﻿type Storage = {
+  -- count: int,
+  a: int
+}
+
+var M = Contract<Storage>()
+
+function M:init()
+  -- self.storage.count = 100000
+  self.storage.a = 0
+  pprint("init test storage performance done")
+end
+
+function M:start()
+  pprint("test_storage_performance start begin")
+  var i = 0
+  self.storage.a = 1
+  while i < 100000 do
+     -- self.storage.a = self.storage.a + 1
+     var c = self.storage.a
+     i = i + 1
+     self.storage.a = i
+  end
+  pprint("i now is ", i, " and a is ", self.storage.a)
+  pprint("test_storage_performance start end")
+end
+
+return M

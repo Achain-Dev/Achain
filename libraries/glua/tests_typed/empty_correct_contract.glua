@@ -1,0 +1,12 @@
+type Storage = {}
+
+let M: Contract<Storage> = {}
+
+function M:init()
+end
+
+function M:start()
+	-- pprint("hi")
+end
+
+return M

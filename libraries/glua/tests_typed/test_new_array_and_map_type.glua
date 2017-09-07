@@ -1,0 +1,49 @@
+let a: Array<int> = [1,2,3]
+
+type Person<T> = {
+	name: string,
+	age: int,
+	parents: Map<T>
+}
+
+type SPerson = Person<string>
+
+let b: Map<string> = { a: "1", b: "abc", c: "hello" }
+
+let c = SPerson()
+
+let d = []
+
+pprint('a', a, 'b', b, 'c', c, 'd', d)
+
+let a1: table = c
+let a2: table = [1,2,3]
+let a3: Array<int> = [1,2,3]
+let a4: table = {a: 1, b: 2}
+let a5: Array<string> = []
+let a6: Map<int> = {'a6key': 1, b: 2, d:5}
+
+let b1: SPerson = a1
+let b2: SPerson = {a: 1, b: 2}
+let c1: Map<string> = a1
+let c2: Map<object> = c1
+let d1: Array<int> = a1
+let d2: Array<object> = d1
+
+
+let f1: int = a3[1]
+let f2: string = c1.a
+
+
+let arr1: Array<number> = [ 1, 2.5, 3 ]
+
+let p1 = Person()              
+let p2 = Person({name: "glua"})    
+
+type Person2 = {
+	name: string,
+	age: int = 24
+} 
+
+let p3 = Array<Person2> ( [ {name: "glua"}, {name: "China", age: 10000} ] )
+let p4 = Array<Person2> { name: "hello", age: 100 } 

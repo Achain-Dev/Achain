@@ -1,0 +1,3 @@
+let a = string.split('a:b', ':')
+
+var b: string = '123'

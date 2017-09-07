@@ -1,0 +1,17 @@
+*.opendb
+*~
+x64
+.vs
+*.sdf
+*.suo
+*.out
+*.VC.db
+*.VC.opendb
+*.bytes
+*.opensdf
+/bin
+/Debug
+/Release
+/out
+/logs
+/CMakeCache*

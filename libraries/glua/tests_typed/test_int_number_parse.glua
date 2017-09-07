@@ -1,0 +1,22 @@
+-- 从此int和number在编译期也区分成不同类型, int作为number的子类型，number不能隐式转换成int
+-- 加法等操作符或函数，当参数都是int时，返回值也是int，否则返回值是number(函数重载签名)
+
+let a1: int = 1
+let a2: number = 1.23
+let a3: int = a1 + a1
+let a4: number = a1
+let a5: int = a1 + a2  -- error
+let a6: number = a1 + a2
+let a7: number = a1 + a2
+
+let function f1(n: int)
+end
+
+let function f2(n: number)
+end
+
+f1(a1)
+f1(a2)  -- error
+
+f2(a1)
+f2(a2)

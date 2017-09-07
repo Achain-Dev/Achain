@@ -1,0 +1,13 @@
+type Storage = {
+}
+
+let M = Contract<Storage>()
+
+function M:init()
+end
+
+function M.start(self)
+
+end
+
+return M

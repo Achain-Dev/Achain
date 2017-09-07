@@ -1,0 +1,22 @@
+let a1 = Stream()
+a1:push(123)
+a1:push_string('abc')
+let s1 = a1:size()
+pprint("a1 size is ", s1)
+pprint('a1 is ', tostring(a1), tojsonstring(a1))
+pprint('a1 pos is', a1:pos())
+pprint("a1 to int is ", tonumber(a1))
+
+var c: int = a1:pos()
+
+var s = ''
+while c < a1:size() do
+	s = s .. tostring(a1:current())
+	pprint("a1[", c, "]=", a1:current())
+	c = c + 1
+	a1:next()
+end
+
+t1 = s1
+t2 = s
+pprint(t1, t2)

@@ -1,0 +1,18 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+function M:print()
+    type man={high:int,height:int,hair:string}
+	type person={name:string,age:int default 12,gender:man}
+	type record={school:string default 'hkj',class:string,student:person}
+    let b :int|record
+	a=b()
+	print(a.school)
+end
+
+return M

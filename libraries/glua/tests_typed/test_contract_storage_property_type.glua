@@ -1,0 +1,17 @@
+type Storage = {
+	name: string,
+	age: int,
+	error: int | string
+}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+function M:start()
+
+end
+
+return M

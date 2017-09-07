@@ -1,0 +1,28 @@
+﻿var users: Map<string> = {}
+
+var user_info = {}
+
+for user: string,amount: int in pairs(user_info) do
+	var t_user_info = totable(json.loads(users[user]))
+end
+
+var b = [1,2,3]
+
+for i = 1,b,2 do
+	pprint(i)
+end
+
+for i = 1,5,2 do
+	pprint(i)
+end
+
+var int_array = [2,3,4]
+
+for k: string, v in ipairs(int_array) do
+    var a = v + 1
+    var b = k .. 'error'
+end
+
+for k in user_info do
+	pprint(k)
+end

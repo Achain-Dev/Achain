@@ -1,0 +1,19 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+function M:start()
+	pprint("start called")
+	let demo2 = import_contract 'demo2'
+	pprint("import contract demo2", demo2)
+	pprint(getmetatable(totable(demo2)))
+	let start = demo2.start
+	demo2:start('abc')
+	pprint("import correct contract start end")
+end
+
+return M

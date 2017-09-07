@@ -1,0 +1,14 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+	pprint("test api return contract init called")
+end
+
+function M:start()
+	-- print(123)
+	return 'hello'
+end
+
+return M

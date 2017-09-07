@@ -1,0 +1,8 @@
+-- 测试漏掉类型声明中的逗号时候的报错信息
+
+-- 这里的报错，因为type A = B<...>和type A = { ... }两种规则需要lookahead到第4个token才能知道，而目前只lookahead一个token，所以要考虑如何提供更好的错误提示
+type Person = {
+	name: string,
+	age: int
+	address: string
+}

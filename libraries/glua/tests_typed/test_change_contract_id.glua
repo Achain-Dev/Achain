@@ -1,0 +1,13 @@
+type S = {}
+var M = Contract<S>()
+
+function M:init()
+
+end
+
+function M:start()
+	self.id = 'abc'
+	self['name'] = 'hello'
+end
+
+return M

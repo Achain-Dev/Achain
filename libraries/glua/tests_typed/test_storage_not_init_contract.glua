@@ -1,0 +1,16 @@
+﻿type Storage = {
+    age: int,
+    name: string
+}
+
+var M = Contract<Storage>()
+
+function M:init()
+    print("initing")
+end
+
+function M:start(arg: string)
+    print("calling start api")
+end
+
+return M

@@ -1,0 +1,4 @@
+-- ²âÊÔÂ©µôendÊ±ºòµÄ±¨´í
+
+if true then
+	print(1)

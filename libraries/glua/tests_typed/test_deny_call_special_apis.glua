@@ -1,0 +1,33 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+function M:on_deposit(n: int)
+
+end
+
+function M:on_destroy()
+
+end
+
+function M:on_upgrade()
+
+end
+
+function M:hello1(arg: string)
+	pprint('hello', arg)
+end
+
+function M:hello(arg: string)
+	self:init()
+	self:on_deposit(123)
+	self:on_destroy()
+	self:on_upgrade()
+	self:hello1(arg)
+end
+
+return M

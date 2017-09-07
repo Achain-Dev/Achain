@@ -1,0 +1,33 @@
+-- 测试内置模块的编译期类型
+
+-- table module
+var table1 = {a=1,b=2}
+
+let concat = table.concat
+let a1 = concat(table1, ",", 1, 3)
+let b1 = concat(123)
+let c1 = concat(table1, ",")
+
+let a2 = table.insert(table1, 2, 'hi')
+let b2 = table.insert(table1, 'hi')
+let c2 = table.insert(table1)
+
+let a3 = table.remove(table1, 1)
+let b3 = table.remove(table1)
+let c3 = table.remove()
+
+let a4 = table.sort(table1)
+let b4 = table.sort(table1, (a: number, b: number) => a>b)
+let c4 = table.sort()
+
+
+-- string module
+let s1 = "abcdef,12345,123"
+let a5 = string.split(s1, ',')
+let b5 = string.split(s1)
+
+-- math module
+let a6: number = math.pi
+let b6: string = math.pi
+
+-- time module

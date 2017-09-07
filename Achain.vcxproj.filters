@@ -1,0 +1,1011 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="libraries\api\ConversionFunctions.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\api\GlobalApiLogger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\AccountEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\AccountOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Address.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\applink.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Asset.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\AssetEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\AssetOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\BalanceEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\BalanceOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Block.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ChainDatabase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ChainInterface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ExtendedAddress.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ForkBlocks.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\GenesisJson.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Operations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\PendingChainState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\PropertyEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\PtsAddress.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\SlateEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\SlateOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\SlotEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Time.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Transaction.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\TransactionCreationState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\TransactionEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\TransactionEvaluationState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\Types.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\WithdrawTypes.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\cli\Cli.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\cli\Pretty.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\cli\PrintResult.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\ApiLogger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\BlockchainApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\Client.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\DebugApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\DelegateApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\GeneralApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\Messages.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\NetworkApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\Notifier.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\WalletApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\ChainDownloader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\ChainServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\CoreMessages.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\MessageOrientedConnection.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\Node.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\PeerConnection.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\PeerDatabase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\StcpSocket.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\net\Upnp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\rpc\RpcClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\rpc\RpcServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\rpc_stubs\CommonApiClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\rpc_stubs\CommonApiRpcClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\rpc_stubs\CommonApiRpcServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\utilities\GitRevision.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\utilities\KeyConversion.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\utilities\StringEscape.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\utilities\Words.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\Login.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\TransactionBuilder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\TransactionLedger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\TransactionLedgerExperimental.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\Wallet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\WalletDb.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\wallet\WalletEntrys.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\db\UpgradeLeveldb.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ContractEntry.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ContractOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\ImessageOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\StorageOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\StorageTypes.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\TransactionOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\ContractApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\EventOperations.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\SandboxContractApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\client\ScriptApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_astparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_debug_file.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_loader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_lutil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_state_scope.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_tokenparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_vm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\language_server.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lapi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lauxlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lbaselib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lbitlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lcode.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lcompile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lcorolib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lctype.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ldblib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ldebug.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ldo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ldump.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lfunc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lgc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lhashmap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lhttplib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\linit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\liolib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ljsonlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ljsonrpclib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\llex.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lmathlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lmem.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lnetlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\loadlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lobject.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lopcodes.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\loslib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lparser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lparsercombinator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lprefix.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lremote_debugger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lrepl.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lstate.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lstring.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lstrlib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltable.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltablib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltimelib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltypechecker.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\ltype_checker_type_info.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lua.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\luac.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lundump.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lutf8lib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lvm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lzio.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_proto_info.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_decompile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_statement.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_structs.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_disassemble.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\glua_api_types.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\blockchain\GenesisJson_test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\thinkyoung_lua_api.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\thinkyoung_lua_lib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\glua\lthinkyounglib.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\utilities\CommonApi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="libraries\include\api\ApiMetadata.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\api\CommonApi.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\api\ConversionFunctions.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\api\GlobalApiLogger.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\AccountEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\AccountOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Address.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Asset.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\AssetEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\AssetOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\BalanceEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\BalanceOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Block.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\BlockEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ChainDatabase.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ChainDatabaseImpl.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ChainInterface.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Checkpoints.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Condition.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Config.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\DelegateConfig.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Exceptions.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ExtendedAddress.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ForkBlocks.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\GenesisJson.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\GenesisState.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\OperationFactory.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Operations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\PendingChainState.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\PropertyEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\PtsAddress.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\SlateEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\SlateOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\SlotEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Time.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Transaction.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\TransactionCreationState.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\TransactionEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\TransactionEvaluationState.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\Types.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\WithdrawTypes.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\cli\Cli.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\cli\Pretty.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\cli\PrintResult.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\ApiLogger.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\Client.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\ClientImpl.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\Messages.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\Notifier.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\client\SeedNodes.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\ChainConnection.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\ChainDownloader.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\ChainMessages.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\ChainServer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\ChainServerCommands.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Config.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Connection.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\CoreMessages.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Exceptions.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Message.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\MessageOrientedConnection.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Node.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\PeerConnection.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\PeerDatabase.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\StcpSocket.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\net\Upnp.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc\Exceptions.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc\RpcClient.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc\RpcClientApi.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc\RpcServer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc_stubs\CommonApiClient.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc_stubs\CommonApiRpcClient.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\rpc_stubs\CommonApiRpcServer.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\utilities\GitRevision.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\utilities\KeyConversion.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\utilities\PaddingOstream.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\utilities\StringEscape.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\utilities\Words.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\Config.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\Exceptions.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\Pretty.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\TransactionBuilder.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\Url.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\Wallet.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\WalletDb.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\WalletEntrys.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\wallet\WalletImpl.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\CachedLevelMap.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\Exception.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\FastLevelMap.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\FsHashMap.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\Fwd.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\LevelMap.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\LevelPodMap.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\db\UpgradeLeveldb.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ContractEntry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ContractOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\ImessageOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\StorageOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\StorageTypes.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\TransactionOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lapi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lauxlib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lcode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lcompile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lctype.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ldebug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ldo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lfunc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lgc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lhashmap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\llex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\llimits.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lmem.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lobject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lopcodes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lprefix.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lstate.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lstring.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ltable.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ltm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\luaconf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lualib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lundump.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lvm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lzio.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\AssertException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\CheckMacros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Checks.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\CompositeTestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\CurrentTest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\DeferredTestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\DeferredTestResult.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\ExceptionMacros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\ExecuteTest.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\HelperMacros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\MemoryOutStream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Posix\SignalTranslator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Posix\TimeHelpers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\ReportAssert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\ReportAssertImpl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\RequiredCheckException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\RequiredCheckTestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\RequireMacros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Test.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestDetails.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestMacros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestReporterStdout.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestResults.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestRunner.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TestSuite.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\ThrowingTestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TimeConstraint.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\TimeHelpers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\UnitTest++.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\UnitTestPP.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\Win32\TimeHelpers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\UnitTest++\XmlTestReporter.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lrepl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ltypechecker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lparsercombinator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua_astparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua_loader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua_tokenparser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\blockchain\EventOperations.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\exceptions.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lnetlib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lremote_debugger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\ltype_checker_type_info.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\lua_debug_file.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\thinkyoung_ltests.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\thinkyoung_lua_api.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\thinkyoung_lua_lib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\thinkyoung_lua_parser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lua\thinkyoung_lutil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="libraries\include\rpc_stubs\CommonApiOverrides.ipp" />
+  </ItemGroup>
+</Project>

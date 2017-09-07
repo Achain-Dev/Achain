@@ -1,0 +1,19 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+let function add(a: number, b: number)
+    return a + b
+end
+let add2: Function = add
+let r = add2('abc')
+
+function M:print()
+
+end
+
+return M

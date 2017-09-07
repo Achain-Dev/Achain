@@ -1,0 +1,16 @@
+type Handler = {
+	eventName: string,
+	__call: (string) => number default (arg: string) => 0
+}
+
+let h1 = Handler({eventName="glua"})
+let h2: Handler = {eventName="glua"}
+
+let function handler_fn(arg: string)
+	return tonumber(arg)
+end
+
+h1.__call = handler_fn
+h2.__call = handler_fn
+
+h2('123')

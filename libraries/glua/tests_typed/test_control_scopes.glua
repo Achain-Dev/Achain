@@ -1,0 +1,28 @@
+var a = 1
+
+do
+	var a = 'hello'
+	pprint(a)
+end
+
+pprint(a)
+
+while a < 10 do
+	a = a + 1
+end
+
+pprint(a)
+
+repeat
+	a = a + 1
+until a > 20
+
+pprint(a)
+
+if true then
+	pprint('hello if')
+elseif true then
+	pprint('hello elseif')
+else
+	pprint('hello if end')
+end

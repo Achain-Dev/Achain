@@ -1,0 +1,1 @@
+let nested_table1 = [ {name='hi',age=100} ]

@@ -1,0 +1,3 @@
+function hello()
+	let a default 123
+end

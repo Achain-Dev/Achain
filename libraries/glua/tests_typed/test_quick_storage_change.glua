@@ -1,0 +1,25 @@
+type Storage = {
+	count: int
+}
+
+var M = Contract<Storage>()
+
+function M:init()
+    self.storage.count = 0
+end
+
+--[[
+function M:change()
+    self.storage.count = self.storage.count + 1
+    pprint("count changed, ", self.storage.count)
+end
+]]
+
+function M:start()
+
+    pprint('count: ', self.storage.count)
+	self.storage.count = self.storage.count + 1
+    pprint("count changed, ", self.storage.count)
+end
+
+return M

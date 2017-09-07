@@ -1,0 +1,9 @@
+var a = [[hello
+ world]]
+
+ --[[
+ this is a comment
+ ]]
+
+ var b = a
+ pprint(b)

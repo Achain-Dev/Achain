@@ -1,0 +1,17 @@
+let a = [1, 2, 'abc', {name="hello", age=24}]
+let b = {m=234,n=123, ab=1}
+let c = [1,3,6,5]
+t1 = tojsonstring(a)
+pprint(t1)
+t2 = tojsonstring(b)
+pprint(t2)
+t3 = tojsonstring(c)
+pprint(t3)
+
+t4 = json.loads('{"avi_alp":0,"avi_asset":0,"frozen_alp":0,"alp_address":["ALPxdEoFqVnmobBg69S1rx4sy7PwBViaY6z"],"frozen_asset":0}')
+pprint(t4)
+
+let d = []
+d[2] = 123
+t5 = tojsonstring(d)
+pprint(t5)

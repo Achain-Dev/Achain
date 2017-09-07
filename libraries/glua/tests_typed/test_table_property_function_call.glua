@@ -1,0 +1,23 @@
+type Person = {
+	name: string
+}
+
+var p1 = {}
+
+function p1.sayHi1(self)
+
+end
+
+function p1:sayHi2()
+end
+
+var p2 = Person()
+
+function p2:sayHi2()
+
+end
+
+p1.sayHi1(p1)
+p1:sayHi2()
+p2:sayHi2()
+p2.sayHi2(p2)

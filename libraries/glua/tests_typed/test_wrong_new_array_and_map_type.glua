@@ -1,0 +1,42 @@
+let a: Array<int> = [1,2,3]
+
+type Person<T> = {
+	name: string,
+	age: int,
+	parents: Map<T>
+}
+
+type SPerson = Person<string>
+
+let b: Map<string> = { a: "1", b: "abc", c: "hello", 123 }
+
+let c = SPerson()
+
+let d = {a: '1', b: 2}
+
+let e = []
+
+let f = {1,2,3}
+
+let a1: SPerson = [1,2,3]
+
+type Address = {
+	country: string
+}
+
+let a2: Address = c
+let a3: Map<string> = c
+let a4: Map<object> = {a: 1, b: '2'}
+let a5: Map<string> = a4
+let a6: Map<string> = ['1','2','3']
+let a7: Array<string> = c
+let a8: Array<object> = [1,'a']
+let a9: Array<string> = a8
+
+let f1: Array<int> = [1,2,3]
+let f2: string = f1[1]
+let f3: Map<string> = {a: '1', b: 'abc'}
+let f4: int = f3.a
+let f5: string = f3[1]
+
+let f6: Map = {}

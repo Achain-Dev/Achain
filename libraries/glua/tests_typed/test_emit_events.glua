@@ -1,0 +1,12 @@
+emit hello("world")
+
+var a = 'world'
+var b = 1
+
+emit hello(a)
+
+emit hello2(b)
+
+emit hello3(123)
+
+emit hello3 ("a" .. "b")

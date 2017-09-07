@@ -1,0 +1,22 @@
+let return = 'abc'
+let end: int = 123
+let function do(name: string)
+	pprint(name, 123)
+end
+
+let function hello(do: int)
+	pprint(123)
+end
+
+var M = {}
+function M:end()
+
+end
+
+function M.repeat()
+
+end
+
+let function correct_func(abc: string)
+	pprint(abc)
+end

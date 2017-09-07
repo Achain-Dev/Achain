@@ -1,0 +1,82 @@
+print("test storage case\n")
+
+type Storage = {
+	a: int,
+	b: int,
+	c: int,
+	d: Map<string>,
+	e: Array<int>,
+	f: Map<string>,
+	int_array: Array<int>,
+    m: int
+}
+
+local M = Contract<Storage>()
+ 
+function M:init() -- if use M:init, not need self param, if use M.init, need self param 
+	print("test storage init called")	
+	local demo2 = import_contract 'demo2'
+	local storage = self.storage -- demo2.storage
+
+	print(self.name)
+	
+	print(self.storage.a)
+	-- print(demo2.id) -- can't access other contract's storage directly
+
+	storage['a'] = 1
+	storage.b = 2
+	-- storage.b = 'abc'
+	storage['c'] = storage.a
+
+	storage['d'] = {name="thinkyoung", age="100"}
+	storage.e = [ 1,2,3, 11, 10, 8, 7 ]
+	storage.d.name2 = "gop"
+	self.storage.a=1
+	self.storage.f = {name="thinkyoung", age="100"}
+	pprint(storage.e)
+	self.storage['int_array'] = [ 5,6,7,8 ]
+
+    self.storage.m = 2604051000  -- larger than int32 max value 0x0FFFFFFF
+	local a = [1,2]
+	-- self.storage[a] = [3,4]
+	-- pprint(self.storage[a])
+end
+
+function M:start(name: string)
+	print("test storage start called", name)
+	if name ~= 'abcd' then
+		exit('arg expected abcd bug got ', name)
+	end
+	local demo2 = import_contract 'demo2'
+	pprint("aaa-1", self)
+	local storage = self.storage -- demo2.storage
+	pprint("aaa0", self, self.id, get_current_contract_address(), demo2.id)
+	-- pprint(self.storage.bbb)
+	print('b=', storage.b)
+	print('a=', storage.a)
+	print('c=', storage.c)
+	print("aaa1")
+    print("m=", storage.m)
+	if storage.a then
+		storage.a=100
+	end
+	print("aaa2")
+	-- self.storage.a = 555
+	local f = self.storage['f'] or {}
+	-- self.storage['f'].age = nil
+	f.age = nil
+	if self.storage.int_array then
+		table.remove(self.storage['int_array'], 1)
+		self.storage['int_array'][1] = 99
+		table.insert(self.storage['int_array'], 19)
+	end
+
+	print(storage) -- storage can't use pprint, and recur obj can't pprint
+	pprint("test storage start api end")
+end
+
+--offline function M:query()
+--    pprint('query storage')
+--end
+
+return M

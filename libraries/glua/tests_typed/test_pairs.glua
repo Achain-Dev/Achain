@@ -1,0 +1,21 @@
+let b1 = {m=234,n=123, ab=1, a=1}
+let b2 = [1,3,6,5]
+(totable(b1))[100] = 200
+
+var k: object = nil
+var v: object = nil
+
+var sorted_b = {}
+var sorted_b2 = {}
+for k,v in pairs(b1) do
+	print(k)
+	sorted_b[#sorted_b+1] = [k,v]
+end
+
+for k,v in pairs(b2) do
+	print(k)
+	sorted_b2[#sorted_b2+1] = [k,v]
+end
+
+t1 = tojsonstring(sorted_b)
+pprint(t1)

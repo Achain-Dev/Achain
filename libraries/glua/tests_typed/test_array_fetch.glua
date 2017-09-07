@@ -1,0 +1,15 @@
+type Storage = {}
+
+var M = Contract<Storage>()
+
+function M:init()
+
+end
+
+function M:start()
+	var a: Array<int> = [1,2,3]
+	let n:int = a[1]
+	print(n)
+end
+
+return M

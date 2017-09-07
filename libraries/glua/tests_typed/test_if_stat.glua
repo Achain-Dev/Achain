@@ -1,0 +1,18 @@
+if true then
+	pprint(1)
+elseif 2 then
+	pprint(2)
+elseif 3 then
+	pprint(3)
+else
+	pprint(4)
+end
+
+if 1 then
+	pprint(1)
+	if 2 then
+		pprint(2.2)
+	end
+else
+	pprint(3)
+end
