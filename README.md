@@ -4,7 +4,7 @@ Achain is a new blockchain based on BTS1.0 which integrates lua virtual machine 
 
 These social actors together maintain a replicated deterministic state machine which defines the state of a free market. This state machine unambigiously defines the ownership of resources amongst market participants, the rules by which resources are reallocated through market operations, and the history of all market operations. Social actors are free to voluntarily enter and exit the market as desired.
 
-Replicas of the state machine are kept consistent using the [Delegated Proof-of-Stake](http://wiki.bitshares.org/index.php/DPOS_or_Delegated_Proof_of_Stake) distributed consensus protocol, which depends on market operations by a special class of market participants colloquially known as shareholders. Resource ownership is secured using digital signatures and inputs to the state machine are shared amongst actors using a peer-to-peer mesh network.
+Replicas of the state machine are kept consistent using the [Result Delegated Proof-of-Stake](https://bitshares.org/technology/delegated-proof-of-stake-consensus/) distributed consensus protocol, which depends on market operations by a special class of market participants colloquially known as shareholders. Resource ownership is secured using digital signatures and inputs to the state machine are shared amongst actors using a peer-to-peer mesh network.
 
 For more information about Achain, please read  following document:
 * [Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf) 
