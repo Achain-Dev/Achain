@@ -10,10 +10,10 @@ Windows - Visual Studio 2013
   `D:\Achain`, you can use whatever you like.  In several of the batch files
   and makefiles, this directory will be referred to as `Achain_ROOT`:
   ```
- $ mkdir D:\Achain
-```
-* Clone the Achain repository
+* Clone the Achain repository:
   ```
+```
+ $ mkdir D:\Achain
  $ cd D:\Achain
  $ git clone https://github.com/Achain-Dev/Achain.git
  $ cd Achain
@@ -22,26 +22,22 @@ Windows - Visual Studio 2013
 #### Achain depends on the following third party libraries - Skip if you downloaded the prebuilt binary package(s) ####
 
  * Boost
-
    Achain depends on the Boost libraries version 1.55 or later (I assume
-   you're using 1.55, the latest as of this writing).  You must build them from
-   source if you're building 32bit binaries, but the 64bit binaries include
-    prebuilt boost binaries, so no need to build them again for 64bit development).
+   you're using 1.55, the latest as of this writing). 
    * download the latest boost source from http://www.boost.org/users/download/
    * unzip it to the base directory `D:\Achain`.
    * This will create a directory like `D:\Achain\boost_1_55_0`.
 
  * OpenSSL
-
    Achain depends on OpenSSL, and you must build this from source.
     * download the latest OpenSSL source from http://www.openssl.org/source/
     * Untar it to the base directory `D:\Achain`
     * this will create a directory like `D:\Achain\openssl-1.0.1g`.
 
-At the end of this, your base directory should look like this:
+   At the end of this, your base directory should look like this:
+   ```
 ```
-```
-D:\Achain
+D:\Achain\include
 +- LevelDB
 +- Achain
 +- boost_1.55
@@ -50,10 +46,11 @@ D:\Achain
 +- miniupnpc
 +- fc
 ```
-
+```
 #### Build the library dependencies - Skip if you downloaded the prebuilt binary package(s) ####
-* Build boost libraries (required for 32bit builds only, skip this step for 64bit development):
+* Build boost libraries (required for 64bit builds only):
   ```
+```
 cd D:\Achain\boost
 bootstrap.bat
 b2.exe toolset=msvc-11.0 variant=debug,release link=static threading=multi runtime-link=shared address-model=32
@@ -77,6 +74,7 @@ set(Boost_USE_DEBUG_PYTHON ON)
 
 * Build OpenSSL DLLs
   ```
+```
 cd D:\Achain\openssl-1.0.1g
 perl Configure --openssldir=D:\Achain\OpenSSL VC-WIN32
 ms\do_ms.bat
@@ -85,7 +83,7 @@ nmake -f ms\ntdll.mak install
 ```
   This will create the directory `D:\Achain\OpenSSL` with the libraries, DLLs,
   and header files.
-
+```
 #### Build Achain ####
 * Launch *Visual Studio* and load `D:\Achain\Achain\Achain.sln` for 64 bit builds.
 
