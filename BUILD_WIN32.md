@@ -11,7 +11,6 @@ Windows - Visual Studio 2013
   and makefiles, this directory will be referred to as `Achain_ROOT`:
   ```
 * Clone the Achain repository:
-  ```
 ```
  $ mkdir D:\Achain
  $ cd D:\Achain
@@ -35,7 +34,6 @@ Windows - Visual Studio 2013
     * this will create a directory like `D:\Achain\openssl-1.0.1g`.
 
    At the end of this, your base directory should look like this:
-   ```
 ```
 D:\Achain\include
 +- LevelDB
@@ -73,7 +71,6 @@ set(Boost_USE_DEBUG_PYTHON ON)
   debug version of Achain.
 
 * Build OpenSSL DLLs
-  ```
 ```
 cd D:\Achain\openssl-1.0.1g
 perl Configure --openssldir=D:\Achain\OpenSSL VC-WIN32
