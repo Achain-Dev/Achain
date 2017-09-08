@@ -1,6 +1,6 @@
 Achain
 =========
-Achain is a new blockchain based on BTS1.0 which integrates lua virtual machine based smart contracts, a software platform designed to help coordinate voluntary free market operations amongst a set of social actors.
+Achain is a new blockchain based on BTS1.0 which integrates lua virtual machine based smart contracts, yet a software platform designed to help coordinate voluntary free market operations amongst a set of social actors.
 
 These social actors together maintain a replicated deterministic state machine which defines the state of a free market. This state machine unambigiously defines the ownership of resources amongst market participants, the rules by which resources are reallocated through market operations, and the history of all market operations. Social actors are free to voluntarily enter and exit the market as desired.
 
@@ -51,7 +51,7 @@ Contributing
 The source code can always be found at the [Achain GitHub Repository](https://github.com/Achain-Dev/Achain). There are four main branches:
 - `master` - official Achain releases are tagged from here; this should only change for a new release
 - `Achain` - updates to Achain are staged here in preparation for the next official release
-- `develop` - all new development happens here; this is what is used for internal Achain XTS test networks
+- `develop` - all new development happens here; this is what is used for internal Achain test networks
 - `toolkit` - this is the most recent common ancestor between master and develop; forks of Achain should base from here
 
 Some technical documentation is available at the [Achain GitHub Wiki](https://github.com/Achain-Dev/Achain/wiki).
