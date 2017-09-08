@@ -13,8 +13,8 @@ For more information about Achain, please read  following document:
 Building
 --------
 Different platforms have different build instructions:
-* [Windows](https://github.com/Achain/Achain/blob/master/BUILD_WIN32.md)
-* [Ubuntu (Todo)](https://github.com/Achain/Achain/blob/master/BUILD_UBUNTU.md)
+* [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
+* [Ubuntu (Todo)](https://github.com/Achain-Dev/Achain/blob/master/BUILD_UBUNTU.md)
 
 
 Using the RPC server
