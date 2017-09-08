@@ -12,7 +12,6 @@ Windows - Visual Studio 2013
   ```
 mkdir D:\Achain
 ```
-
 * Clone the Achain repository
   ```
 cd D:\Achain
@@ -20,7 +19,6 @@ git clone https://github.com/Achain-Dev/Achain.git
 cd Achain
 git submodule update --init --recursive
 ```
-
  * Boost
 
    Achain depends on the Boost libraries version 1.55 or later (I assume
