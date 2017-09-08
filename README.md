@@ -14,7 +14,7 @@ Building
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain/Achain/blob/master/BUILD_WIN32.md)
-* [Ubuntu](https://github.com/Achain/Achain/blob/master/BUILD_UBUNTU.md)
+* [Ubuntu (Todo)](https://github.com/Achain/Achain/blob/master/BUILD_UBUNTU.md)
 
 
 Using the RPC server
