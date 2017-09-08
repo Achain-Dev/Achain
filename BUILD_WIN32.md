@@ -3,22 +3,24 @@ Windows - Visual Studio 2013
 #### Prerequisites ####
 * Microsoft Visual C++ 2013 Update 1 (the free Express edition will work)
 * If you have multiple MSVS installation use MSVS Developer console from target version.
-* You can build either Windows 32bit or 64bit binaries.
+* You can build either Windows 64bit binaries.
 
 #### Set up the directory structure####
 * Create a base directory for all projects.  I'm putting everything in
   `D:\Achain`, you can use whatever you like.  In several of the batch files
   and makefiles, this directory will be referred to as `Achain_ROOT`:
   ```
-mkdir D:\Achain
+ $ mkdir D:\Achain
 ```
 * Clone the Achain repository
   ```
-cd D:\Achain
-git clone https://github.com/Achain-Dev/Achain.git
-cd Achain
-git submodule update --init --recursive
+ $ cd D:\Achain
+ $ git clone https://github.com/Achain-Dev/Achain.git
+ $ cd Achain
+ $ git submodule update --init --recursive
 ```
+#### Achain depends on the following third party libraries - Skip if you downloaded the prebuilt binary package(s) ####
+
  * Boost
 
    Achain depends on the Boost libraries version 1.55 or later (I assume
@@ -36,8 +38,8 @@ git submodule update --init --recursive
     * Untar it to the base directory `D:\Achain`
     * this will create a directory like `D:\Achain\openssl-1.0.1g`.
 
-At the end of this, your base directory should look like this (directory names will
-be slightly different for the 64bit versions):
+At the end of this, your base directory should look like this:
+```
 ```
 D:\Achain
 +- LevelDB
