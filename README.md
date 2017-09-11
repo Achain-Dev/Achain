@@ -4,7 +4,7 @@ Achain is one new blockchain based on BTS1.0 which integrates lua virtual machin
 
 Achain is making efforts to build up a high performance discentralized enterprise blockchain platform, to develop business blockchain applications, to eliminate cognitive fear of the enterprises facing blockchain technology or corresponding applications, to make the blockchain visualized and configurable.
 
-Replicas of the state machine are kept consistent using the [Result Delegated Proof-of-Stake] distributed consensus protocol.
+Replicas of the state machine are kept consistent using the Result Delegated Proof-of-Stake distributed consensus protocol.
 
 For more information about Achain, please read following document:
 * [Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf).
