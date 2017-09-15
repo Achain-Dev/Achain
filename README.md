@@ -14,12 +14,12 @@ Building
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
-* [Ubuntu (Todo)](https://github.com/Achain-Dev/Achain/blob/master/BUILD_UBUNTU.md)
+* [Ubuntu  (Todo) ](https://github.com/Achain-Dev/Achain/blob/master/BUILD_UBUNTU.md)
 
 Using the RPC server
 --------------------
-(todo)
-
+( Todo )
+ 
 Contributing
 ------------
 The source code can always be found at the [Achain GitHub Repository](https://github.com/Achain-Dev/Achain). 
@@ -31,7 +31,7 @@ Support
 -------
 Bugs can be reported directly to the [Achain Issue Tracker](https://github.com/Achain-Dev/Achain/issues).
 
-Technical support can be obtained from the [AchainTalk Technical Support Forum](https://Achaintalk.org/index.php?board=45.0).
+Technical support can be obtained from the [AchainTalk Technical Support Forum](https://forum.achain.com/).
 
 License
 ------
