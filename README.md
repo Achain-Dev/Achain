@@ -13,7 +13,7 @@ For more information about Achain, please read following document:
 Building
 --------
 Different platforms have different build instructions:
-* [Windows]
+* [Windows] https://github.com/Achain-Dev/Achain
 * [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
 
 Using the RPC server
