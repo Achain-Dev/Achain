@@ -182,10 +182,9 @@ void RpcClientMgr::send_message(TaskBase* rpc_msg) {
 }
 
 void RpcClientMgr::connect_to_server() {
-    fc::ip::address ip("127.0.0.1");
-    uint16_t port = 65000;
-    fc::ip::endpoint rp(ip, port);
-    _rpc_client_ptr->connect_to(rp);
+	if (!_b_valid_flag)
+		return;
+	_rpc_client_ptr->connect_to(_end_point);
 }
 
 std::string TaskImplResult::get_result_string() {
