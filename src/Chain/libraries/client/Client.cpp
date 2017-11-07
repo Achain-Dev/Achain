@@ -82,6 +82,7 @@ std::cin >> a;
 #include <cli/locale.hpp>
 #include <blockchain/api_extern.hpp>
 #include <glua/thinkyoung_lua_api.h>
+#include <contract/rpc_mgr.hpp>
 
 using namespace boost;
 using std::string;
@@ -2156,6 +2157,11 @@ namespace thinkyoung {
         {
             return my->_delegate_config;
         }
+
+		void Client::send_rpc_msg(TaskBase* task)
+		{
+			my->rpcMgr->send_message(task);
+		}
         /**
         * Detail Implementation
         */
