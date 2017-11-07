@@ -8,7 +8,6 @@ contract task entity
 #define _TASK_H_
 #include <blockchain/ContractEntry.hpp>
 #include <glua/thinkyoung_lua_lib.h>
-#include <net/Message.hpp>
 #include <fc/filesystem.hpp>
 
 #include <stdint.h>
@@ -16,7 +15,6 @@ contract task entity
 
 
 using thinkyoung::blockchain::Code;
-using thinkyoung::net::Message;
 
 #define DISPATCH_TASK_TIMESPAN 1
 
@@ -48,7 +46,7 @@ struct TaskImplResult : public TaskBase {
     void   init_task_base(TaskBase* task);
     
     virtual  std::string  get_result_string();
-    virtual  Message get_rpc_message() = 0;
+	virtual  void get_rpc_message() = 0;
   public:
     uint64_t      error_code;
     std::string   error_msg;
@@ -59,7 +57,7 @@ struct CompileTaskResult : public TaskImplResult {
     CompileTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     
     std::string  gpc_path_file;
 };
@@ -69,7 +67,7 @@ struct RegisterTaskResult : public TaskImplResult {
     RegisterTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     
     //TODO
 };
@@ -79,7 +77,7 @@ struct CallTaskResult : public TaskImplResult {
     CallTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     //TODO
 };
 
@@ -88,7 +86,7 @@ struct TransferTaskResult : public TaskImplResult {
     TransferTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     //TODO
 };
 
@@ -97,7 +95,7 @@ struct UpgradeTaskResult : public TaskImplResult {
     UpgradeTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     //TODO
 };
 
@@ -106,7 +104,7 @@ struct DestroyTaskResult : public TaskImplResult {
     DestroyTaskResult(TaskBase* task);
     
     std::string  get_result_string();
-    Message get_rpc_message();
+	void get_rpc_message();
     //TODO
 };
 

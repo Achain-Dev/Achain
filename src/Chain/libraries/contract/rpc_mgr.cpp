@@ -120,9 +120,7 @@ void RpcClientMgr::read_loop() {
             }
             
             m.data.resize(m.size); // truncate off the padding bytes
-            //得到Message
-            //转换为task
-            //这里需要针对每个不同的类型进行转换
+            //get task result pointer
             result_p = parse_to_result(m);
             insert_task(result_p);
             _last_message_received_time = fc::time_point::now();
@@ -199,10 +197,9 @@ std::string CompileTaskResult::get_result_string() {
     return nullptr;
 }
 
-Message CompileTaskResult::get_rpc_message() {
-    Message m;
-    return m;
+void CompileTaskResult::get_rpc_message(){
 }
+
 
 CompileTaskResult::CompileTaskResult(TaskBase* task) {
     if (!task) {

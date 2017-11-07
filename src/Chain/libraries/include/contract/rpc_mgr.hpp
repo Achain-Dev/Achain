@@ -41,8 +41,6 @@ class RpcClientMgr {
     void process_task();
     TaskImplResult* parse_to_result(Message& msg);
     
-    //Message& generate_message(TaskBase* task);
-    
     
   private:
     StcpSocketPtr _rpc_client_ptr;
