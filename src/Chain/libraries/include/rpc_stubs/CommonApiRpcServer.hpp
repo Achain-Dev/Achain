@@ -69,6 +69,8 @@ namespace thinkyoung {
             fc::variant blockchain_get_pretty_transaction_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant blockchain_get_pretty_contract_transaction_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant blockchain_get_pretty_contract_transaction_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant blockchain_get_contract_result_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant blockchain_get_contract_result_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant blockchain_get_block_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant blockchain_get_block_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant blockchain_get_block_transactions_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
