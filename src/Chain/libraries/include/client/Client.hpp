@@ -3,6 +3,7 @@
 #include <api/CommonApi.hpp>
 #include <blockchain/ChainDatabase.hpp>
 #include <client/SeedNodes.hpp>
+#include <lvm/LvmMgr.hpp>
 #include <net/Node.hpp>
 #include <rpc/RpcClientApi.hpp>
 #include <rpc_stubs/CommonApiClient.hpp>
@@ -111,11 +112,12 @@ namespace thinkyoung {
 
             /** if this client provides faucet services, specify the account to pay from here */
             string              faucet_account_name;
-
             optional<string>    growl_notify_endpoint;
             optional<string>    growl_password;
             optional<string>    growl_alp_client_identifier;
 
+            // enable lvm process to compile, register, call contract.
+            bool                lvm_enabled = false;
         };
 
 
@@ -181,6 +183,9 @@ namespace thinkyoung {
             virtual thinkyoung::api::CommonApi* get_impl() const override;
 
         private:
+            thinkyoung::lvm::LvmMgrPtr _p_lvm_mgr;
+
+        private:
             unique_ptr<detail::ClientImpl> my;
         };
 
@@ -233,6 +238,7 @@ FC_REFLECT(thinkyoung::client::Config,
 (growl_notify_endpoint)
 (growl_password)
 (growl_alp_client_identifier)
+(lvm_enabled)
 (rpc)
 )
 
