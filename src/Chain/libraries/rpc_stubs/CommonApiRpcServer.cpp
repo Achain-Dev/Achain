@@ -426,6 +426,30 @@ namespace thinkyoung {
             return fc::variant(result);
         }
 
+        fc::variant CommonApiRpcServer::blockchain_get_contract_result_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // this method has no prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (result_id)");
+            std::string result_id = parameters[0].as<std::string>();
+
+            thinkyoung::blockchain::ContractTrxInfo result = get_client()->blockchain_get_contract_result(result_id);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::blockchain_get_contract_result_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // this method has no prerequisites
+
+            if (!parameters.contains("result_id"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'result_id'");
+            std::string result_id = parameters["result_id"].as<std::string>();
+
+            thinkyoung::blockchain::ContractTrxInfo result = get_client()->blockchain_get_contract_result(result_id);
+            return fc::variant(result);
+        }
+
         fc::variant CommonApiRpcServer::blockchain_get_block_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
         {
             // this method has no prerequisites
@@ -7591,6 +7615,14 @@ namespace thinkyoung {
                 this, capture_con, _1);
             json_connection->add_named_param_method("blockchain_get_pretty_contract_transaction", bound_named_method);
 
+           // register method blockchain_get_contract_result
+            bound_positional_method = boost::bind(&CommonApiRpcServer::blockchain_get_contract_result_positional,
+                this, capture_con, _1);
+            json_connection->add_method("blockchain_get_contract_result", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::blockchain_get_contract_result_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("blockchain_get_contract_result", bound_named_method);
+
            // register method blockchain_get_block
             bound_positional_method = boost::bind(&CommonApiRpcServer::blockchain_get_block_positional,
                 this, capture_con, _1);
@@ -9717,6 +9749,20 @@ namespace thinkyoung {
                     /* detailed description */ "Get pretty information about an in-wallet contract transaction\n\nParameters:\n  transaction_id_prefix (string, required): the base16 transaction ID to return\n  exact (bool, optional, defaults to false): whether or not a partial match is ok\n\nReturns:\n  pretty_contract_transaction\n",
                     /* aliases */ {}, true};
                 store_method_metadata(blockchain_get_pretty_contract_transaction_method_metadata);
+            }
+
+            {
+                // register method blockchain_get_contract_result
+                thinkyoung::api::MethodData blockchain_get_contract_result_method_metadata{ "blockchain_get_contract_result", nullptr,
+                    /* description */ "Get pretty information about an call-contract result",
+                    /* returns */ "contract_trx_info",
+                    /* params: */{
+                        {"result_id", "string", thinkyoung::api::required_positional, fc::ovariant()}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 0,
+                    /* detailed description */ "Get pretty information about an call-contract result\n\nParameters:\n  result_id (string, required): the call-contract ID\n\nReturns:\n  contract_trx_info\n",
+                    /* aliases */ {}, true};
+                store_method_metadata(blockchain_get_contract_result_method_metadata);
             }
 
             {
@@ -12843,6 +12889,8 @@ namespace thinkyoung {
                 return blockchain_get_pretty_transaction_positional(nullptr, parameters);
             if (method_name == "blockchain_get_pretty_contract_transaction")
                 return blockchain_get_pretty_contract_transaction_positional(nullptr, parameters);
+            if (method_name == "blockchain_get_contract_result")
+                return blockchain_get_contract_result_positional(nullptr, parameters);
             if (method_name == "blockchain_get_block")
                 return blockchain_get_block_positional(nullptr, parameters);
             if (method_name == "blockchain_get_block_transactions")
