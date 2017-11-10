@@ -14,6 +14,7 @@
 
 #include <boost/program_options.hpp>
 #include <memory>
+#include <contract/rpc_message.hpp>
 
 struct TaskBase;
 namespace thinkyoung {

@@ -26,19 +26,25 @@ class RpcClientMgr {
     RpcClientMgr(Client* client = nullptr);
     virtual ~RpcClientMgr();
     
-    void start();
+	void start_loop();
+
+	void init();
     
     void set_endpoint(std::string& ip_addr, int port);
     
     void insert_connection(thinkyoung::net::StcpSocketPtr&);
     void connect_to_server();
     void send_message(TaskBase*);
+	void set_last_receive_time();
     
   private:
+	void start();
     void read_loop();
     void insert_task(TaskImplResult*);
     void task_imp();
-    void process_task();
+	void process_task(RpcClientMgr*);
+	void reconnect_to_server();
+	
     TaskImplResult* parse_to_result(Message& msg);
     
     
@@ -50,11 +56,9 @@ class RpcClientMgr {
     std::vector<StcpSocketPtr>      _rpc_connections;
     std::vector<TaskImplResult*>          _tasks;
     Client* _client_ptr;
-    bool _b_valid_flag;
     std::mutex              _task_mutex;
-    uint64_t _bytes_received;
-    fc::time_point _connected_time;
-    fc::time_point _last_message_received_time;
+	fc::time_point _last_hello_message_received_time;
+	bool _b_valid_flag;
 };
 
 #endif
