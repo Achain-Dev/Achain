@@ -27,6 +27,8 @@ class RpcClientMgr {
     virtual ~RpcClientMgr();
     
 	void start_loop();
+
+	void init();
     
     void set_endpoint(std::string& ip_addr, int port);
     

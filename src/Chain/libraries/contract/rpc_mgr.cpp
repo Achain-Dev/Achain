@@ -1,3 +1,4 @@
+#include <net/Config.hpp>
 #include <contract/rpc_mgr.hpp>
 #include <contract/rpc_message.hpp>
 #include <iostream>
@@ -26,10 +27,8 @@ const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum:
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
 
 RpcClientMgr::RpcClientMgr(Client* client)
-    :_receive_msg_thread_ptr(std::make_shared<fc::thread>("server")),
-     _b_valid_flag(false),
-     _rpc_client_ptr(std::make_shared<thinkyoung::net::StcpSocket>()),
-     _task_proc_thread_ptr(std::make_shared<fc::thread>("task_proc")) {
+    :_b_valid_flag(false),
+     _rpc_client_ptr(std::make_shared<thinkyoung::net::StcpSocket>()){
     _client_ptr = client;
 	_last_hello_message_received_time = fc::time_point::min();
 }
@@ -39,6 +38,12 @@ RpcClientMgr::~RpcClientMgr() {
 
 
 
+void RpcClientMgr::init(){
+
+	_receive_msg_thread_ptr = std::make_shared<fc::thread>("server");
+	_task_proc_thread_ptr = std::make_shared<fc::thread>("task_proc");
+
+}
 void RpcClientMgr::start() {
 
 	connect_to_server(); 
@@ -52,11 +57,9 @@ void RpcClientMgr::start_loop() {
 	uint64_t interval = 0;
 	interval = (fc::time_point::now() - _last_hello_message_received_time).to_seconds();
 
-	std::cout << "interval = " << interval << std::endl;
 	//if the interval bigger than TIME_INTERVAL, the lvm maybe error, then restart the lvm
 	if (interval > TIME_INTERVAL)
 	{
-		std::cout << "start_loop" << std::endl;
 		//TODO
 		//start lvm
 		_rpc_client_ptr->close();
@@ -134,7 +137,7 @@ void RpcClientMgr::read_loop() {
             _rpc_client_ptr->read(buffer, BUFFER_SIZE);
             /*convert to MessageHeader*/
             memcpy((char*)&m, buffer, sizeof(MessageHeader));
-            FC_ASSERT(m.size <= 1000000, "", ("m.size", m.size)("MAX_MESSAGE_SIZE", 1000000));
+			FC_ASSERT(m.size <= MAX_MESSAGE_SIZE, "", ("m.size", m.size)("MAX_MESSAGE_SIZE", MAX_MESSAGE_SIZE));
             /*remaining len of byte to read from socket*/
             remaining_bytes_with_padding = 16 * ((m.size - LEFTOVER + 15) / 16);
             m.data.resize(LEFTOVER + remaining_bytes_with_padding);
@@ -211,8 +214,6 @@ void RpcClientMgr::connect_to_server() {
 
 void RpcClientMgr::set_last_receive_time(){
 	_last_hello_message_received_time = fc::time_point::now();
-
-	std::cout << "_last_hello_message_received_time = " << _last_hello_message_received_time.sec_since_epoch() << std::endl;
 }
 
 
@@ -236,7 +237,6 @@ TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
     
     switch (msg.msg_type) {
 		case HELLO_MESSAGE_TYPE: {
-			std::cout << "receive hello msg" << std::endl;
 			HelloMsgResultRpc hello_msg(msg.as<HelloMsgResultRpc>());
 			result_p = new HelloMsgResult();
 			result_p->task_type = hello_msg.data.task_type;
