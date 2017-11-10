@@ -3,6 +3,7 @@
 #include <api/CommonApi.hpp>
 #include <blockchain/ChainDatabase.hpp>
 #include <client/SeedNodes.hpp>
+#include <lvm/LvmMgr.hpp>
 #include <net/Node.hpp>
 #include <rpc/RpcClientApi.hpp>
 #include <rpc_stubs/CommonApiClient.hpp>
@@ -112,11 +113,13 @@ namespace thinkyoung {
             
             /** if this client provides faucet services, specify the account to pay from here */
             string              faucet_account_name;
-            
+
             optional<string>    growl_notify_endpoint;
             optional<string>    growl_password;
             optional<string>    growl_alp_client_identifier;
-            
+
+            // enable lvm process to compile, register, call contract.
+            bool                lvm_enabled = false;
         };
         
         /**
@@ -180,8 +183,11 @@ namespace thinkyoung {
             void send_rpc_msg(TaskBase* task);
           protected:
             virtual thinkyoung::api::CommonApi* get_impl() const override;
-            
-          private:
+
+        private:
+            thinkyoung::lvm::LvmMgrPtr _p_lvm_mgr;
+
+        private:
             unique_ptr<detail::ClientImpl> my;
         };
         
@@ -212,27 +218,27 @@ FC_REFLECT(thinkyoung::client::RpcServerConfig, (enable)(enable_cache)(rpc_user)
            (encrypted_rpc_endpoint)(encrypted_rpc_wif_key)(htdocs))
 FC_REFLECT(thinkyoung::client::ChainServerConfig, (enabled)(listen_port))
 FC_REFLECT(thinkyoung::client::Config,
-           (logging)
-           (ignore_console)
-           (client_debug_name)
-           (rpc)
-           (genesis_config)
-           (statistics_enabled)
-           (default_peers)
-           (maximum_number_of_connections)
-           (use_upnp)
-           (chain_servers)
-           (chain_server)
-           (wallet_enabled)
-           (min_relay_fee)
-           (wallet_callback_url)
-           (light_network_fee)
-           (light_relay_fee)
-           (relay_account_name)
-           (faucet_account_name)
-           (growl_notify_endpoint)
-           (growl_password)
-           (growl_alp_client_identifier)
-           (rpc)
-          )
-
+(logging)
+(ignore_console)
+(client_debug_name)
+(rpc)
+(genesis_config)
+(statistics_enabled)
+(default_peers)
+(maximum_number_of_connections)
+(use_upnp)
+(chain_servers)
+(chain_server)
+(wallet_enabled)
+(min_relay_fee)
+(wallet_callback_url)
+(light_network_fee)
+(light_relay_fee)
+(relay_account_name)
+(faucet_account_name)
+(growl_notify_endpoint)
+(growl_password)
+(growl_alp_client_identifier)
+(lvm_enabled)
+(rpc)
+)
