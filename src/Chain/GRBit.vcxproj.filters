@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="源文件">
@@ -460,6 +460,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="libraries\contract\rpc_mgr.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="libraries\lvm\LvmMgr.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1014,6 +1017,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="libraries\include\contract\rpc_mgr.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lvm\LvmMgr.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
