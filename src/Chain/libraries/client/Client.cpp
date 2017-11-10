@@ -1966,6 +1966,10 @@ namespace thinkyoung {
 
             my->_chain_db->set_relay_fee(my->_config.min_relay_fee);
             my->_chain_db->repair_database();
+
+			my->rpcMgr->init();
+			my->rpcMgr->set_endpoint(std::string("127.0.0.1"), 65000);
+			my->rpcMgr->start_loop();
         } //configure_from_command_line
 
         fc::future<void> Client::start()

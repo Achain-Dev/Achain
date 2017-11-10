@@ -15,7 +15,19 @@ enum LuaRpcMessageTypeEnum {
     UPGRADE_MESSAGE_TYPE,
     TRANSFER_MESSAGE_TYPE,
     DESTROY_MESSAGE_TYPE,
+	HELLO_MESSAGE_TYPE = 100,
     MESSAGE_COUNT
+};
+
+//HELLO MSG
+//hello msg, achain receive hello-msg from lvm only, not send hello-msg
+struct HelloMsgResultRpc{
+	static const LuaRpcMessageTypeEnum type;
+	HelloMsgResult data;
+	HelloMsgResultRpc() {}
+	HelloMsgResultRpc(HelloMsgResult& para) :
+		data(std::move(para))
+	{}
 };
 
 //task:
@@ -142,7 +154,7 @@ struct DestroyTaskResultRpc {
 
 
 FC_REFLECT_ENUM(LuaRpcMessageTypeEnum, (COMPILE_MESSAGE_TYPE)(CALL_MESSAGE_TYPE)(REGTISTER_MESSAGE_TYPE)
-                (UPGRADE_MESSAGE_TYPE)(TRANSFER_MESSAGE_TYPE)(DESTROY_MESSAGE_TYPE))
+	(UPGRADE_MESSAGE_TYPE)(TRANSFER_MESSAGE_TYPE)(DESTROY_MESSAGE_TYPE)(HELLO_MESSAGE_TYPE))
 
 //task
 FC_REFLECT(CompileTaskRpc, (data))
@@ -159,4 +171,8 @@ FC_REFLECT(CallTaskResultRpc, (data))
 FC_REFLECT(TransferTaskResultRpc, (data))
 FC_REFLECT(UpgradeTaskResultRpc, (data))
 FC_REFLECT(DestroyTaskResultRpc, (data))
+
+//hello msg
+FC_REFLECT(HelloMsgResultRpc, (data))
+
 #endif

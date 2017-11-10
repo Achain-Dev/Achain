@@ -8,6 +8,11 @@ namespace thinkyoung {
 
             fc::variant_object ClientImpl::about() const
             {
+				CompileTask task;
+				task.task_from = 1;
+				task.task_id = 10008877;
+				task.glua_path_file = fc::path("C:/Users/yangsai");
+				_self->send_rpc_msg(&task);
                 return thinkyoung::client::version_info();
             }
 
