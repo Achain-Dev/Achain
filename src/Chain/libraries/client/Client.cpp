@@ -82,6 +82,7 @@ std::cin >> a;
 #include <cli/locale.hpp>
 #include <blockchain/api_extern.hpp>
 #include <glua/thinkyoung_lua_api.h>
+#include <contract/rpc_mgr.hpp>
 
 using namespace boost;
 using std::string;
@@ -183,6 +184,7 @@ namespace thinkyoung {
                 ("growl", program_options::value<std::string>()->implicit_value("127.0.0.1"), "Send notifications about potential problems to Growl")
                 ("growl-password", program_options::value<std::string>(), "Password for authenticating to a Growl server")
                 ("growl-identifier", program_options::value<std::string>(), "A name displayed in growl messages to identify this alp_client instance")
+                ("disable-lvm", program_options::value<bool>(), "Disable contract operation will handle in a lvm process")
                 ;
 
             program_options::variables_map option_variables;
@@ -1515,7 +1517,7 @@ namespace thinkyoung {
         } // end namespace detail
 
         Client::Client(const std::string& user_agent)
-            :my(new detail::ClientImpl(this, user_agent))
+            : my(new detail::ClientImpl(this, user_agent))
         {
         }
 
@@ -1777,6 +1779,15 @@ namespace thinkyoung {
                 this->network_set_advanced_node_parameters(params);
             }
 
+            if (option_variables.count("disable-lvm") == 0)
+            {
+                my->_config.lvm_enabled = true;
+                _p_lvm_mgr = std::make_shared<thinkyoung::lvm::LvmMgr>();
+                fc::path path_file = fc::current_path();
+                _p_lvm_mgr->set_lvm_path_file(path_file);
+                _p_lvm_mgr->run_lvm();
+            }
+
             my->configure_rpc_server(my->_config, option_variables);
             my->configure_chain_server(my->_config, option_variables);
 
@@ -1955,6 +1966,10 @@ namespace thinkyoung {
 
             my->_chain_db->set_relay_fee(my->_config.min_relay_fee);
             my->_chain_db->repair_database();
+
+			my->rpcMgr->init();
+			my->rpcMgr->set_endpoint(std::string("127.0.0.1"), 65000);
+			my->rpcMgr->start_loop();
         } //configure_from_command_line
 
         fc::future<void> Client::start()
@@ -2156,6 +2171,11 @@ namespace thinkyoung {
         {
             return my->_delegate_config;
         }
+
+		void Client::send_rpc_msg(TaskBase* task)
+		{
+			my->rpcMgr->send_message(task);
+		}
         /**
         * Detail Implementation
         */
