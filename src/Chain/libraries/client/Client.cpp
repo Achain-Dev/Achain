@@ -1721,6 +1721,9 @@ namespace thinkyoung {
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
                 return;
             }
+
+			my->rpcMgr->set_endpoint(std::string("127.0.0.1"), 65000);
+			my->rpcMgr->start_loop();
             g_client = this;
             // parse command-line options
             auto option_variables = parse_option_variables(argc, argv);

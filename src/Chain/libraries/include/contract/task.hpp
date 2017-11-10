@@ -16,7 +16,12 @@ contract task entity
 
 using thinkyoung::blockchain::Code;
 
+class RpcClientMgr;
+
 #define DISPATCH_TASK_TIMESPAN 1
+#define RECONNECT_TIMES 5
+#define START_LOOP_TIME 10
+#define TIME_INTERVAL 15
 
 enum LUA_TASK_TYPE {
     COMPILE_TASK = 0,
@@ -25,6 +30,7 @@ enum LUA_TASK_TYPE {
     CALL_TASK,
     TRANSFER_TASK,
     DESTROY_TASK,
+	HELLO_MSG = 100,
     TASK_COUNT
 };
 
@@ -42,22 +48,23 @@ struct TaskBase {
 
 struct TaskImplResult : public TaskBase {
     TaskImplResult() {};
+	virtual ~TaskImplResult() {};
     
-    void   init_task_base(TaskBase* task);
-    
-    virtual  std::string  get_result_string();
-	virtual  void get_rpc_message() = 0;
+	virtual  void  process_result(RpcClientMgr* msg_p = nullptr);
+	virtual  void  func2() {};
   public:
     uint64_t      error_code;
     std::string   error_msg;
 };
 
+//hello msg
+typedef struct TaskImplResult HelloMsgResult;
+
 struct CompileTaskResult : public TaskImplResult {
     CompileTaskResult() {}
     CompileTaskResult(TaskBase* task);
-    
-    std::string  get_result_string();
-	void get_rpc_message();
+
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     
     std::string  gpc_path_file;
 };
@@ -66,45 +73,39 @@ struct RegisterTaskResult : public TaskImplResult {
     RegisterTaskResult() {}
     RegisterTaskResult(TaskBase* task);
     
-    std::string  get_result_string();
-	void get_rpc_message();
-    
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct CallTaskResult : public TaskImplResult {
     CallTaskResult() {}
     CallTaskResult(TaskBase* task);
-    
-    std::string  get_result_string();
-	void get_rpc_message();
+
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct TransferTaskResult : public TaskImplResult {
     TransferTaskResult() {}
     TransferTaskResult(TaskBase* task);
-    
-    std::string  get_result_string();
-	void get_rpc_message();
+
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct UpgradeTaskResult : public TaskImplResult {
     UpgradeTaskResult() {}
     UpgradeTaskResult(TaskBase* task);
-    
-    std::string  get_result_string();
-	void get_rpc_message();
+
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct DestroyTaskResult : public TaskImplResult {
     DestroyTaskResult() {}
     DestroyTaskResult(TaskBase* task);
-    
-    std::string  get_result_string();
-	void get_rpc_message();
+
+	void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
@@ -198,6 +199,7 @@ FC_REFLECT_ENUM(LUA_TASK_TYPE,
                 (CALL_TASK)
                 (TRANSFER_TASK)
                 (DESTROY_TASK)
+				(HELLO_MSG)
                )
 
 FC_REFLECT(TaskBase, (task_id)(task_type)(task_from))
