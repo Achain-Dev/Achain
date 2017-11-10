@@ -43,7 +43,7 @@ enum LUA_TASK_FROM {
 struct TaskBase {
     uint32_t task_id;     //a random value,CLI or achain launch a request with a task_id
     uint16_t task_type;   //here,change LUA_TASK_TYPE to uint32_t, fit FC name
-    uint8_t task_from;    //LUA_TASK_FORM_CLI¡¢LUA_TASK_FORM_RPC
+    uint8_t task_from;    //LUA_TASK_FORM_CLIÂ¡Â¢LUA_TASK_FORM_RPC
 };
 
 struct TaskImplResult : public TaskBase {
