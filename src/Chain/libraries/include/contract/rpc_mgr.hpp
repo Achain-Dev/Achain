@@ -17,6 +17,7 @@ rpc client
 class Client;
 struct TaskBase;
 struct TaskImplResult;
+class TaskHandler;
 using thinkyoung::net::StcpSocketPtr;
 
 using thinkyoung::net::Message;
@@ -36,6 +37,8 @@ class RpcClientMgr {
     void connect_to_server();
     void send_message(TaskBase*);
 	void set_last_receive_time();
+	void execute_task(TaskBase*);
+	static RpcClientMgr* get_rpc_mgr();
     
   private:
 	void start();
@@ -44,6 +47,7 @@ class RpcClientMgr {
     void task_imp();
 	void process_task(RpcClientMgr*);
 	void reconnect_to_server();
+	void generate_message(TaskBase* task_p, Message* msg);
 	
     TaskImplResult* parse_to_result(Message& msg);
     
@@ -59,6 +63,10 @@ class RpcClientMgr {
     std::mutex              _task_mutex;
 	fc::time_point _last_hello_message_received_time;
 	bool _b_valid_flag;
+
+	TaskHandler* _task_handler_ptr;
+  private:
+	static RpcClientMgr* _s_rpc_mgr_ptr;
 };
 
 #endif

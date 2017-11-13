@@ -26,6 +26,8 @@ const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum:
 //hello msg
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
 
+RpcClientMgr* RpcClientMgr::_s_rpc_mgr_ptr = nullptr;
+
 RpcClientMgr::RpcClientMgr(Client* client)
     :_b_valid_flag(false),
      _rpc_client_ptr(std::make_shared<thinkyoung::net::StcpSocket>()){
@@ -42,6 +44,8 @@ void RpcClientMgr::init(){
 
 	_receive_msg_thread_ptr = std::make_shared<fc::thread>("server");
 	_task_proc_thread_ptr = std::make_shared<fc::thread>("task_proc");
+
+	//_task_handler_ptr = new TaskHandler();
 
 }
 void RpcClientMgr::start() {
@@ -179,13 +183,11 @@ void RpcClientMgr::read_loop() {
 void RpcClientMgr::send_message(TaskBase* rpc_msg) {
     uint32_t size_of_message_and_header = 0;
     uint32_t size_with_padding = 0;
-    CompileTaskRpc rpc(*(CompileTask*)rpc_msg);
+	Message m;
 
-	//from rpc
-	rpc.data.task_from = FROM_RPC;
-    Message m(rpc);
+	generate_message(rpc_msg, &m);
     //padding rpc data
-    size_of_message_and_header = sizeof(thinkyoung::net::MessageHeader) + m.size;
+    size_of_message_and_header = sizeof(MessageHeader) + m.size;
     //pad the message we send to a multiple of 16 bytes
     size_with_padding = 16 * ((size_of_message_and_header + 15) / 16);
     std::unique_ptr<char[]> padded_message(new char[size_with_padding]);
@@ -197,12 +199,8 @@ void RpcClientMgr::send_message(TaskBase* rpc_msg) {
         _rpc_client_ptr->write(padded_message.get(), size_with_padding);
         _rpc_client_ptr->flush();
         
-    } catch (fc::exception& er) {
-        //TODO
-    } catch (const std::exception& e) {
-        //TODO
     } catch (...) {
-        //TODO
+		_rpc_client_ptr->close();
     }
 }
 
@@ -288,107 +286,89 @@ TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
     return result_p;
 }
 
-
-CompileTaskResult::CompileTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
+//get rpc_mgr
+RpcClientMgr* RpcClientMgr::get_rpc_mgr(){
+	if (!_s_rpc_mgr_ptr){
+		_s_rpc_mgr_ptr = new RpcClientMgr();
 	}
 
-	CompileTaskResult* compileTask_p = (CompileTaskResult*)task;
-	//memcpy(this, task, sizeof(TaskBase));
-	this->task_from = task->task_from;
-	this->task_id = task->task_id;
-	this->task_type = task->task_type;
-	this->error_code = compileTask_p->error_code;
-	this->error_msg = compileTask_p->error_msg;
-	this->gpc_path_file = compileTask_p->gpc_path_file;
+	return _s_rpc_mgr_ptr;
 }
 
-RegisterTaskResult::RegisterTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
-	}
+void RpcClientMgr::execute_task(TaskBase* task_p){
 
-	//TODO
+	send_message(task_p);
 }
 
-CallTaskResult::CallTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
-	}
+void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 
-	//TODO
-}
+	FC_ASSERT(task_p != NULL);
+	FC_ASSERT(msg_p != NULL);
 
-TransferTaskResult::TransferTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
-	}
-
-	//TODO
-}
-
-UpgradeTaskResult::UpgradeTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
-	}
-
-	//TODO
-}
-
-DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
-	if (!task) {
-		return;
-	}
-
-	//TODO
-}
-void TaskImplResult::process_result(RpcClientMgr* msg_p){
-	if (msg_p)
+	switch (task_p->task_type)
 	{
-		msg_p->set_last_receive_time();
+		case COMPILE_TASK:
+		{
+			CompileTaskRpc task_rpc(*(CompileTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		case REGISTER_TASK:
+		{
+			RegisterTaskRpc task_rpc(*(RegisterTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		case UPGRADE_TASK:
+		{
+			UpgradeTaskRpc task_rpc(*(UpgradeTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		case CALL_TASK:
+		{
+			CallTaskRpc task_rpc(*(CallTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		case TRANSFER_TASK:
+		{
+			TransferTaskRpc task_rpc(*(TransferTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		case DESTROY_TASK:
+		{
+			DestroyTaskRpc task_rpc(*(DestroyTask*)task_p);
+			task_rpc.data.task_from = FROM_RPC;
+
+			Message msg(task_rpc);
+			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
+			break;
+		}
+
+		default:
+		{
+		}
 	}
-
-	return;
-}
-void CompileTaskResult::process_result(RpcClientMgr* msg_p){
-	CompileTaskResult* task = (CompileTaskResult*)(this);
-	std::cout << "recieve response......." << std::endl;
-	std::cout << "task_from: " << (task->task_from == 0 ? "FROM_CLI" : "FROM_RPC") << std::endl;
-	std::cout << "task_id: " << task->task_id << std::endl;
-	std::cout << "task_type: " << task->task_type << std::endl;
-	std::cout << "error_code: " << task->error_code << std::endl;
-	std::cout << "error_msg: " << task->error_msg << std::endl;
-
-	return;
-}
-
-void RegisterTaskResult::process_result(RpcClientMgr* msg_p){
-
-	//TODO
-	return;
-}
-
-void CallTaskResult::process_result(RpcClientMgr* msg_p){
-
-	//TODO
-	return;
-}
-
-void TransferTaskResult::process_result(RpcClientMgr* msg_p){
-
-	//TODO
-	return;
-}
-
-void UpgradeTaskResult::process_result(RpcClientMgr* msg_p){
-
-	//TODO
-	return;
-}
-
-void DestroyTaskResult::process_result(RpcClientMgr* msg_p){
-
-	//TODO
-	return;
 }
