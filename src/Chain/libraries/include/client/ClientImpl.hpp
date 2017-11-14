@@ -154,7 +154,7 @@ namespace thinkyoung {
                         }
                         
                         FC_RETHROW_EXCEPTIONS(warn, "chain_db")
-                        rpcMgr = RpcClientMgr::get_rpc_mgr();
+                        rpcMgr = RpcClientMgr::get_rpc_mgr(_self);
                     }
                     
                     FC_RETHROW_EXCEPTIONS(warn, "")
