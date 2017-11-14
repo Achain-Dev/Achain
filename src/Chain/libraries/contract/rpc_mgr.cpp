@@ -183,9 +183,8 @@ void RpcClientMgr::read_loop() {
 void RpcClientMgr::send_message(TaskBase* rpc_msg) {
     uint32_t size_of_message_and_header = 0;
     uint32_t size_with_padding = 0;
-	Message m;
 
-	generate_message(rpc_msg, &m);
+	Message m(generate_message(rpc_msg));
     //padding rpc data
     size_of_message_and_header = sizeof(MessageHeader) + m.size;
     //pad the message we send to a multiple of 16 bytes
@@ -300,10 +299,9 @@ void RpcClientMgr::execute_task(TaskBase* task_p){
 	send_message(task_p);
 }
 
-void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
+Message RpcClientMgr::generate_message(TaskBase* task_p){
 
 	FC_ASSERT(task_p != NULL);
-	FC_ASSERT(msg_p != NULL);
 
 	switch (task_p->task_type)
 	{
@@ -313,8 +311,8 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		case REGISTER_TASK:
@@ -323,8 +321,8 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		case UPGRADE_TASK:
@@ -333,8 +331,8 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		case CALL_TASK:
@@ -343,8 +341,8 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		case TRANSFER_TASK:
@@ -353,8 +351,8 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		case DESTROY_TASK:
@@ -363,12 +361,13 @@ void RpcClientMgr::generate_message(TaskBase* task_p, Message* msg_p){
 			task_rpc.data.task_from = FROM_RPC;
 
 			Message msg(task_rpc);
-			memcpy(msg_p, &task_rpc, sizeof(MessageHeader) + msg.size);
-			break;
+
+			return msg;
 		}
 
 		default:
 		{
+			return Message();
 		}
 	}
 }
