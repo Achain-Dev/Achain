@@ -47,7 +47,7 @@ class RpcClientMgr {
     void task_imp();
 	void process_task(RpcClientMgr*);
 	void reconnect_to_server();
-	void generate_message(TaskBase* task_p, Message* msg);
+	Message generate_message(TaskBase* task_p);
 	
     TaskImplResult* parse_to_result(Message& msg);
     
