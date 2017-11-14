@@ -40,10 +40,18 @@ enum LUA_TASK_FROM {
     FROM_COUNT
 };
 
+enum LUA_TASK_STAGE{
+	CHAIN_TO_LVM_CALL = 0,
+	CHAIN_TO_LVM_CALL1,
+	CHAIN_TO_LVM_CALL2,
+	CHAIN_TO_LVM_CALL3,
+	CHAIN_TO_LVM_COUNT
+};
+
 struct TaskBase {
     uint32_t task_id;     //a random value,CLI or achain launch a request with a task_id
     uint16_t task_type;   //here,change LUA_TASK_TYPE to uint32_t, fit FC name
-    uint8_t task_from;    //LUA_TASK_FORM_CLI¡¢LUA_TASK_FORM_RPC
+    uint8_t task_from;    //LUA_TASK_FORM_CLI/LUA_TASK_FORM_RPC
 };
 
 struct TaskImplResult : public TaskBase {

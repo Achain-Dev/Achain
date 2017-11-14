@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -239,6 +239,7 @@
     <ClCompile Include="libraries\cli\Pretty.cpp" />
     <ClCompile Include="libraries\cli\PrintResult.cpp" />
     <ClCompile Include="libraries\contract\rpc_mgr.cpp" />
+    <ClCompile Include="libraries\contract\task.cpp" />
     <ClCompile Include="libraries\db\UpgradeLeveldb.cpp" />
     <ClCompile Include="libraries\glua\glua_api_types.cpp" />
     <ClCompile Include="libraries\glua\glua_astparser.cpp" />
@@ -305,7 +306,7 @@
     <ClCompile Include="libraries\glua\lutf8lib.cpp" />
     <ClCompile Include="libraries\glua\lvm.cpp" />
     <ClCompile Include="libraries\glua\lzio.cpp" />
-	<ClCompile Include="libraries\lvm\LvmMgr.cpp" />
+    <ClCompile Include="libraries\lvm\LvmMgr.cpp" />
     <ClCompile Include="libraries\net\ChainDownloader.cpp" />
     <ClCompile Include="libraries\net\ChainServer.cpp" />
     <ClCompile Include="libraries\net\CoreMessages.cpp" />
@@ -447,7 +448,7 @@
     <ClInclude Include="libraries\include\lua\lundump.h" />
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
-	<ClInclude Include="libraries\include\lvm\LvmMgr.hpp" />
+    <ClInclude Include="libraries\include\lvm\LvmMgr.hpp" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />
     <ClInclude Include="libraries\include\net\ChainDownloader.hpp" />
     <ClInclude Include="libraries\include\net\ChainMessages.hpp" />
