@@ -30,7 +30,7 @@ enum LUA_TASK_TYPE {
     CALL_TASK,
     TRANSFER_TASK,
     DESTROY_TASK,
-	HELLO_MSG = 100,
+    HELLO_MSG,
     TASK_COUNT
 };
 
@@ -48,10 +48,10 @@ struct TaskBase {
 
 struct TaskImplResult : public TaskBase {
     TaskImplResult() {};
-	virtual ~TaskImplResult() {};
+    virtual ~TaskImplResult() {};
     
-	virtual  void  process_result(RpcClientMgr* msg_p = nullptr);
-	virtual  void  func2() {};
+    virtual  void  process_result(RpcClientMgr* msg_p = nullptr);
+    virtual  void  func2() {};
   public:
     uint64_t      error_code;
     std::string   error_msg;
@@ -63,8 +63,8 @@ typedef struct TaskImplResult HelloMsgResult;
 struct CompileTaskResult : public TaskImplResult {
     CompileTaskResult() {}
     CompileTaskResult(TaskBase* task);
-
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     
     std::string  gpc_path_file;
 };
@@ -73,39 +73,39 @@ struct RegisterTaskResult : public TaskImplResult {
     RegisterTaskResult() {}
     RegisterTaskResult(TaskBase* task);
     
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct CallTaskResult : public TaskImplResult {
     CallTaskResult() {}
     CallTaskResult(TaskBase* task);
-
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct TransferTaskResult : public TaskImplResult {
     TransferTaskResult() {}
     TransferTaskResult(TaskBase* task);
-
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct UpgradeTaskResult : public TaskImplResult {
     UpgradeTaskResult() {}
     UpgradeTaskResult(TaskBase* task);
-
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
 struct DestroyTaskResult : public TaskImplResult {
     DestroyTaskResult() {}
     DestroyTaskResult(TaskBase* task);
-
-	void  process_result(RpcClientMgr* msg_p = nullptr);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
     //TODO
 };
 
@@ -119,73 +119,73 @@ struct CompileTask : public TaskBase {
 };
 
 struct RegisterTask : public TaskBase {
-	RegisterTask() {
-		task_type = REGISTER_TASK;
-	};
-
-	std::string             gpc_code;
-	intptr_t                statevalue;
-	int                     num_limit;
-	std::string             str_caller;
-	std::string             str_caller_address;
-	std::string             str_contract_address;
-	std::string             str_contract_id;
-	Code                    contract_code;
+    RegisterTask() {
+        task_type = REGISTER_TASK;
+    };
+    
+    std::string             gpc_code;
+    intptr_t                statevalue;
+    int                     num_limit;
+    std::string             str_caller;
+    std::string             str_caller_address;
+    std::string             str_contract_address;
+    std::string             str_contract_id;
+    Code                    contract_code;
 };
 
 struct UpgradeTask : public TaskBase {
-	UpgradeTask() {
-		task_type = UPGRADE_TASK;
-	};
-	intptr_t                statevalue;
-	int                     num_limit;
-	std::string             str_caller;
-	std::string             str_caller_address;
-	std::string             str_contract_address;
-	std::string             str_contract_id;
-	Code                    contract_code;
+    UpgradeTask() {
+        task_type = UPGRADE_TASK;
+    };
+    intptr_t                statevalue;
+    int                     num_limit;
+    std::string             str_caller;
+    std::string             str_caller_address;
+    std::string             str_contract_address;
+    std::string             str_contract_id;
+    Code                    contract_code;
 };
 
 struct CallTask : public TaskBase {
-	CallTask() {
-		task_type = CALL_TASK;
-	};
-	intptr_t                statevalue;
-	int                     num_limit;
-	std::string             str_caller;
-	std::string             str_caller_address;
-	std::string             str_contract_address;
-	std::string             str_contract_id;
-	std::string             str_method;
-	std::string             str_args;
-	Code                    contract_code;
+    CallTask() {
+        task_type = CALL_TASK;
+    };
+    intptr_t                statevalue;
+    int                     num_limit;
+    std::string             str_caller;
+    std::string             str_caller_address;
+    std::string             str_contract_address;
+    std::string             str_contract_id;
+    std::string             str_method;
+    std::string             str_args;
+    Code                    contract_code;
 };
 
 struct TransferTask : public TaskBase {
-	TransferTask() {
-		task_type = TRANSFER_TASK;
-	};
-	intptr_t                statevalue;
-	int                     num_limit;
-	std::string             str_caller;
-	std::string             str_caller_address;
-	std::string             str_contract_address;
-	std::string             str_contract_id;
-	std::string             str_args;
-	Code                    contract_code;
+    TransferTask() {
+        task_type = TRANSFER_TASK;
+    };
+    intptr_t                statevalue;
+    int                     num_limit;
+    std::string             str_caller;
+    std::string             str_caller_address;
+    std::string             str_contract_address;
+    std::string             str_contract_id;
+    std::string             str_args;
+    Code                    contract_code;
 };
 
 struct DestroyTask : public TaskBase {
-	DestroyTask() {
-		task_type = DESTROY_TASK;
-	};
-	intptr_t               statevalue;
-	int                    num_limit;
-	std::string            str_caller;
-	std::string            str_caller_address;
-	std::string            str_contract_address;
-	std::string            str_contract_id;
-	Code                   contract_code;
+    DestroyTask() {
+        task_type = DESTROY_TASK;
+    };
+    intptr_t               statevalue;
+    int                    num_limit;
+    std::string            str_caller;
+    std::string            str_caller_address;
+    std::string            str_contract_address;
+    std::string            str_contract_id;
+    Code                   contract_code;
 };
 
 FC_REFLECT_ENUM(LUA_TASK_TYPE,
@@ -195,31 +195,31 @@ FC_REFLECT_ENUM(LUA_TASK_TYPE,
                 (CALL_TASK)
                 (TRANSFER_TASK)
                 (DESTROY_TASK)
-				(HELLO_MSG)
+                (HELLO_MSG)
                )
 
 FC_REFLECT(TaskBase, (task_id)(task_type)(task_from))
 FC_REFLECT_DERIVED(CompileTask, (TaskBase), (glua_path_file))
 
 FC_REFLECT_DERIVED(CallTask, (TaskBase), (statevalue)(num_limit)
-(str_caller)(str_caller_address)(str_contract_address)
-(str_contract_id)(str_method)(str_args)(contract_code))
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(str_method)(str_args)(contract_code))
 
 FC_REFLECT_DERIVED(RegisterTask, (TaskBase), (gpc_code)(statevalue)(num_limit)
-(str_caller)(str_caller_address)(str_contract_address)
-(str_contract_id)(contract_code))
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(contract_code))
 
 FC_REFLECT_DERIVED(TransferTask, (TaskBase), (statevalue)(num_limit)
-(str_caller)(str_caller_address)(str_contract_address)
-(str_contract_id)(str_args)(contract_code))
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(str_args)(contract_code))
 
 FC_REFLECT_DERIVED(UpgradeTask, (TaskBase), (statevalue)(num_limit)
-(str_caller)(str_caller_address)(str_contract_address)
-(str_contract_id)(contract_code))
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(contract_code))
 
 FC_REFLECT_DERIVED(DestroyTask, (TaskBase), (statevalue)(num_limit)
-(str_caller)(str_caller_address)(str_contract_address)
-(str_contract_id)(contract_code))
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(contract_code))
 
 FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(error_msg))
 FC_REFLECT_DERIVED(CompileTaskResult, (TaskImplResult), (gpc_path_file))
