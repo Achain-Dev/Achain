@@ -15,20 +15,20 @@
 namespace thinkyoung {
     namespace lvm {
         class LvmMgr {
-         public:
-             LvmMgr();
-             ~LvmMgr();
-
-             void run_lvm();
-             void set_lvm_path_file(const fc::path& lvm_path_file);
-
+          public:
+            LvmMgr();
+            ~LvmMgr();
+            
+            void run_lvm();
+            void set_lvm_path_file(const fc::path& lvm_path_file);
+            
           private:
-             void terminate_lvm_process();
-             void start_lvm_process();
-
-         private:
-             fc::path _lvm_path_file;
-             fc::process_ptr _p_lvm_process;
+            void terminate_lvm_process();
+            void start_lvm_process();
+            
+          private:
+            fc::path _lvm_path_file;
+            fc::process_ptr _p_lvm_process;
         };
         typedef std::shared_ptr<LvmMgr> LvmMgrPtr;
     }
