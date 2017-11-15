@@ -96,14 +96,12 @@ void RpcClientMgr::process_task(RpcClientMgr* msg_p) {
 
     _task_mutex.lock();
     std::vector<TaskImplResult*>::iterator iter = _tasks.begin();
-    
     while (iter != _tasks.end()) {
 		ptask = (*iter);
 		(*iter)->process_result(msg_p);
 		iter = _tasks.erase(iter);
 		delete ptask;
     }
-    
     _task_mutex.unlock();
 }
 
