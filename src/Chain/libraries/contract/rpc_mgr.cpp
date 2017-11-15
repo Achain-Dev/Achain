@@ -1,4 +1,5 @@
 #include <net/Config.hpp>
+#include <lvm/LvmMgr.hpp>
 #include <contract/rpc_mgr.hpp>
 #include <contract/rpc_message.hpp>
 #include <iostream>
@@ -30,56 +31,67 @@ RpcClientMgr* RpcClientMgr::_s_rpc_mgr_ptr = nullptr;
 
 RpcClientMgr::RpcClientMgr(Client* client)
     :_b_valid_flag(false),
-     _rpc_client_ptr(std::make_shared<thinkyoung::net::StcpSocket>()){
+     _rpc_client_ptr(std::make_shared<thinkyoung::net::StcpSocket>()) {
     _client_ptr = client;
-	_last_hello_message_received_time = fc::time_point::min();
+    _last_hello_message_received_time = fc::time_point::min();
 }
 
 RpcClientMgr::~RpcClientMgr() {
 }
 
+//get rpc_mgr
+RpcClientMgr* RpcClientMgr::get_rpc_mgr(Client* client) {
+    if (!RpcClientMgr::_s_rpc_mgr_ptr) {
+        RpcClientMgr::_s_rpc_mgr_ptr = new RpcClientMgr(client);
+    }
+    
+    return RpcClientMgr::_s_rpc_mgr_ptr;
+}
 
+void RpcClientMgr::delete_rpc_mgr() {
+    if (RpcClientMgr::_s_rpc_mgr_ptr) {
+        delete RpcClientMgr::_s_rpc_mgr_ptr;
+    }
+}
 
-void RpcClientMgr::init(){
-
-	_receive_msg_thread_ptr = std::make_shared<fc::thread>("server");
-	_task_proc_thread_ptr = std::make_shared<fc::thread>("task_proc");
-
-	//_task_handler_ptr = new TaskHandler();
-
+void RpcClientMgr::init() {
+    _receive_msg_thread_ptr = std::make_shared<fc::thread>("server");
+    _task_proc_thread_ptr = std::make_shared<fc::thread>("task_proc");
+    //_task_handler_ptr = new TaskHandler();
 }
 void RpcClientMgr::start() {
-
-	connect_to_server(); 
-	
+    connect_to_server();
     _receive_msg_thread_ptr->async([&]() {
         this->read_loop();
     });
 }
 
 void RpcClientMgr::start_loop() {
-	uint64_t interval = 0;
-	interval = (fc::time_point::now() - _last_hello_message_received_time).to_seconds();
-
-	//if the interval bigger than TIME_INTERVAL, the lvm maybe error, then restart the lvm
-	if (interval > TIME_INTERVAL)
-	{
-		//TODO
-		//start lvm
-		_rpc_client_ptr->close();
-		try{ 
-			start(); 
-		}
-		catch (fc::exception& e)
-		{
-			//TODO
-		}
-	}
-
-	fc::schedule([this](){ start_loop(); },
-		fc::time_point::now() + fc::seconds(START_LOOP_TIME),
-		"start_loop");
-
+    uint64_t interval = 0;
+    interval = (fc::time_point::now() - _last_hello_message_received_time).to_seconds();
+    
+    //if the interval bigger than TIME_INTERVAL, the lvm maybe error, then restart the lvm
+    if (interval > TIME_INTERVAL) {
+        //start lvm
+        FC_ASSERT(_client_ptr);
+        thinkyoung::lvm::LvmMgrPtr lvm_mgr = _client_ptr->get_lvm_mgr();
+        FC_ASSERT(lvm_mgr);
+        lvm_mgr->run_lvm();
+        _rpc_client_ptr->close();
+        
+        try {
+            start();
+            
+        } catch (fc::exception& e) {
+            //TODO
+        }
+    }
+    
+    fc::schedule([this]() {
+        start_loop();
+    },
+    fc::time_point::now() + fc::seconds(START_LOOP_TIME),
+    "start_loop");
 }
 
 void RpcClientMgr::task_imp() {
@@ -91,16 +103,14 @@ void RpcClientMgr::task_imp() {
 }
 
 void RpcClientMgr::process_task(RpcClientMgr* msg_p) {
-
-	TaskImplResult* ptask = nullptr;
-
+    TaskImplResult* ptask = nullptr;
     _task_mutex.lock();
     std::vector<TaskImplResult*>::iterator iter = _tasks.begin();
     while (iter != _tasks.end()) {
-		ptask = (*iter);
-		(*iter)->process_result(msg_p);
-		iter = _tasks.erase(iter);
-		delete ptask;
+        ptask = (*iter);
+        (*iter)->process_result(msg_p);
+        iter = _tasks.erase(iter);
+        delete ptask;
     }
     _task_mutex.unlock();
 }
@@ -139,7 +149,7 @@ void RpcClientMgr::read_loop() {
             _rpc_client_ptr->read(buffer, BUFFER_SIZE);
             /*convert to MessageHeader*/
             memcpy((char*)&m, buffer, sizeof(MessageHeader));
-			FC_ASSERT(m.size <= MAX_MESSAGE_SIZE, "", ("m.size", m.size)("MAX_MESSAGE_SIZE", MAX_MESSAGE_SIZE));
+            FC_ASSERT(m.size <= MAX_MESSAGE_SIZE, "", ("m.size", m.size)("MAX_MESSAGE_SIZE", MAX_MESSAGE_SIZE));
             /*remaining len of byte to read from socket*/
             remaining_bytes_with_padding = 16 * ((m.size - LEFTOVER + 15) / 16);
             m.data.resize(LEFTOVER + remaining_bytes_with_padding);
@@ -157,32 +167,30 @@ void RpcClientMgr::read_loop() {
         
     } catch (const fc::eof_exception& e) {
         wlog("disconnected ${e}", ("e", e.to_detail_string()));
-		reconnect = true;
+        reconnect = true;
         
     } catch (const fc::exception& e) {
         elog("disconnected ${er}", ("er", e.to_detail_string()));
-		reconnect = true;
+        reconnect = true;
         
     } catch (const std::exception& e) {
         elog("disconnected ${er}", ("er", e.what()));
-		reconnect = true;
+        reconnect = true;
         
     } catch (...) {
         elog("unexpected exception");
-		reconnect = true;
+        reconnect = true;
     }
     
-	if (reconnect)
-	{
-		reconnect_to_server();
-	}
+    if (reconnect) {
+        reconnect_to_server();
+    }
 }
 
 void RpcClientMgr::send_message(TaskBase* rpc_msg) {
     uint32_t size_of_message_and_header = 0;
     uint32_t size_with_padding = 0;
-
-	Message m(generate_message(rpc_msg));
+    Message m(generate_message(rpc_msg));
     //padding rpc data
     size_of_message_and_header = sizeof(MessageHeader) + m.size;
     //pad the message we send to a multiple of 16 bytes
@@ -197,47 +205,47 @@ void RpcClientMgr::send_message(TaskBase* rpc_msg) {
         _rpc_client_ptr->flush();
         
     } catch (...) {
-		_rpc_client_ptr->close();
+        _rpc_client_ptr->close();
     }
 }
 
 void RpcClientMgr::connect_to_server() {
-	if (!_b_valid_flag)
-		return;
-	_rpc_client_ptr->connect_to(_end_point);
+    if (!_b_valid_flag)
+        return;
+        
+    _rpc_client_ptr->connect_to(_end_point);
 }
 
-void RpcClientMgr::set_last_receive_time(){
-	_last_hello_message_received_time = fc::time_point::now();
+void RpcClientMgr::set_last_receive_time() {
+    _last_hello_message_received_time = fc::time_point::now();
 }
-
 
 void RpcClientMgr::reconnect_to_server() {
-	int times = 0;
-	_rpc_client_ptr->close();
-
-	while (times < RECONNECT_TIMES) {
-		try {
-			start();
-			break;
-		}
-		catch (fc::exception& e) {
-			times++;
-		}
-	}
+    int times = 0;
+    _rpc_client_ptr->close();
+    
+    while (times < RECONNECT_TIMES) {
+        try {
+            start();
+            break;
+            
+        } catch (fc::exception& e) {
+            times++;
+        }
+    }
 }
 
 TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
     TaskImplResult* result_p = NULL;
     
     switch (msg.msg_type) {
-		case HELLO_MESSAGE_TYPE: {
-			HelloMsgResultRpc hello_msg(msg.as<HelloMsgResultRpc>());
-			result_p = new HelloMsgResult();
-			result_p->task_type = hello_msg.data.task_type;
-			break;
-		}
-
+        case HELLO_MESSAGE_TYPE: {
+            HelloMsgResultRpc hello_msg(msg.as<HelloMsgResultRpc>());
+            result_p = new HelloMsgResult();
+            result_p->task_type = hello_msg.data.task_type;
+            break;
+        }
+        
         case COMPILE_MESSAGE_TYPE: {
             CompileTaskResultRpc compile_task(msg.as<CompileTaskResultRpc>());
             result_p = new CompileTaskResult(&compile_task.data);
@@ -245,127 +253,100 @@ TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
         }
         
         case CALL_MESSAGE_TYPE: {
-			CallTaskResultRpc call_task(msg.as<CallTaskResultRpc>());
-			result_p = new CallTaskResult(&call_task.data);
+            CallTaskResultRpc call_task(msg.as<CallTaskResultRpc>());
+            result_p = new CallTaskResult(&call_task.data);
             break;
         }
         
         case REGTISTER_MESSAGE_TYPE: {
-			RegisterTaskResultRpc register_task(msg.as<RegisterTaskResultRpc>());
-			result_p = new RegisterTaskResult(&register_task.data);
+            RegisterTaskResultRpc register_task(msg.as<RegisterTaskResultRpc>());
+            result_p = new RegisterTaskResult(&register_task.data);
             break;
         }
         
         case UPGRADE_MESSAGE_TYPE: {
-			UpgradeTaskResultRpc upgrade_task(msg.as<UpgradeTaskResultRpc>());
-			result_p = new RegisterTaskResult(&upgrade_task.data);
+            UpgradeTaskResultRpc upgrade_task(msg.as<UpgradeTaskResultRpc>());
+            result_p = new RegisterTaskResult(&upgrade_task.data);
             break;
         }
         
         case TRANSFER_MESSAGE_TYPE: {
-			TransferTaskResultRpc transfer_task(msg.as<TransferTaskResultRpc>());
-			result_p = new TransferTaskResult(&transfer_task.data);
+            TransferTaskResultRpc transfer_task(msg.as<TransferTaskResultRpc>());
+            result_p = new TransferTaskResult(&transfer_task.data);
             break;
         }
         
         case DESTROY_MESSAGE_TYPE: {
-			DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
-			result_p = new DestroyTaskResult(&destroy_task.data);
+            DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
+            result_p = new DestroyTaskResult(&destroy_task.data);
             break;
         }
         
         default: {
-			//TODO
-			result_p = nullptr;
+            //TODO
+            result_p = nullptr;
         }
     }
     
     return result_p;
 }
 
-//get rpc_mgr
-RpcClientMgr* RpcClientMgr::get_rpc_mgr(){
-	if (!_s_rpc_mgr_ptr){
-		_s_rpc_mgr_ptr = new RpcClientMgr();
-	}
+Client* RpcClientMgr::get_client() {
+    return _client_ptr;
+};
 
-	return _s_rpc_mgr_ptr;
+void RpcClientMgr::execute_task(TaskBase* task_p) {
+    send_message(task_p);
 }
 
-void RpcClientMgr::execute_task(TaskBase* task_p){
-
-	send_message(task_p);
-}
-
-Message RpcClientMgr::generate_message(TaskBase* task_p){
-
-	FC_ASSERT(task_p != NULL);
-
-	switch (task_p->task_type)
-	{
-		case COMPILE_TASK:
-		{
-			CompileTaskRpc task_rpc(*(CompileTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		case REGISTER_TASK:
-		{
-			RegisterTaskRpc task_rpc(*(RegisterTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		case UPGRADE_TASK:
-		{
-			UpgradeTaskRpc task_rpc(*(UpgradeTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		case CALL_TASK:
-		{
-			CallTaskRpc task_rpc(*(CallTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		case TRANSFER_TASK:
-		{
-			TransferTaskRpc task_rpc(*(TransferTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		case DESTROY_TASK:
-		{
-			DestroyTaskRpc task_rpc(*(DestroyTask*)task_p);
-			task_rpc.data.task_from = FROM_RPC;
-
-			Message msg(task_rpc);
-
-			return msg;
-		}
-
-		default:
-		{
-			return Message();
-		}
-	}
+Message RpcClientMgr::generate_message(TaskBase* task_p) {
+    FC_ASSERT(task_p != NULL);
+    
+    switch (task_p->task_type) {
+        case COMPILE_TASK: {
+            CompileTaskRpc task_rpc(*(CompileTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case REGISTER_TASK: {
+            RegisterTaskRpc task_rpc(*(RegisterTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case UPGRADE_TASK: {
+            UpgradeTaskRpc task_rpc(*(UpgradeTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case CALL_TASK: {
+            CallTaskRpc task_rpc(*(CallTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case TRANSFER_TASK: {
+            TransferTaskRpc task_rpc(*(TransferTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case DESTROY_TASK: {
+            DestroyTaskRpc task_rpc(*(DestroyTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        default: {
+            return Message();
+        }
+    }
 }
