@@ -12,7 +12,6 @@ using thinkyoung::net::StcpSocket;
 
 const int BUFFER_SIZE = 16;
 
-
 //task
 const LuaRpcMessageTypeEnum CompileTaskRpc::type = LuaRpcMessageTypeEnum::COMPILE_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum CallTaskRpc::type = LuaRpcMessageTypeEnum::CALL_MESSAGE_TYPE;
@@ -31,6 +30,7 @@ const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum:
 
 //hello msg
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
+
 
 RpcClientMgr* RpcClientMgr::_s_rpc_mgr_ptr = nullptr;
 
@@ -320,7 +320,6 @@ void RpcClientMgr::insert_task(TaskImplResult* task) {
     _task_mutex.unlock();
     task_imp();
 }
-
 void RpcClientMgr::task_imp() {
     _task_proc_thread_ptr->schedule([this]() {
         process_task(this);
@@ -328,7 +327,6 @@ void RpcClientMgr::task_imp() {
     fc::time_point::now() + fc::seconds(DISPATCH_TASK_TIMESPAN),
     "process the task");
 }
-
 //process result received from lvm
 void RpcClientMgr::process_task(RpcClientMgr* msg_p) {
     TaskImplResult* ptask = nullptr;
@@ -347,7 +345,6 @@ void RpcClientMgr::process_task(RpcClientMgr* msg_p) {
 Client* RpcClientMgr::get_client() {
     return _client_ptr;
 };
-
 Message RpcClientMgr::generate_message(TaskBase* task_p) {
     FC_ASSERT(task_p != NULL);
     
@@ -399,7 +396,6 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
         }
     }
 }
-
 TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
     TaskImplResult* result_p = NULL;
     

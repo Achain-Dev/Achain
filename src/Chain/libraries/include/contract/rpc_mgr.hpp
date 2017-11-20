@@ -51,6 +51,7 @@ class RpcClientMgr {
     void send_to_lvm(Message& m, StcpSocketPtr& sock_ptr);
     void read_from_lvm(StcpSocketPtr& sock, Message& m);
     TaskImplResult* parse_to_result(Message& msg);
+    
     void close_rpc_client();
     void insert_connection(StcpSocketPtr&);
     void connect_to_server(SocketMode emode);
@@ -63,6 +64,7 @@ class RpcClientMgr {
     std::shared_ptr<fc::thread> _async_thread_ptr;
     std::shared_ptr<fc::thread> _sync_thread_ptr;
     std::shared_ptr<fc::thread> _task_proc_thread_ptr;
+    
     std::vector<TaskImplResult*>          _tasks;
     Client* _client_ptr;
     std::mutex              _task_mutex;
