@@ -240,6 +240,7 @@
     <ClCompile Include="libraries\cli\PrintResult.cpp" />
     <ClCompile Include="libraries\contract\rpc_mgr.cpp" />
     <ClCompile Include="libraries\contract\task.cpp" />
+    <ClCompile Include="libraries\contract\task_dispatcher.cpp" />
     <ClCompile Include="libraries\db\UpgradeLeveldb.cpp" />
     <ClCompile Include="libraries\glua\glua_api_types.cpp" />
     <ClCompile Include="libraries\glua\glua_astparser.cpp" />
@@ -396,6 +397,7 @@
     <ClInclude Include="libraries\include\contract\rpc_message.hpp" />
     <ClInclude Include="libraries\include\contract\rpc_mgr.hpp" />
     <ClInclude Include="libraries\include\contract\task.hpp" />
+    <ClInclude Include="libraries\include\contract\task_dispatcher.hpp" />
     <ClInclude Include="libraries\include\db\CachedLevelMap.hpp" />
     <ClInclude Include="libraries\include\db\Exception.hpp" />
     <ClInclude Include="libraries\include\db\FastLevelMap.hpp" />

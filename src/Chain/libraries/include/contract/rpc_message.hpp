@@ -8,27 +8,35 @@
 #include <fc/reflect/variant.hpp>
 #include <contract/task.hpp>
 
+
 enum LuaRpcMessageTypeEnum {
     COMPILE_MESSAGE_TYPE = 0,
+    COMPILE_RESULT_MESSAGE_TYPE,
     CALL_MESSAGE_TYPE,
+    CALL_RESULT_MESSAGE_TYPE,
     REGTISTER_MESSAGE_TYPE,
+    REGTISTER_RESULT_MESSAGE_TYPE,
     UPGRADE_MESSAGE_TYPE,
+    UPGRADE_RESULT_MESSAGE_TYPE,
     TRANSFER_MESSAGE_TYPE,
+    TRANSFER_RESULT_MESSAGE_TYPE,
     DESTROY_MESSAGE_TYPE,
+    DESTROY_RESULT_MESSAGE_TYPE,
     LUA_REQUEST_MESSAGE_TYPE,
-	HELLO_MESSAGE_TYPE,
+    LUA_REQUEST_RESULT_MESSAGE_TYPE,
+    HELLO_MESSAGE_TYPE,
     MESSAGE_COUNT
 };
 
 //HELLO MSG
 //hello msg, achain receive hello-msg from lvm only, not send hello-msg
-struct HelloMsgResultRpc{
-	static const LuaRpcMessageTypeEnum type;
-	HelloMsgResult data;
-	HelloMsgResultRpc() {}
-	HelloMsgResultRpc(HelloMsgResult& para) :
-		data(std::move(para))
-	{}
+struct HelloMsgResultRpc {
+    static const LuaRpcMessageTypeEnum type;
+    HelloMsgResult data;
+    HelloMsgResultRpc() {}
+    HelloMsgResultRpc(HelloMsgResult& para) :
+        data(std::move(para))
+    {}
 };
 
 //task:
@@ -88,6 +96,16 @@ struct DestroyTaskRpc {
     
     DestroyTaskRpc() {}
     DestroyTaskRpc(DestroyTask& para) :
+        data(std::move(para))
+    {}
+};
+
+struct LuaRequestTaskRpc {
+    static const LuaRpcMessageTypeEnum type;
+    LuaRequestTask data;
+    
+    LuaRequestTaskRpc() {}
+    LuaRequestTaskRpc(LuaRequestTask& para) :
         data(std::move(para))
     {}
 };
@@ -153,9 +171,31 @@ struct DestroyTaskResultRpc {
     {}
 };
 
+struct LuaRequestTaskResultRpc {
+    static const LuaRpcMessageTypeEnum type;
+    LuaRequestTaskResult data;
+    
+    LuaRequestTaskResultRpc() {}
+    LuaRequestTaskResultRpc(LuaRequestTaskResult& para) :
+        data(std::move(para))
+    {}
+};
 
-FC_REFLECT_ENUM(LuaRpcMessageTypeEnum, (COMPILE_MESSAGE_TYPE)(CALL_MESSAGE_TYPE)(REGTISTER_MESSAGE_TYPE)
-	(UPGRADE_MESSAGE_TYPE)(TRANSFER_MESSAGE_TYPE)(DESTROY_MESSAGE_TYPE)(HELLO_MESSAGE_TYPE))
+FC_REFLECT_ENUM(LuaRpcMessageTypeEnum, (COMPILE_MESSAGE_TYPE)
+                (COMPILE_RESULT_MESSAGE_TYPE)
+                (CALL_MESSAGE_TYPE)
+                (CALL_RESULT_MESSAGE_TYPE)
+                (REGTISTER_MESSAGE_TYPE)
+                (REGTISTER_RESULT_MESSAGE_TYPE)
+                (UPGRADE_MESSAGE_TYPE)
+                (UPGRADE_RESULT_MESSAGE_TYPE)
+                (TRANSFER_MESSAGE_TYPE)
+                (TRANSFER_RESULT_MESSAGE_TYPE)
+                (DESTROY_MESSAGE_TYPE)
+                (DESTROY_RESULT_MESSAGE_TYPE)
+                (LUA_REQUEST_MESSAGE_TYPE)
+                (LUA_REQUEST_RESULT_MESSAGE_TYPE)
+                (HELLO_MESSAGE_TYPE))
 
 //task
 FC_REFLECT(CompileTaskRpc, (data))
@@ -164,6 +204,7 @@ FC_REFLECT(RegisterTaskRpc, (data))
 FC_REFLECT(TransferTaskRpc, (data))
 FC_REFLECT(UpgradeTaskRpc, (data))
 FC_REFLECT(DestroyTaskRpc, (data))
+FC_REFLECT(LuaRequestTaskRpc, (data))
 
 //result
 FC_REFLECT(CompileTaskResultRpc, (data))
@@ -172,6 +213,7 @@ FC_REFLECT(CallTaskResultRpc, (data))
 FC_REFLECT(TransferTaskResultRpc, (data))
 FC_REFLECT(UpgradeTaskResultRpc, (data))
 FC_REFLECT(DestroyTaskResultRpc, (data))
+FC_REFLECT(LuaRequestTaskResultRpc, (data))
 
 //hello msg
 FC_REFLECT(HelloMsgResultRpc, (data))
