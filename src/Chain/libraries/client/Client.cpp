@@ -2053,7 +2053,7 @@ namespace thinkyoung {
         }
         
         void Client::send_rpc_msg(TaskBase* task) {
-            my->rpcMgr->send_message(task);
+            my->rpcMgr->post_message(task);
         }
         
         bool Client::lvm_enabled() {

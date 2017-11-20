@@ -192,5 +192,10 @@ namespace thinkyoung {
 
 		FC_DECLARE_EXCEPTION(chaindatabasee_error, 42000, "chaindatabasee error");
 		FC_DECLARE_DERIVED_EXCEPTION(store_and_index_a_seen_block, thinkyoung::blockchain::chaindatabasee_error,42001,"store_and_index_a_seen_block");
+
+        FC_DECLARE_EXCEPTION(socket_send_error, 50000, "Socket Send Error");
+        FC_DECLARE_EXCEPTION(socket_read_error, 51000, "Socket Read Error");
+        FC_DECLARE_EXCEPTION(sync_socket_error, 52000, "Sync Socket Error");
+        FC_DECLARE_EXCEPTION(async_socket_error, 53000, "Async Socket Error");
     }
 } // thinkyoung::blockchain

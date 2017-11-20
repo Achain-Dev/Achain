@@ -23,6 +23,12 @@ class RpcClientMgr;
 #define START_LOOP_TIME 10
 #define TIME_INTERVAL 15
 
+enum SocketMode {
+    ASYNC_MODE = 0,
+    SYNC_MODE,
+    MODE_COUNT
+};
+
 enum LUA_TASK_TYPE {
     COMPILE_TASK = 0,
     REGISTER_TASK,
