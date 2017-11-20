@@ -8,7 +8,6 @@ CompileTaskResult::CompileTaskResult(TaskBase* task) {
 	}
 
 	CompileTaskResult* compileTask_p = (CompileTaskResult*)task;
-	//memcpy(this, task, sizeof(TaskBase));
 	this->task_from = task->task_from;
 	this->task_id = task->task_id;
 	this->task_type = task->task_type;
