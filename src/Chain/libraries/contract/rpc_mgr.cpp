@@ -64,6 +64,11 @@ void RpcClientMgr::delete_rpc_mgr() {
     }
 }
 
+Client* RpcClientMgr::get_client()
+{
+    return _client_ptr;
+}
+
 void RpcClientMgr::init() {
     _socket_thread_ptr = std::make_shared<fc::thread>("socket client");
 }
