@@ -32,7 +32,7 @@ class RpcClientMgr {
     void start_loop();
     void set_endpoint(std::string& ip_addr, int port);
     void set_last_receive_time();
-    void post_message(TaskBase*, fc::promise<void*>::ptr&);
+    void post_message(TaskBase*, fc::promise<void*>::ptr);
 
     struct ProcTaskRequest
     {
