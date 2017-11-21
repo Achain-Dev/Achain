@@ -10,9 +10,9 @@
 #include <blockchain/TransactionOperations.hpp>
 #include <contract/task.hpp>
 #include <contract/task_dispatcher.hpp>
+#include <contract/rpc_mgr.hpp>
 
 #define  CLOSE_REGISTER_CONTRACT 0
-#define  ENABLELVM 0
 namespace thinkyoung {
     namespace blockchain {
         bool is_contract_has_method(const string& method_name, const std::set<std::string>& abi_set) {
@@ -236,7 +236,7 @@ namespace thinkyoung {
                                 }
                             }
                             
-                            if (ENABLELVM) {
+                            if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
                                 //TODO
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
@@ -471,7 +471,7 @@ namespace thinkyoung {
                                 }
                             }
                             
-                            if (ENABLELVM) {
+                            if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
                                 //TODO
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
@@ -699,7 +699,7 @@ namespace thinkyoung {
                     lua::api::global_glua_chain_api->clear_exceptions(scope.L());
                     int limit = eval_state._current_state->get_limit(0, initcost.amount);
                     
-                    if (ENABLELVM) {
+                    if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
                         //register task info
                         _registertask.num_limit = limit;
                         _registertask.statevalue = reinterpret_cast<intptr_t>(&statevalue);
@@ -874,7 +874,7 @@ namespace thinkyoung {
                         }
                         
                         //add to replace the previous code
-                        if (ENABLELVM) {
+                        if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
                             //TODO
                             // this part neeed to tune while debuging
                             // some code need to be added/del
@@ -1109,7 +1109,7 @@ namespace thinkyoung {
                             scope.execute_contract_api_by_address(contract_id.AddressToString(AddressType::contract_address).c_str(), CON_ON_DEPOSIT_INTERFACE, transfer_str.c_str(), nullptr);//to do:Óëlua²¿·ÖÊÊÅä
                             eval_state._current_state->store_balance_entry(balance_entry);
                             
-                            if (ENABLELVM) {
+                            if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
                                 //TODO
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
