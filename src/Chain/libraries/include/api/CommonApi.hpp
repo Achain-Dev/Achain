@@ -166,6 +166,14 @@ namespace thinkyoung {
              */
             virtual thinkyoung::wallet::PrettyContractTransaction blockchain_get_pretty_contract_transaction(const std::string& transaction_id_prefix, bool exact = fc::json::from_string("false").as<bool>()) const = 0;
             /**
+             * Get pretty information about an call-contract result.
+             *
+             * @param result_id the call-contract ID (string, required)
+             *
+             * @return contract_trx_info
+             */
+            virtual thinkyoung::blockchain::ContractTrxInfo blockchain_get_contract_result(const std::string& result_id) const = 0;
+            /**
              * Retrieves the block entry for the given block number or ID.
              *
              * @param block block number or ID to retrieve (string, required)
