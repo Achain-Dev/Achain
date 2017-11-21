@@ -2,6 +2,7 @@
 #include <lvm/LvmMgr.hpp>
 #include <contract/rpc_mgr.hpp>
 #include <contract/rpc_message.hpp>
+#include <contract/task_dispatcher.hpp>
 #include <iostream>
 
 using thinkyoung::net::Message;
@@ -39,6 +40,7 @@ RpcClientMgr::RpcClientMgr(Client* client)
     :_b_valid_flag(false) {
     _client_ptr = client;
     _last_hello_message_received_time = fc::time_point::min();
+    _rpc_client_ptr = std::make_shared<StcpSocket>();
 }
 
 RpcClientMgr::~RpcClientMgr() {
@@ -69,14 +71,15 @@ void RpcClientMgr::init() {
 //srart socket
 void RpcClientMgr::start() {
     //start socket first
+    try
+    {
+        connect_to_server();
+    }
+    catch (...)
+    {
+        return;
+    }
     _socket_thread_ptr->async([&]() {
-        try {
-            connect_to_server();
-            
-        } catch (...) {
-            return;
-        }
-        
         this->read_loop();
     });
 }
@@ -95,11 +98,12 @@ void RpcClientMgr::start_loop() {
         lvm_mgr->run_lvm();
         start();
     }
-    
+
     fc::schedule([this]() {
         start_loop();
     }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
     "start_loop");
+
 }
 
 void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
@@ -197,7 +201,15 @@ void RpcClientMgr::read_loop() {
             read_from_lvm(m);
             //receive response from lvm
             result_p = parse_msg(m);
-            set_value(result_p);
+            if (result_p->task_type == LUA_REQUEST_RESULT_TASK)
+            {
+                TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
+                delete (LuaRequestTask*)result_p;
+            }
+            else
+            {
+                set_value(result_p);
+            }
         }
         
     } catch (thinkyoung::blockchain::socket_read_error& e) {
@@ -235,7 +247,7 @@ void RpcClientMgr::set_value(TaskBase* task_result) {
 }
 
 //async send msg, throw thinkyoung::blockchain::async_socket_error when exception
-void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr& prom) {
+void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr prom) {
     Message m(generate_message(task_msg));
     
     try {
