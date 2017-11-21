@@ -226,7 +226,9 @@ struct LuaRequestTask : public TaskBase {
         task_from = FROM_LUA_TO_CHAIN;
     }
     
-    LUA_REQUEST_METHOD     method;
+    LuaRequestTask(TaskBase* task);
+    
+    int     method;
     std::vector<fc::variant> params;
 };
 
@@ -236,7 +238,9 @@ struct LuaRequestTaskResult : public TaskBase {
         task_type = FROM_RPC;
     }
     
-    LUA_REQUEST_METHOD     method;
+    LuaRequestTaskResult(TaskBase* task);
+    
+    int     method;
     std::vector<fc::variant> result;
 };
 
@@ -262,6 +266,28 @@ FC_REFLECT_ENUM(LUA_TASK_FROM,
                 (FROM_CLI)
                 (FROM_RPC)
                 (FROM_LUA_TO_CHAIN)
+               )
+
+FC_REFLECT_ENUM(LUA_REQUEST_METHOD,
+                (GET_STORED_CONTRACT_INFO_BY_ADDRESS)
+                (GET_CONTRACT_ADDRESS_BY_NAME)
+                (CHECK_CONTRACT_EXIST_BY_ADDRESS)
+                (CHECK_CONTRACT_EXIST)
+                (OPEN_CONTRACT)
+                (OPEN_CONTRACT_BY_ADDRESS)
+                (GET_STORAGE_VALUE_FROM_THINKYOUNG)
+                (GET_CONTRACT_BALANCE_AMOUNT)
+                (GET_TRANSACTION_FEE)
+                (GET_CHAIN_NOW)
+                (GET_CHAIN_RANDOM)
+                (GET_TRANSACTION_ID)
+                (GET_HEADER_BLOCK_NUM)
+                (WAIT_FOR_FUTURE_RANDOM)
+                (GET_WAITED)
+                (COMMIT_STORAGE_CHANGES_TO_THINKYOUNG)
+                (TRANSFER_FROM_CONTRACT_TO_ADDRESS)
+                (TRANSFER_FROM_CONTRACT_TO_PUBLIC_ACCOUNT)
+                (EMIT)
                )
 
 FC_REFLECT(TaskBase, (task_id)(task_type)(task_from))

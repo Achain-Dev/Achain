@@ -19,6 +19,7 @@ const LuaRpcMessageTypeEnum RegisterTaskRpc::type = LuaRpcMessageTypeEnum::REGTI
 const LuaRpcMessageTypeEnum UpgradeTaskRpc::type = LuaRpcMessageTypeEnum::UPGRADE_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum TransferTaskRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum DestroyTaskRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum LuaRequestTaskRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_MESSAGE_TYPE;
 
 //result
 const LuaRpcMessageTypeEnum CompileTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_MESSAGE_TYPE;
@@ -27,6 +28,7 @@ const LuaRpcMessageTypeEnum CallTaskResultRpc::type = LuaRpcMessageTypeEnum::CAL
 const LuaRpcMessageTypeEnum UpgradeTaskResultRpc::type = LuaRpcMessageTypeEnum::UPGRADE_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum DestroyTaskResultRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum LuaRequestTaskResultRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_RESULT_MESSAGE_TYPE;
 
 //hello msg
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
@@ -96,12 +98,12 @@ void RpcClientMgr::start_loop() {
         lvm_mgr->run_lvm();
         start();
     }
-#if 0
+
     fc::schedule([this]() {
         start_loop();
     }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
     "start_loop");
-#endif
+
 }
 
 void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
@@ -114,9 +116,8 @@ void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
 void RpcClientMgr::connect_to_server() {
     if (!_b_valid_flag)
         return;
-
+        
     _rpc_client_ptr->connect_to(_end_point);
-
 }
 
 void RpcClientMgr::reconnect_to_server() {
@@ -198,7 +199,6 @@ void RpcClientMgr::read_loop() {
         while (true) {
             //read msg from async socket
             read_from_lvm(m);
-            
             //receive response from lvm
             result_p = parse_msg(m);
             if (result_p->task_type == LUA_REQUEST_RESULT_TASK)
@@ -211,6 +211,7 @@ void RpcClientMgr::read_loop() {
                 set_value(result_p);
             }
         }
+        
     } catch (thinkyoung::blockchain::socket_read_error& e) {
         elog("socket read message error.");
         reconnect_to_server();
@@ -226,23 +227,21 @@ void RpcClientMgr::store_request(TaskBase* task, fc::promise<void*>::ptr& prom) 
     _task_mutex.unlock();
 }
 
-void RpcClientMgr::set_value(TaskBase* task_result)
-{
+void RpcClientMgr::set_value(TaskBase* task_result) {
     FC_ASSERT(task_result);
     _task_mutex.lock();
     std::vector<ProcTaskRequest>::iterator iter = _tasks.begin();
-    for (; iter != _tasks.end(); iter++)
-    {
-        if (iter->task->task_id == task_result->task_id)
-        {
+    
+    for (; iter != _tasks.end(); iter++) {
+        if (iter->task->task_id == task_result->task_id) {
             break;
         }
     }
-
-    if ((iter != _tasks.end()) && (!iter->task_promise->canceled()))
-    {
+    
+    if ((iter != _tasks.end()) && (!iter->task_promise->canceled())) {
         iter->task_promise->set_value((TaskImplResult*)task_result);
     }
+    
     _tasks.erase(iter);
     _task_mutex.unlock();
 }
@@ -250,16 +249,16 @@ void RpcClientMgr::set_value(TaskBase* task_result)
 //async send msg, throw thinkyoung::blockchain::async_socket_error when exception
 void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr prom) {
     Message m(generate_message(task_msg));
-
+    
     try {
         send_to_lvm(m);
-
+        
         //if msg from FROM_RPC, store the task and promise;when receive the result,promosi->set_value
         //if msg from FROM_LUA_TO_CHAIN, do not store,just send the msg to LVM
-        if (task_msg->task_from == FROM_RPC)
-        {
+        if (task_msg->task_from == FROM_RPC) {
             store_request(task_msg, prom);
         }
+        
     } catch (thinkyoung::blockchain::socket_send_error& e) {
         elog("async socket send message exception");
         reconnect_to_server();
@@ -322,13 +321,20 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
             return msg;
         }
         
+        case LUA_REQUEST_RESULT_TASK: {
+            LuaRequestTaskResultRpc task_rpc(*(LuaRequestTaskResult*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
         default: {
             return Message();
         }
     }
 }
 TaskBase* RpcClientMgr::parse_msg(Message& msg) {
-    TaskImplResult* result_p = NULL;
+    TaskBase* result_p = NULL;
     
     switch (msg.msg_type) {
         case HELLO_MESSAGE_TYPE: {
@@ -371,6 +377,12 @@ TaskBase* RpcClientMgr::parse_msg(Message& msg) {
         case DESTROY_MESSAGE_TYPE: {
             DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
             result_p = new DestroyTaskResult(&destroy_task.data);
+            break;
+        }
+        
+        case LUA_REQUEST_MESSAGE_TYPE: {
+            LuaRequestTaskRpc request_task(msg.as<LuaRequestTaskRpc>());
+            result_p = new LuaRequestTask(&request_task.data);
             break;
         }
         
