@@ -12,7 +12,7 @@
 #include <contract/task_dispatcher.hpp>
 
 #define  CLOSE_REGISTER_CONTRACT 0
-#define  ENABLELVM 1
+#define  ENABLELVM 0
 namespace thinkyoung {
     namespace blockchain {
         bool is_contract_has_method(const string& method_name, const std::set<std::string>& abi_set) {
