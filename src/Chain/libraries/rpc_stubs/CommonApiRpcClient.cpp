@@ -99,6 +99,11 @@ namespace thinkyoung {
             fc::variant result = get_json_connection()->async_call("blockchain_get_pretty_contract_transaction", std::vector<fc::variant>{fc::variant(transaction_id_prefix), fc::variant(exact)}).wait();
             return result.as<thinkyoung::wallet::PrettyContractTransaction>();
         }
+        thinkyoung::blockchain::ContractTrxInfo CommonApiRpcClient::blockchain_get_contract_result(const std::string& result_id) const
+        {
+            fc::variant result = get_json_connection()->async_call("blockchain_get_contract_result", std::vector<fc::variant>{fc::variant(result_id)}).wait();
+            return result.as<thinkyoung::blockchain::ContractTrxInfo>();
+        }
         fc::optional<thinkyoung::blockchain::BlockEntry> CommonApiRpcClient::blockchain_get_block(const std::string& block) const
         {
             fc::variant result = get_json_connection()->async_call("blockchain_get_block", std::vector<fc::variant>{fc::variant(block)}).wait();

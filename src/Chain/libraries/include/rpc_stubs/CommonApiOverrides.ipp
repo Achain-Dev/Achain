@@ -30,6 +30,7 @@
             std::pair<thinkyoung::blockchain::TransactionIdType, thinkyoung::blockchain::TransactionEntry> blockchain_get_transaction(const std::string& transaction_id_prefix, bool exact = fc::json::from_string("false").as<bool>()) const override;
             thinkyoung::wallet::PrettyTransaction blockchain_get_pretty_transaction(const std::string& transaction_id_prefix, bool exact = fc::json::from_string("false").as<bool>()) const override;
             thinkyoung::wallet::PrettyContractTransaction blockchain_get_pretty_contract_transaction(const std::string& transaction_id_prefix, bool exact = fc::json::from_string("false").as<bool>()) const override;
+            thinkyoung::blockchain::ContractTrxInfo blockchain_get_contract_result(const std::string& result_id) const override;
             fc::optional<thinkyoung::blockchain::BlockEntry> blockchain_get_block(const std::string& block) const override;
             std::map<thinkyoung::blockchain::TransactionIdType, thinkyoung::blockchain::TransactionEntry> blockchain_get_block_transactions(const std::string& block) const override;
             fc::optional<thinkyoung::blockchain::AccountEntry> blockchain_get_account(const std::string& account) const override;
