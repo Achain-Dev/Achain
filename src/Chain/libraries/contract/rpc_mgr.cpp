@@ -1,7 +1,6 @@
 #include <net/Config.hpp>
 #include <lvm/LvmMgr.hpp>
 #include <contract/rpc_mgr.hpp>
-//#include <net/StcpSocket.hpp>
 #include <contract/rpc_message.hpp>
 #include <iostream>
 
@@ -38,17 +37,12 @@ RpcClientMgr::RpcClientMgr(Client* client)
     :_b_valid_flag(false) {
     _client_ptr = client;
     _last_hello_message_received_time = fc::time_point::min();
-    
-    for (int iter = ASYNC_MODE; iter < MODE_COUNT; iter++) {
-        _rpc_connections.push_back(std::make_shared<StcpSocket>());
-    }
 }
 
 RpcClientMgr::~RpcClientMgr() {
     close_rpc_client();
-    _async_thread_ptr->quit();
-    _sync_thread_ptr->quit();
-    _task_proc_thread_ptr->quit();
+    _socket_thread_ptr->quit();
+    delete_rpc_mgr();
 }
 
 //get rpc_mgr
@@ -67,22 +61,22 @@ void RpcClientMgr::delete_rpc_mgr() {
 }
 
 void RpcClientMgr::init() {
-    _async_thread_ptr = std::make_shared<fc::thread>("async");
-    _sync_thread_ptr = std::make_shared<fc::thread>("sync");
-    _task_proc_thread_ptr = std::make_shared<fc::thread>("task_proc");
+    _socket_thread_ptr = std::make_shared<fc::thread>("socket client");
 }
 
 //srart socket
 void RpcClientMgr::start() {
-    //start async socket first
-    connect_to_server(ASYNC_MODE);
-    _async_thread_ptr->async([&]() {
-        this->read_loop(ASYNC_MODE);
-    });
-    //then start sync scoket,just connect to server
-    connect_to_server(SYNC_MODE);
-    _sync_thread_ptr->async([&]() {
-        this->read_loop(SYNC_MODE);
+    //start socket first
+    _socket_thread_ptr->async([&]() {
+        try
+        { 
+            connect_to_server(); 
+        } catch (...)
+        {
+            return;
+        }
+        
+        this->read_loop();
     });
 }
 
@@ -98,20 +92,13 @@ void RpcClientMgr::start_loop() {
         thinkyoung::lvm::LvmMgrPtr lvm_mgr = _client_ptr->get_lvm_mgr();
         FC_ASSERT(lvm_mgr);
         lvm_mgr->run_lvm();
-        
-        try {
-            start();
-            
-        } catch (fc::exception& e) {
-            //TODO
-        }
+        start();
     }
     
     fc::schedule([this]() {
         start_loop();
-    }, fc::time_point::now() + fc::seconds(99999999),
+    }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
     "start_loop");
-    //START_LOOP_TIME
 }
 
 void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
@@ -121,17 +108,12 @@ void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
     return;
 }
 
-void RpcClientMgr::connect_to_server(SocketMode emode) {
-    StcpSocketPtr tmp = NULL;
-    
+void RpcClientMgr::connect_to_server() {
     if (!_b_valid_flag)
         return;
-        
-    tmp = get_connection(emode);
-    
-    if (tmp) {
-        tmp->connect_to(_end_point);
-    }
+
+    _rpc_client_ptr->connect_to(_end_point);
+
 }
 
 void RpcClientMgr::reconnect_to_server() {
@@ -149,14 +131,14 @@ void RpcClientMgr::reconnect_to_server() {
 }
 
 //receive msg
-void RpcClientMgr::read_from_lvm(StcpSocketPtr& sock, Message& m) {
+void RpcClientMgr::read_from_lvm(Message& m) {
     uint64_t remaining_bytes_with_padding = 0;
     char buffer[BUFFER_SIZE];
     int leftover = BUFFER_SIZE - sizeof(MessageHeader);
     
     try {
         /*first: read msgHead, get data.size*/
-        sock->read(buffer, BUFFER_SIZE);
+        _rpc_client_ptr->read(buffer, BUFFER_SIZE);
         /*convert to MessageHeader*/
         memcpy((char*)&m, buffer, sizeof(MessageHeader));
         FC_ASSERT(m.size <= MAX_MESSAGE_SIZE, "", ("m.size", m.size)("MAX_MESSAGE_SIZE", MAX_MESSAGE_SIZE));
@@ -166,7 +148,7 @@ void RpcClientMgr::read_from_lvm(StcpSocketPtr& sock, Message& m) {
         std::copy(buffer + sizeof(MessageHeader), buffer + sizeof(buffer), m.data.begin());
         
         if (remaining_bytes_with_padding) {
-            sock->read(&m.data[leftover], remaining_bytes_with_padding);
+            _rpc_client_ptr->read(&m.data[leftover], remaining_bytes_with_padding);
         }
         
         m.data.resize(m.size);
@@ -180,7 +162,7 @@ void RpcClientMgr::read_from_lvm(StcpSocketPtr& sock, Message& m) {
 }
 
 //send msg to lvm
-void RpcClientMgr::send_to_lvm(Message& m, StcpSocketPtr& sock_ptr) {
+void RpcClientMgr::send_to_lvm(Message& m) {
     uint32_t size_of_message_and_header = 0;
     uint32_t size_with_padding = 0;
     size_of_message_and_header = sizeof(MessageHeader) + m.size;
@@ -192,8 +174,8 @@ void RpcClientMgr::send_to_lvm(Message& m, StcpSocketPtr& sock_ptr) {
     
     //send
     try {
-        sock_ptr->write(padded_message.get(), size_with_padding);
-        sock_ptr->flush();
+        _rpc_client_ptr->write(padded_message.get(), size_with_padding);
+        _rpc_client_ptr->flush();
         
     } catch (...) {
         elog("send message exception");
@@ -202,33 +184,21 @@ void RpcClientMgr::send_to_lvm(Message& m, StcpSocketPtr& sock_ptr) {
     }
 }
 
-//async socket receive msg loop
-void RpcClientMgr::read_loop(SocketMode emode) {
-    TaskImplResult* result_p = NULL;
-    StcpSocketPtr tmp = NULL;
-    const int BUFFER_SIZE = 16;
+//socket receive msg loop
+void RpcClientMgr::read_loop() {
+    TaskBase* result_p = NULL;
     static_assert(BUFFER_SIZE >= sizeof(MessageHeader), "insufficient buffer");
     
     try {
         Message m;
-        tmp = get_connection(emode);
         
         while (true) {
             //read msg from async socket
-            read_from_lvm(tmp, m);
+            read_from_lvm(m);
             
-            if (ASYNC_MODE == emode) {
-                //receive response from lvm,insert the result to _tasks
-                result_p = parse_to_result(m);
-                insert_task(result_p);
-            }
-            
-            //process sync msg
-            else {
-                //receive request from lvm, process request, then send result to lvm
-                //TODO:process msg,then send result to lvm
-                //send_to_lvm();
-            }
+            //receive response from lvm
+            result_p = parse_msg(m);
+            set_value(result_p);
         }
     } catch (thinkyoung::blockchain::socket_read_error& e) {
         elog("socket read message error.");
@@ -236,14 +206,49 @@ void RpcClientMgr::read_loop(SocketMode emode) {
     }
 }
 
+void RpcClientMgr::store_request(TaskBase* task, fc::promise<void*>::ptr& prom) {
+    ProcTaskRequest task_request;
+    _task_mutex.lock();
+    task_request.task = task;
+    task_request.task_promise = prom;
+    _tasks.push_back(task_request);
+    _task_mutex.unlock();
+}
+
+void RpcClientMgr::set_value(TaskBase* task_result)
+{
+    FC_ASSERT(task_result);
+    _task_mutex.lock();
+    std::vector<ProcTaskRequest>::iterator iter = _tasks.begin();
+    for (; iter != _tasks.end(); iter++)
+    {
+        if (iter->task->task_id == task_result->task_id)
+        {
+            break;
+        }
+    }
+
+    if ((iter != _tasks.end()) && (!iter->task_promise->canceled()))
+    {
+        iter->task_promise->set_value((TaskImplResult*)task_result);
+    }
+    _tasks.erase(iter);
+    _task_mutex.unlock();
+}
+
 //async send msg, throw thinkyoung::blockchain::async_socket_error when exception
-//this interface called by broadcast msg : evaluate contract, this process is async
-void RpcClientMgr::post_message(TaskBase* task_msg) {
+void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr& prom) {
     Message m(generate_message(task_msg));
-    
+
     try {
-        send_to_lvm(m, get_connection(ASYNC_MODE));
-        
+        send_to_lvm(m);
+
+        //if msg from FROM_RPC, store the task and promise;when receive the result,promosi->set_value
+        //if msg from FROM_LUA_TO_CHAIN, do not store,just send the msg to LVM
+        if (task_msg->task_from == FROM_RPC)
+        {
+            store_request(task_msg, prom);
+        }
     } catch (thinkyoung::blockchain::socket_send_error& e) {
         elog("async socket send message exception");
         reconnect_to_server();
@@ -252,101 +257,16 @@ void RpcClientMgr::post_message(TaskBase* task_msg) {
     }
 }
 
-//sync rpc send msg;throw thinkyoung::blockchain::sync_socket_error when exception
-//this interface called by CLI/RPC on demand,this process is sync
-void RpcClientMgr::send_message(TaskBase* rpc_msg) {
-    uint32_t size_of_message_and_header = 0;
-    uint32_t size_with_padding = 0;
-    StcpSocketPtr tmp = NULL;
-    Message m(generate_message(rpc_msg));
-    Message rec_m;
-    
-    //send response
-    try {
-        tmp = get_connection(SYNC_MODE);
-        FC_ASSERT(tmp);
-        send_to_lvm(m, tmp);
-        read_from_lvm(tmp, rec_m);
-        
-    } catch (thinkyoung::blockchain::socket_send_error& e) {
-        elog("sync socket send message exception");
-        reconnect_to_server();
-        FC_THROW_EXCEPTION(thinkyoung::blockchain::sync_socket_error, \
-                           "send msg error. ");
-                           
-    } catch (thinkyoung::blockchain::socket_read_error& e) {
-        elog("sync socket read message exception");
-        reconnect_to_server();
-        FC_THROW_EXCEPTION(thinkyoung::blockchain::sync_socket_error, \
-                           "reeive msg error. ");
-    }
-    
-    //TODO : result from lvm,then return it to CLI OR RPC
-    return;
-}
-
-StcpSocketPtr RpcClientMgr::get_connection(SocketMode emode) {
-    FC_ASSERT(emode < MODE_COUNT);
-    StcpSocketPtr tmp = NULL;
-    
-    try {
-        tmp = _rpc_connections.at(uint32_t(emode));
-        
-    } catch (std::exception& e) {
-        tmp = NULL;
-    }
-    
-    return tmp;
-}
-
 void RpcClientMgr::close_rpc_client() {
-    std::vector<StcpSocketPtr>::iterator iter = _rpc_connections.begin();
-    
-    for (; iter != _rpc_connections.end(); iter++) {
-        (*iter)->close();
-    }
+    _rpc_client_ptr->close();
 }
 
 void RpcClientMgr::set_last_receive_time() {
     _last_hello_message_received_time = fc::time_point::now();
 }
 
-/////process task
-void RpcClientMgr::insert_task(TaskImplResult* task) {
-    _task_mutex.lock();
-    _tasks.push_back(task);
-    std::vector<TaskImplResult*>::iterator iter = _tasks.begin();
-    CompileTaskResult* result = (CompileTaskResult*)(*iter);
-    _task_mutex.unlock();
-    task_imp();
-}
-void RpcClientMgr::task_imp() {
-    _task_proc_thread_ptr->schedule([this]() {
-        process_task(this);
-    },
-    fc::time_point::now() + fc::seconds(DISPATCH_TASK_TIMESPAN),
-    "process the task");
-}
-//process result received from lvm
-void RpcClientMgr::process_task(RpcClientMgr* msg_p) {
-    TaskImplResult* ptask = nullptr;
-    _task_mutex.lock();
-    std::vector<TaskImplResult*>::iterator iter = _tasks.begin();
-    
-    while (iter != _tasks.end()) {
-        ptask = (*iter);
-        (*iter)->process_result(msg_p);
-        iter = _tasks.erase(iter);
-        delete ptask;
-    }
-    
-    _task_mutex.unlock();
-}
-Client* RpcClientMgr::get_client() {
-    return _client_ptr;
-};
 Message RpcClientMgr::generate_message(TaskBase* task_p) {
-    FC_ASSERT(task_p != NULL);
+    FC_ASSERT(task_p);
     
     switch (task_p->task_type) {
         case COMPILE_TASK: {
@@ -396,7 +316,7 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
         }
     }
 }
-TaskImplResult* RpcClientMgr::parse_to_result(Message& msg) {
+TaskBase* RpcClientMgr::parse_msg(Message& msg) {
     TaskImplResult* result_p = NULL;
     
     switch (msg.msg_type) {
