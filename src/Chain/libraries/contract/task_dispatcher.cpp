@@ -94,12 +94,14 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
             break;
     }
     
-    p_rpc_mgr->send_message(task_base);
+    p_rpc_mgr->post_message(task_base, _on_lua_request_promise_ptr);
     _on_lua_request_promise_ptr->wait();
+
+    //delete task_base;
 }
 
 void TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
-    p_rpc_mgr->send_message(task);
+    p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
     _exec_lua_task_ptr->wait();
 }

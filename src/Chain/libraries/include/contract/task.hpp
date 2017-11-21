@@ -20,14 +20,8 @@ class RpcClientMgr;
 
 #define DISPATCH_TASK_TIMESPAN 1
 #define RECONNECT_TIMES 5
-#define START_LOOP_TIME 10
-#define TIME_INTERVAL 15
-
-enum SocketMode {
-    ASYNC_MODE = 0,
-    SYNC_MODE,
-    MODE_COUNT
-};
+#define START_LOOP_TIME 30
+#define TIME_INTERVAL 50
 
 enum LUA_TASK_TYPE {
     COMPILE_TASK = 0,
