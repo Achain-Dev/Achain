@@ -9,9 +9,10 @@
 #include <sstream>
 #include <blockchain/TransactionOperations.hpp>
 #include <contract/task.hpp>
+#include <contract/task_dispatcher.hpp>
 
 #define  CLOSE_REGISTER_CONTRACT 0
-#define  ENABLELVM 0
+#define  ENABLELVM 1
 namespace thinkyoung {
     namespace blockchain {
         bool is_contract_has_method(const string& method_name, const std::set<std::string>& abi_set) {
@@ -262,6 +263,7 @@ namespace thinkyoung {
                                 
                                 Code& _code = entry1->code;
                                 _upgradetask.contract_code = _code;
+                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);                            //call interface to send msg to LVM
                             }
                             
                             ShareType exec_cost = eval_state._current_state->get_amount(scope.get_instructions_executed_count()).amount;
@@ -496,6 +498,7 @@ namespace thinkyoung {
                                 
                                 Code& _code = entry1->code;
                                 _destroytask.contract_code = _code;
+                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);                            //call interface to send msg to LVM
                             }
                             
                             ShareType exec_cost = eval_state._current_state->get_amount(scope.get_instructions_executed_count()).amount;
@@ -664,6 +667,7 @@ namespace thinkyoung {
                     FC_CAPTURE_AND_THROW(insufficient_funds, ("no enough balance"));
             }
             
+            RegisterTask _registertask;
             ContractEntry entry;
             entry.owner = owner;
             entry.code = contract_code;
@@ -694,6 +698,25 @@ namespace thinkyoung {
                     lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(this->owner))).c_str());
                     lua::api::global_glua_chain_api->clear_exceptions(scope.L());
                     int limit = eval_state._current_state->get_limit(0, initcost.amount);
+                    
+                    if (ENABLELVM) {
+                        //register task info
+                        _registertask.num_limit = limit;
+                        _registertask.statevalue = reinterpret_cast<intptr_t>(&statevalue);
+                        _registertask.str_caller = (string)(this->owner);
+                        _registertask.str_caller_address = (string)(Address(this->owner));
+                        _registertask.contract_code = this->contract_code;
+                        _registertask.str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
+                        _registertask.gpc_code = "";                        //need compile contract file path
+                        thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
+                        oContractEntry entry = cur_state->get_contract_entry(_registertask.str_contract_address);
+                        
+                        if (entry.valid()) {
+                            _registertask.str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
+                        }
+                        
+                        TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_registertask);                            //call interface to send msg to LVM
+                    }
                     
                     if (limit <= 0)
                         FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
@@ -880,6 +903,7 @@ namespace thinkyoung {
                             
                             Code& _code = entry1->code;
                             _calltask.contract_code = _code;
+                            TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);                       //call interface to send msg to LVM
                         }
                         
                         scope.set_instructions_limit(limit);
@@ -1113,6 +1137,7 @@ namespace thinkyoung {
                                 
                                 Code& _code = entry1->code;
                                 _transfertask.contract_code = _code;
+                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask);                            //call interface to send msg to LVM
                             }
                             
                             if (scope.L()->force_stopping == true && scope.L()->exit_code == LUA_API_INTERNAL_ERROR)
