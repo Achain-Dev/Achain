@@ -33,9 +33,11 @@ class RpcClientMgr {
     void set_endpoint(std::string& ip_addr, int port);
     void set_last_receive_time();
     void post_message(TaskBase*, fc::promise<void*>::ptr&);
-
-    struct ProcTaskRequest
-    {
+    Client* get_client() {
+        return _client_ptr;
+    };
+    
+    struct ProcTaskRequest {
         TaskBase* task;
         fc::promise<void*>::ptr task_promise;
     };
