@@ -18,6 +18,7 @@ const LuaRpcMessageTypeEnum RegisterTaskRpc::type = LuaRpcMessageTypeEnum::REGTI
 const LuaRpcMessageTypeEnum UpgradeTaskRpc::type = LuaRpcMessageTypeEnum::UPGRADE_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum TransferTaskRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum DestroyTaskRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum LuaRequestTaskRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_MESSAGE_TYPE;
 
 //result
 const LuaRpcMessageTypeEnum CompileTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_MESSAGE_TYPE;
@@ -26,6 +27,7 @@ const LuaRpcMessageTypeEnum CallTaskResultRpc::type = LuaRpcMessageTypeEnum::CAL
 const LuaRpcMessageTypeEnum UpgradeTaskResultRpc::type = LuaRpcMessageTypeEnum::UPGRADE_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum DestroyTaskResultRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum LuaRequestTaskResultRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_RESULT_MESSAGE_TYPE;
 
 //hello msg
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
@@ -311,6 +313,13 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
             return msg;
         }
         
+        case LUA_REQUEST_RESULT_TASK: {
+            LuaRequestTaskResultRpc task_rpc(*(LuaRequestTaskResult*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
         default: {
             return Message();
         }
@@ -360,6 +369,12 @@ TaskBase* RpcClientMgr::parse_msg(Message& msg) {
         case DESTROY_MESSAGE_TYPE: {
             DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
             result_p = new DestroyTaskResult(&destroy_task.data);
+            break;
+        }
+        
+        case LUA_REQUEST_MESSAGE_TYPE: {
+            LuaRequestTaskRpc request_task(msg.as<LuaRequestTaskRpc>());
+            result_p = new LuaRequestTask(&request_task.data);
             break;
         }
         
