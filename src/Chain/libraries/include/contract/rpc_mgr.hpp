@@ -27,6 +27,7 @@ class RpcClientMgr {
   public:
     static RpcClientMgr* get_rpc_mgr(Client* client = nullptr);
     static void   delete_rpc_mgr();
+    Client* get_client();
     
     void init();
     void start_loop();
