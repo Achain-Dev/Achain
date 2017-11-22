@@ -73,6 +73,7 @@ enum LUA_REQUEST_METHOD {
 };
 
 struct TaskBase {
+    TaskBase();
     uint32_t task_id;     //a random value,CLI or achain launch a request with a task_id
     LUA_TASK_TYPE task_type;   //LUA_TASK_TYPE
     LUA_TASK_FROM task_from;    //LUA_TASK_FORM_CLI/LUA_TASK_FORM_RPC
