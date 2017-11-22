@@ -26,16 +26,22 @@ class RpcClientMgr;
 enum LUA_TASK_TYPE {
     COMPILE_TASK = 0,
     COMPILE_TASK_RESULT,
+    COMPILE_SCRIPT,
+    COMPILE_SCRIPT_RESULT,
     REGISTER_TASK,
     REGISTER_TASK_RESULT,
     UPGRADE_TASK,
     UPGRADE_TASK_RESULT,
     CALL_TASK,
     CALL_TASK_RESULT,
+    CALL_TASK_OFFLINE,
+    CALL_TASK_OFFLINE_RESULT,
     TRANSFER_TASK,
     TRANSFER_TASK_RESULT,
     DESTROY_TASK,
     DESTROY_TASK_RESULT,
+    HANDLE_EVENTS,
+    HANDLE_EVENTS_RESULT,
     LUA_REQUEST_TASK,
     LUA_REQUEST_RESULT_TASK,
     HELLO_MSG,
@@ -141,6 +147,26 @@ struct DestroyTaskResult : public TaskImplResult {
     //TODO
 };
 
+struct CompileScriptResult : TaskImplResult {
+    CompileScriptResult() {}
+    CompileScriptResult(TaskBase* task);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
+};
+
+struct HandleEventsResult : TaskImplResult {
+    HandleEventsResult() {}
+    HandleEventsResult(TaskBase* task);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
+};
+
+struct CallContractOfflineResult : TaskImplResult {
+    CallContractOfflineResult() {}
+    CallContractOfflineResult(TaskBase* task);
+    
+    void  process_result(RpcClientMgr* msg_p = nullptr);
+};
 
 //task
 struct CompileTask : public TaskBase {
@@ -220,6 +246,44 @@ struct DestroyTask : public TaskBase {
     Code                   contract_code;
 };
 
+struct CompileScripTask : public TaskBase {
+    CompileScripTask() {
+        task_type = COMPILE_SCRIPT;
+    };
+    
+    bool use_contract;
+    std::string path_file_name;
+    bool use_type_check;
+};
+
+struct HandleEvents : public TaskBase {
+    HandleEvents() {
+        task_type = HANDLE_EVENTS;
+    }
+    
+    std::string contract_id;
+    std::string event_type;
+    std::string event_param;
+    bool is_truncated;
+};
+
+struct CallContractOffline : public TaskBase {
+    CallContractOffline() {
+        task_type = CALL_TASK_OFFLINE;
+    }
+    
+    intptr_t                statevalue;
+    int                     num_limit;
+    std::string             str_caller;
+    std::string             str_caller_address;
+    std::string             str_contract_address;
+    std::string             str_contract_id;
+    std::string             str_method;
+    std::string             str_args;
+    Code                    contract_code;
+};
+
+//special task
 struct LuaRequestTask : public TaskBase {
     LuaRequestTask() {
         task_type = LUA_REQUEST_TASK;
@@ -313,9 +377,16 @@ FC_REFLECT_DERIVED(DestroyTask, (TaskBase), (statevalue)(num_limit)
                    (str_caller)(str_caller_address)(str_contract_address)
                    (str_contract_id)(contract_code))
 
+FC_REFLECT_DERIVED(CompileScripTask, (TaskBase), (path_file_name)(use_contract)
+                   (use_type_check))
+FC_REFLECT_DERIVED(HandleEvents, (TaskBase), (contract_id)(event_type)
+                   (event_param)(is_truncated))
+FC_REFLECT_DERIVED(CallContractOffline, (TaskBase), (statevalue)(num_limit)
+                   (str_caller)(str_caller_address)(str_contract_address)
+                   (str_contract_id)(str_method)(str_args)(contract_code))
+
 FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params))
 FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(result))
-
 FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(error_msg))
 FC_REFLECT_DERIVED(CompileTaskResult, (TaskImplResult), (gpc_path_file))
 FC_REFLECT_DERIVED(RegisterTaskResult, (TaskImplResult))
@@ -323,5 +394,8 @@ FC_REFLECT_DERIVED(CallTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(TransferTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(UpgradeTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(DestroyTaskResult, (TaskImplResult))
+FC_REFLECT_DERIVED(CompileScriptResult, (TaskImplResult))
+FC_REFLECT_DERIVED(HandleEventsResult, (TaskImplResult))
+FC_REFLECT_DERIVED(CallContractOfflineResult, (TaskImplResult))
 
 #endif

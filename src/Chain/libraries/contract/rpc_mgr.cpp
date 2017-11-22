@@ -64,8 +64,7 @@ void RpcClientMgr::delete_rpc_mgr() {
     }
 }
 
-Client* RpcClientMgr::get_client()
-{
+Client* RpcClientMgr::get_client() {
     return _client_ptr;
 }
 
@@ -76,14 +75,13 @@ void RpcClientMgr::init() {
 //srart socket
 void RpcClientMgr::start() {
     //start socket first
-    try
-    {
+    try {
         connect_to_server();
-    }
-    catch (...)
-    {
+        
+    } catch (...) {
         return;
     }
+    
     _socket_thread_ptr->async([&]() {
         this->read_loop();
     });
@@ -103,12 +101,11 @@ void RpcClientMgr::start_loop() {
         lvm_mgr->run_lvm();
         start();
     }
-
+    
     fc::schedule([this]() {
         start_loop();
     }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
     "start_loop");
-
 }
 
 void RpcClientMgr::set_endpoint(std::string& ip_addr, int port) {
@@ -206,13 +203,12 @@ void RpcClientMgr::read_loop() {
             read_from_lvm(m);
             //receive response from lvm
             result_p = parse_msg(m);
-            if (result_p->task_type == LUA_REQUEST_RESULT_TASK)
-            {
+            
+            if (result_p->task_type == LUA_REQUEST_RESULT_TASK) {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
                 delete (LuaRequestTask*)result_p;
-            }
-            else
-            {
+                
+            } else {
                 set_value(result_p);
             }
         }

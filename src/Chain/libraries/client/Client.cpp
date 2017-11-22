@@ -83,6 +83,7 @@ std::cin >> a;
 #include <blockchain/api_extern.hpp>
 #include <glua/thinkyoung_lua_api.h>
 #include <contract/rpc_mgr.hpp>
+#include <contract/task_dispatcher.hpp>
 
 using namespace boost;
 using std::string;
@@ -1294,16 +1295,27 @@ namespace thinkyoung {
                         FC_THROW_EXCEPTION(thinkyoung::blockchain::invalid_script_source_filename, "script source file name should end with .lua or .glua");
                     }
                     
-                    auto p_lua_module = std::make_shared<GluaModuleByteStream>();
-                    FC_ASSERT(p_lua_module, "Alloc memory for GluaModuleByteStream failed!");
-                    lua::lib::GluaStateScope sco(false);
+                    bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client();
                     
-                    if (NOT lua::lib::compilefile_to_stream(sco.L(), filename.generic_string().c_str(), p_lua_module.get(), err_msg, USE_TYPE_CHECK)) {
-                        FC_THROW_EXCEPTION(compile_script_fail, err_msg);
-                    }
-                    
-                    if (save_code_to_file(out_filename, p_lua_module.get(), err_msg) < 0) {
-                        FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_scriptfile_fail, err_msg);
+                    if (enable_lvm) {
+                        std::shared_ptr<CompileScripTask> task = std::make_shared<CompileScripTask>();
+                        task->path_file_name = filename.generic_string();
+                        task->use_contract = false;
+                        task->use_type_check = USE_TYPE_CHECK;
+                        TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
+                        
+                    } else {
+                        auto p_lua_module = std::make_shared<GluaModuleByteStream>();
+                        FC_ASSERT(p_lua_module, "Alloc memory for GluaModuleByteStream failed!");
+                        lua::lib::GluaStateScope sco(false);
+                        
+                        if (NOT lua::lib::compilefile_to_stream(sco.L(), filename.generic_string().c_str(), p_lua_module.get(), err_msg, USE_TYPE_CHECK)) {
+                            FC_THROW_EXCEPTION(compile_script_fail, err_msg);
+                        }
+                        
+                        if (save_code_to_file(out_filename, p_lua_module.get(), err_msg) < 0) {
+                            FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_scriptfile_fail, err_msg);
+                        }
                     }
                     
                     return fc::path(out_filename);

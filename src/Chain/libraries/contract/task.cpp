@@ -56,6 +56,24 @@ DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
     //TODO
 }
 
+CompileScriptResult::CompileScriptResult(TaskBase* task) {
+    if (!task) {
+        return;
+    }
+}
+
+HandleEventsResult::HandleEventsResult(TaskBase* task) {
+    if (!task) {
+        return;
+    }
+}
+
+CallContractOfflineResult::CallContractOfflineResult(TaskBase* task) {
+    if (!task) {
+        return;
+    }
+}
+
 LuaRequestTask::LuaRequestTask(TaskBase* task) {
     if (!task) {
         return;
@@ -109,4 +127,13 @@ void UpgradeTaskResult::process_result(RpcClientMgr* msg_p) {
 void DestroyTaskResult::process_result(RpcClientMgr* msg_p) {
     //TODO
     return;
+}
+
+void CompileScriptResult::process_result(RpcClientMgr* msg_p) {
+}
+
+void HandleEventsResult::process_result(RpcClientMgr* msp_p) {
+}
+
+void CallContractOfflineResult::process_result(RpcClientMgr* msg_p) {
 }

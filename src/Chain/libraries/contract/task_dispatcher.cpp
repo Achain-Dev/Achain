@@ -34,7 +34,6 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     FC_ASSERT(task);
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     TaskBase* task_base = nullptr;
-
     LuaRequestTask* plua_result = (LuaRequestTask*)task;
     
     switch (plua_result->method) {
@@ -95,16 +94,12 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
         case EMIT:
             break;
     }
-
-    //task_base->task_type = LUA_REQUEST_RESULT_TASK;
-    //task_base->task_from = FROM_LUA_TO_CHAIN;
-
+    
     p_rpc_mgr->post_message(task_base, nullptr);
-
     delete task_base;
 }
 
-TaskBase* TaskDispatcher::exec_lua_task(TaskBase* task) {
+TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
     return (TaskImplResult*)(void *)_exec_lua_task_ptr->wait();
