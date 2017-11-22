@@ -2,6 +2,12 @@
 #include <contract/rpc_mgr.hpp>
 #include <iostream>
 
+
+TaskBase::TaskBase(){
+    fc::time_point sec_now = fc::time_point::now();
+    task_id = sec_now.sec_since_epoch();
+}
+
 CompileTaskResult::CompileTaskResult(TaskBase* task) {
     if (!task) {
         return;
@@ -56,19 +62,19 @@ DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
     //TODO
 }
 
-CompileScriptResult::CompileScriptResult(TaskBase* task) {
+CompileScriptTaskResult::CompileScriptTaskResult(TaskBase* task) {
     if (!task) {
         return;
     }
 }
 
-HandleEventsResult::HandleEventsResult(TaskBase* task) {
+HandleEventsTaskResult::HandleEventsTaskResult(TaskBase* task) {
     if (!task) {
         return;
     }
 }
 
-CallContractOfflineResult::CallContractOfflineResult(TaskBase* task) {
+CallContractOfflineTaskResult::CallContractOfflineTaskResult(TaskBase* task) {
     if (!task) {
         return;
     }
@@ -129,11 +135,11 @@ void DestroyTaskResult::process_result(RpcClientMgr* msg_p) {
     return;
 }
 
-void CompileScriptResult::process_result(RpcClientMgr* msg_p) {
+void CompileScriptTaskResult::process_result(RpcClientMgr* msg_p) {
 }
 
-void HandleEventsResult::process_result(RpcClientMgr* msp_p) {
+void HandleEventsTaskResult::process_result(RpcClientMgr* msp_p) {
 }
 
-void CallContractOfflineResult::process_result(RpcClientMgr* msg_p) {
+void CallContractOfflineTaskResult::process_result(RpcClientMgr* msg_p) {
 }

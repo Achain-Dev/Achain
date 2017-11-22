@@ -20,6 +20,9 @@ const LuaRpcMessageTypeEnum UpgradeTaskRpc::type = LuaRpcMessageTypeEnum::UPGRAD
 const LuaRpcMessageTypeEnum TransferTaskRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum DestroyTaskRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum LuaRequestTaskRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CompileScriptTaskRpc::type = LuaRpcMessageTypeEnum::COMPILE_SCRIPT_MESSAGE_TPYE;
+const LuaRpcMessageTypeEnum HandleEventsTaskRpc::type = LuaRpcMessageTypeEnum::HANDLE_EVENTS_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CallContractOfflineTaskRpc::type = LuaRpcMessageTypeEnum::CALL_OFFLINE_MESSAGE_TYPE;
 
 //result
 const LuaRpcMessageTypeEnum CompileTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_RESULT_MESSAGE_TYPE;
@@ -29,6 +32,9 @@ const LuaRpcMessageTypeEnum UpgradeTaskResultRpc::type = LuaRpcMessageTypeEnum::
 const LuaRpcMessageTypeEnum DestroyTaskResultRpc::type = LuaRpcMessageTypeEnum::DESTROY_RESULT_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum::TRANSFER_RESULT_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum LuaRequestTaskResultRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CompileScriptTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_SCRIPT_RESULT_MESSAGE_TPYE;
+const LuaRpcMessageTypeEnum HandleEventsTaskResultRpc::type = LuaRpcMessageTypeEnum::HANDLE_EVENTS_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CallContractOfflineTaskResultRpc::type = LuaRpcMessageTypeEnum::CALL_OFFLINE_RESULT_MESSAGE_TYPE;
 
 //hello msg
 const LuaRpcMessageTypeEnum HelloMsgResultRpc::type = LuaRpcMessageTypeEnum::HELLO_MESSAGE_TYPE;
@@ -208,6 +214,9 @@ void RpcClientMgr::read_loop() {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
                 delete (LuaRequestTask*)result_p;
                 
+            } else if (result_p->task_type == HELLO_MSG) {
+                ((HelloMsgResult*)result_p)->process_result(this);
+                
             } else {
                 set_value(result_p);
             }
@@ -239,11 +248,14 @@ void RpcClientMgr::set_value(TaskBase* task_result) {
         }
     }
     
-    if ((iter != _tasks.end()) && (!iter->task_promise->canceled())) {
-        iter->task_promise->set_value((TaskImplResult*)task_result);
+    if (iter != _tasks.end()) {
+        if (!iter->task_promise->canceled()) {
+            iter->task_promise->set_value((TaskImplResult*)task_result);
+        }
+        
+        _tasks.erase(iter);
     }
     
-    _tasks.erase(iter);
     _task_mutex.unlock();
 }
 
@@ -322,6 +334,27 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
             return msg;
         }
         
+        case COMPILE_SCRIPT_TASK: {
+            CompileScriptTaskRpc task_rpc(*(CompileScriptTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case HANDLE_EVENTS_TASK: {
+            HandleEventsTaskRpc task_rpc(*(HandleEventsTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
+        case CALL_OFFLINE_TASK: {
+            CallContractOfflineTaskRpc task_rpc(*(CallContractOfflineTask*)task_p);
+            task_rpc.data.task_from = FROM_RPC;
+            Message msg(task_rpc);
+            return msg;
+        }
+        
         case LUA_REQUEST_RESULT_TASK: {
             LuaRequestTaskResultRpc task_rpc(*(LuaRequestTaskResult*)task_p);
             task_rpc.data.task_from = FROM_RPC;
@@ -378,6 +411,24 @@ TaskBase* RpcClientMgr::parse_msg(Message& msg) {
         case DESTROY_RESULT_MESSAGE_TYPE: {
             DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
             result_p = new DestroyTaskResult(&destroy_task.data);
+            break;
+        }
+        
+        case COMPILE_SCRIPT_RESULT_MESSAGE_TPYE: {
+            CompileScriptTaskResultRpc compile_script_task(msg.as<CompileScriptTaskResultRpc>());
+            result_p = new CompileScriptTaskResult(&compile_script_task.data);
+            break;
+        }
+        
+        case HANDLE_EVENTS_RESULT_MESSAGE_TYPE: {
+            HandleEventsTaskResultRpc handle_events_task(msg.as<HandleEventsTaskResultRpc>());
+            result_p = new HandleEventsTaskResult(&handle_events_task.data);
+            break;
+        }
+        
+        case CALL_OFFLINE_RESULT_MESSAGE_TYPE: {
+            CallContractOfflineTaskResultRpc call_offline_task(msg.as<CallContractOfflineTaskResultRpc>());
+            result_p = new CallContractOfflineTaskResult(&call_offline_task.data);
             break;
         }
         
