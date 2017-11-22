@@ -2,6 +2,12 @@
 #include <contract/rpc_mgr.hpp>
 #include <iostream>
 
+
+TaskBase::TaskBase(){
+    fc::time_point sec_now = fc::time_point::now();
+    task_id = sec_now.sec_since_epoch();
+}
+
 CompileTaskResult::CompileTaskResult(TaskBase* task) {
     if (!task) {
         return;

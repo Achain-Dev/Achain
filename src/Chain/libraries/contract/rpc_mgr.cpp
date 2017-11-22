@@ -247,11 +247,16 @@ void RpcClientMgr::set_value(TaskBase* task_result) {
         }
     }
     
-    if ((iter != _tasks.end()) && (!iter->task_promise->canceled())) {
-        iter->task_promise->set_value((TaskImplResult*)task_result);
+    if (iter != _tasks.end())
+    {
+        if (!iter->task_promise->canceled())
+        {
+            iter->task_promise->set_value((TaskImplResult*)task_result);
+        }
+
+        _tasks.erase(iter);
     }
     
-    _tasks.erase(iter);
     _task_mutex.unlock();
 }
 
