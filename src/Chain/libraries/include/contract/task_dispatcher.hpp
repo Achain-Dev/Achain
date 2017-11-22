@@ -17,7 +17,7 @@ class TaskDispatcher {
     
   public:
     void on_lua_request(TaskBase* task);
-    TaskBase* exec_lua_task(TaskBase* task);
+    TaskImplResult* exec_lua_task(TaskBase* task);
     
     fc::promise<void*>::ptr _exec_lua_task_ptr;
     
