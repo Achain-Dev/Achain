@@ -55,7 +55,7 @@ class RpcClientMgr {
     TaskBase* parse_msg(Message&);
     void close_rpc_client();
     void connect_to_server();
-    void store_request(TaskBase*, fc::promise<void*>::ptr&);
+    void store_request(TaskBase*, fc::promise<void*>::ptr);
     void set_value(TaskBase*);
     
   private:

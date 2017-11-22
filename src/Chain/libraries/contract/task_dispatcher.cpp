@@ -95,7 +95,9 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
         case EMIT:
             break;
     }
-    
+
+    //task_base->task_type = LUA_REQUEST_RESULT_TASK;
+
     p_rpc_mgr->post_message(task_base, nullptr);
 
     delete task_base;
