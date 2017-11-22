@@ -211,6 +211,10 @@ void RpcClientMgr::read_loop() {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
                 delete (LuaRequestTask*)result_p;
             }
+            else if (result_p->task_type == HELLO_MSG)
+            {
+                ((HelloMsgResult*)result_p)->process_result(this);
+            }
             else
             {
                 set_value(result_p);
