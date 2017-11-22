@@ -5,7 +5,6 @@
 TaskDispatcher* TaskDispatcher::_p_lua_task_dispatcher = nullptr;
 
 TaskDispatcher::TaskDispatcher() {
-    _on_lua_request_promise_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("on_lua_request_promise"));
     _exec_lua_task_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("exec_lua_task_promise"));
     
     if (thinkyoung::lua::api::global_glua_chain_api == nullptr) {
@@ -31,11 +30,14 @@ void TaskDispatcher::delete_lua_task_dispatcher() {
     }
 }
 
-void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
+void TaskDispatcher::on_lua_request(TaskBase* task) {
+    FC_ASSERT(task);
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     TaskBase* task_base = nullptr;
+
+    LuaRequestTask* plua_result = (LuaRequestTask*)task;
     
-    switch (task.method) {
+    switch (plua_result->method) {
         case GET_STORED_CONTRACT_INFO_BY_ADDRESS:
             break;
             
@@ -93,13 +95,16 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
         case EMIT:
             break;
     }
-    
-    p_rpc_mgr->send_message(task_base);
-    _on_lua_request_promise_ptr->wait();
+
+    //task_base->task_type = LUA_REQUEST_RESULT_TASK;
+
+    p_rpc_mgr->post_message(task_base, nullptr);
+
+    delete task_base;
 }
 
 void TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
-    p_rpc_mgr->send_message(task);
+    p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
     _exec_lua_task_ptr->wait();
 }
