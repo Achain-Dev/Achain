@@ -471,6 +471,35 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        thinkyoung::blockchain::ContractTrxInfo CommonApiClient::blockchain_get_contract_result(const std::string& result_id) const
+        {
+            ilog("received RPC call: blockchain_get_contract_result(${result_id})", ("result_id", result_id));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(result_id) );
+                call_id = glog->log_call_started( this, "blockchain_get_contract_result", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call blockchain_get_contract_result finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::blockchain::ContractTrxInfo result =             get_impl()->blockchain_get_contract_result(result_id);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "blockchain_get_contract_result", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         fc::optional<thinkyoung::blockchain::BlockEntry> CommonApiClient::blockchain_get_block(const std::string& block) const
         {
             ilog("received RPC call: blockchain_get_block(${block})", ("block", block));
