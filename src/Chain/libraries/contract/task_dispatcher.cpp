@@ -97,14 +97,15 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     }
 
     //task_base->task_type = LUA_REQUEST_RESULT_TASK;
+    //task_base->task_from = FROM_LUA_TO_CHAIN;
 
     p_rpc_mgr->post_message(task_base, nullptr);
 
     delete task_base;
 }
 
-void TaskDispatcher::exec_lua_task(TaskBase* task) {
+TaskBase* TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
-    _exec_lua_task_ptr->wait();
+    return (TaskImplResult*)(void *)_exec_lua_task_ptr->wait();
 }
