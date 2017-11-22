@@ -22,12 +22,12 @@ const LuaRpcMessageTypeEnum DestroyTaskRpc::type = LuaRpcMessageTypeEnum::DESTRO
 const LuaRpcMessageTypeEnum LuaRequestTaskRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_MESSAGE_TYPE;
 
 //result
-const LuaRpcMessageTypeEnum CompileTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_MESSAGE_TYPE;
-const LuaRpcMessageTypeEnum RegisterTaskResultRpc::type = LuaRpcMessageTypeEnum::REGTISTER_MESSAGE_TYPE;
-const LuaRpcMessageTypeEnum CallTaskResultRpc::type = LuaRpcMessageTypeEnum::CALL_MESSAGE_TYPE;
-const LuaRpcMessageTypeEnum UpgradeTaskResultRpc::type = LuaRpcMessageTypeEnum::UPGRADE_MESSAGE_TYPE;
-const LuaRpcMessageTypeEnum DestroyTaskResultRpc::type = LuaRpcMessageTypeEnum::DESTROY_MESSAGE_TYPE;
-const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum::TRANSFER_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CompileTaskResultRpc::type = LuaRpcMessageTypeEnum::COMPILE_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum RegisterTaskResultRpc::type = LuaRpcMessageTypeEnum::REGTISTER_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum CallTaskResultRpc::type = LuaRpcMessageTypeEnum::CALL_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum UpgradeTaskResultRpc::type = LuaRpcMessageTypeEnum::UPGRADE_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum DestroyTaskResultRpc::type = LuaRpcMessageTypeEnum::DESTROY_RESULT_MESSAGE_TYPE;
+const LuaRpcMessageTypeEnum TransferTaskResultRpc::type = LuaRpcMessageTypeEnum::TRANSFER_RESULT_MESSAGE_TYPE;
 const LuaRpcMessageTypeEnum LuaRequestTaskResultRpc::type = LuaRpcMessageTypeEnum::LUA_REQUEST_RESULT_MESSAGE_TYPE;
 
 //hello msg
@@ -223,7 +223,7 @@ void RpcClientMgr::read_loop() {
     }
 }
 
-void RpcClientMgr::store_request(TaskBase* task, fc::promise<void*>::ptr& prom) {
+void RpcClientMgr::store_request(TaskBase* task, fc::promise<void*>::ptr prom) {
     ProcTaskRequest task_request;
     _task_mutex.lock();
     task_request.task = task;
@@ -349,37 +349,37 @@ TaskBase* RpcClientMgr::parse_msg(Message& msg) {
             break;
         }
         
-        case COMPILE_MESSAGE_TYPE: {
+        case COMPILE_RESULT_MESSAGE_TYPE: {
             CompileTaskResultRpc compile_task(msg.as<CompileTaskResultRpc>());
             result_p = new CompileTaskResult(&compile_task.data);
             break;
         }
         
-        case CALL_MESSAGE_TYPE: {
+        case CALL_RESULT_MESSAGE_TYPE: {
             CallTaskResultRpc call_task(msg.as<CallTaskResultRpc>());
             result_p = new CallTaskResult(&call_task.data);
             break;
         }
         
-        case REGTISTER_MESSAGE_TYPE: {
+        case REGTISTER_RESULT_MESSAGE_TYPE: {
             RegisterTaskResultRpc register_task(msg.as<RegisterTaskResultRpc>());
             result_p = new RegisterTaskResult(&register_task.data);
             break;
         }
         
-        case UPGRADE_MESSAGE_TYPE: {
+        case UPGRADE_RESULT_MESSAGE_TYPE: {
             UpgradeTaskResultRpc upgrade_task(msg.as<UpgradeTaskResultRpc>());
             result_p = new RegisterTaskResult(&upgrade_task.data);
             break;
         }
         
-        case TRANSFER_MESSAGE_TYPE: {
+        case TRANSFER_RESULT_MESSAGE_TYPE: {
             TransferTaskResultRpc transfer_task(msg.as<TransferTaskResultRpc>());
             result_p = new TransferTaskResult(&transfer_task.data);
             break;
         }
         
-        case DESTROY_MESSAGE_TYPE: {
+        case DESTROY_RESULT_MESSAGE_TYPE: {
             DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
             result_p = new DestroyTaskResult(&destroy_task.data);
             break;
