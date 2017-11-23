@@ -81,38 +81,3 @@ void TaskImplResult::process_result(RpcClientMgr* msg_p) {
     
     return;
 }
-void CompileTaskResult::process_result(RpcClientMgr* msg_p) {
-    CompileTaskResult* task = (CompileTaskResult*)(this);
-    std::cout << "recieve response......." << std::endl;
-    std::cout << "task_from: " << (task->task_from == 0 ? "FROM_CLI" : "FROM_RPC") << std::endl;
-    std::cout << "task_id: " << task->task_id << std::endl;
-    std::cout << "task_type: " << task->task_type << std::endl;
-    std::cout << "error_code: " << task->error_code << std::endl;
-    std::cout << "error_msg: " << task->error_msg << std::endl;
-    return;
-}
-
-void RegisterTaskResult::process_result(RpcClientMgr* msg_p) {
-    //TODO
-    return;
-}
-
-void CallTaskResult::process_result(RpcClientMgr* msg_p) {
-    //TODO
-    return;
-}
-
-void TransferTaskResult::process_result(RpcClientMgr* msg_p) {
-    //TODO
-    return;
-}
-
-void UpgradeTaskResult::process_result(RpcClientMgr* msg_p) {
-    //TODO
-    return;
-}
-
-void DestroyTaskResult::process_result(RpcClientMgr* msg_p) {
-    //TODO
-    return;
-}
