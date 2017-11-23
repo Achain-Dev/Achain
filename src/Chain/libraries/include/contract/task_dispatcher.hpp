@@ -16,10 +16,9 @@ class TaskDispatcher {
     static void   delete_lua_task_dispatcher();
     
   public:
-    void on_lua_request(LuaRequestTask& task);
-    void exec_lua_task(TaskBase* task);
+    void on_lua_request(TaskBase* task);
+    TaskImplResult* exec_lua_task(TaskBase* task);
     
-    fc::promise<void*>::ptr _on_lua_request_promise_ptr;
     fc::promise<void*>::ptr _exec_lua_task_ptr;
     
   private:

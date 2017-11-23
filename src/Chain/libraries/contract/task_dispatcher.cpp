@@ -7,7 +7,6 @@
 TaskDispatcher* TaskDispatcher::_p_lua_task_dispatcher = nullptr;
 
 TaskDispatcher::TaskDispatcher() {
-    _on_lua_request_promise_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("on_lua_request_promise"));
     _exec_lua_task_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("exec_lua_task_promise"));
     
     if (thinkyoung::lua::api::global_glua_chain_api == nullptr) {
@@ -33,6 +32,7 @@ void TaskDispatcher::delete_lua_task_dispatcher() {
     }
 }
 
+
 #define EVL_STATE_NIL (30000)
 #define PARAMS_INVALID (31000)
 
@@ -52,7 +52,7 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
     trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(task.statevalue);
     lvm::api::LvmInterface lvm_req(trx_evl_state);
     
-    switch (task.method) {
+    switch (plua_result->method) {
         case GET_STORED_CONTRACT_INFO_BY_ADDRESS:
             if (par_size < 2) {
                 result->ret = fc::raw::pack<bool>(false));
@@ -159,14 +159,12 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
         case EMIT:
             break;
     }
-    
-DONE:
-    p_rpc_mgr->send_message(result);
-    _on_lua_request_promise_ptr->wait();
+    p_rpc_mgr->post_message(task_base, nullptr);
+    delete task_base;
 }
 
-void TaskDispatcher::exec_lua_task(TaskBase* task) {
+TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
-    p_rpc_mgr->send_message(task);
-    _exec_lua_task_ptr->wait();
+    p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
+    return (TaskImplResult*)(void *)_exec_lua_task_ptr->wait();
 }

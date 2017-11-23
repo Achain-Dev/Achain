@@ -83,6 +83,7 @@ std::cin >> a;
 #include <blockchain/api_extern.hpp>
 #include <glua/thinkyoung_lua_api.h>
 #include <contract/rpc_mgr.hpp>
+#include <contract/task_dispatcher.hpp>
 
 using namespace boost;
 using std::string;
@@ -1294,16 +1295,32 @@ namespace thinkyoung {
                         FC_THROW_EXCEPTION(thinkyoung::blockchain::invalid_script_source_filename, "script source file name should end with .lua or .glua");
                     }
                     
-                    auto p_lua_module = std::make_shared<GluaModuleByteStream>();
-                    FC_ASSERT(p_lua_module, "Alloc memory for GluaModuleByteStream failed!");
-                    lua::lib::GluaStateScope sco(false);
-                    
-                    if (NOT lua::lib::compilefile_to_stream(sco.L(), filename.generic_string().c_str(), p_lua_module.get(), err_msg, USE_TYPE_CHECK)) {
-                        FC_THROW_EXCEPTION(compile_script_fail, err_msg);
-                    }
-                    
-                    if (save_code_to_file(out_filename, p_lua_module.get(), err_msg) < 0) {
-                        FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_scriptfile_fail, err_msg);
+                    if (_config.lvm_enabled) {
+                        auto task = std::make_shared<CompileScriptTask>();
+                        task->path_file_name = filename.generic_string();
+                        task->use_contract = false;
+                        task->use_type_check = USE_TYPE_CHECK;
+                        TaskImplResult* result = TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
+                        FC_ASSERT(result->task_type == COMPILE_SCRIPT_RESULT);
+                        std::shared_ptr<CompileScriptTaskResult> task_result;
+                        task_result.reset((CompileScriptTaskResult*)result);
+                        
+                        if (task_result->error_code != 0) {
+                            FC_THROW_EXCEPTION(compile_script_fail, task_result->error_msg);
+                        }
+                        
+                    } else {
+                        auto p_lua_module = std::make_shared<GluaModuleByteStream>();
+                        FC_ASSERT(p_lua_module, "Alloc memory for GluaModuleByteStream failed!");
+                        lua::lib::GluaStateScope sco(false);
+                        
+                        if (NOT lua::lib::compilefile_to_stream(sco.L(), filename.generic_string().c_str(), p_lua_module.get(), err_msg, USE_TYPE_CHECK)) {
+                            FC_THROW_EXCEPTION(compile_script_fail, err_msg);
+                        }
+                        
+                        if (save_code_to_file(out_filename, p_lua_module.get(), err_msg) < 0) {
+                            FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_scriptfile_fail, err_msg);
+                        }
                     }
                     
                     return fc::path(out_filename);
@@ -2056,7 +2073,7 @@ namespace thinkyoung {
         }
         
         void Client::send_rpc_msg(TaskBase* task) {
-            my->rpcMgr->post_message(task);
+            //my->rpcMgr->post_message(task);
         }
         
         bool Client::lvm_enabled() {

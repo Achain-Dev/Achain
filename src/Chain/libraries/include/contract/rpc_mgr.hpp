@@ -27,14 +27,19 @@ class RpcClientMgr {
   public:
     static RpcClientMgr* get_rpc_mgr(Client* client = nullptr);
     static void   delete_rpc_mgr();
+    Client* get_client();
     
     void init();
     void start_loop();
     void set_endpoint(std::string& ip_addr, int port);
-    void send_message(TaskBase*);
     void set_last_receive_time();
-    void post_message(TaskBase*);
-    Client* get_client();
+    void post_message(TaskBase*, fc::promise<void*>::ptr);
+
+    struct ProcTaskRequest
+    {
+        TaskBase* task;
+        fc::promise<void*>::ptr task_promise;
+    };
     
   private:
     RpcClientMgr(Client* client = nullptr);
@@ -42,31 +47,23 @@ class RpcClientMgr {
     
   private:
     void start();
-    void read_loop(SocketMode emode);
-    void insert_task(TaskImplResult*);
-    void task_imp();
-    void process_task(RpcClientMgr*);
+    void read_loop();
     void reconnect_to_server();
-    Message generate_message(TaskBase* task_p);
-    void send_to_lvm(Message& m, StcpSocketPtr& sock_ptr);
-    void read_from_lvm(StcpSocketPtr& sock, Message& m);
-    TaskImplResult* parse_to_result(Message& msg);
-    
+    Message generate_message(TaskBase*);
+    void send_to_lvm(Message&);
+    void read_from_lvm(Message&);
+    TaskBase* parse_msg(Message&);
     void close_rpc_client();
-    void insert_connection(StcpSocketPtr&);
-    void connect_to_server(SocketMode emode);
-    StcpSocketPtr get_connection(SocketMode emode);
+    void connect_to_server();
+    void store_request(TaskBase*, fc::promise<void*>::ptr);
+    void set_value(TaskBase*);
     
   private:
-    //StcpSocketPtr _rpc_client_ptr[MODE_COUNT];
-    std::vector<StcpSocketPtr>      _rpc_connections;
+    StcpSocketPtr _rpc_client_ptr;
     fc::ip::endpoint _end_point;
-    std::shared_ptr<fc::thread> _async_thread_ptr;
-    std::shared_ptr<fc::thread> _sync_thread_ptr;
-    std::shared_ptr<fc::thread> _task_proc_thread_ptr;
-    
-    std::vector<TaskImplResult*>          _tasks;
+    std::shared_ptr<fc::thread> _socket_thread_ptr;
     Client* _client_ptr;
+    std::vector<ProcTaskRequest>  _tasks;
     std::mutex              _task_mutex;
     fc::time_point _last_hello_message_received_time;
     bool _b_valid_flag;
