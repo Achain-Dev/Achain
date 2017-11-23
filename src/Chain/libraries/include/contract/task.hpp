@@ -296,7 +296,8 @@ struct LuaRequestTask : public TaskBase {
     LuaRequestTask(TaskBase* task);
     
     LUA_REQUEST_METHOD     method;
-    std::vector<fc::variant> params;
+    intptr_t statevalue;
+    std::vector<std::vector<char>> params;
 };
 
 struct LuaRequestTaskResult : public TaskBase {
@@ -308,7 +309,9 @@ struct LuaRequestTaskResult : public TaskBase {
     LuaRequestTaskResult(TaskBase* task);
     
     LUA_REQUEST_METHOD     method;
-    std::vector<fc::variant> result;
+    std::vector<char> ret;
+    std::vector<std::vector<char>> params;
+    int err_num;
 };
 
 FC_REFLECT_TYPENAME(LUA_TASK_TYPE)
