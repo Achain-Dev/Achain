@@ -138,22 +138,16 @@ struct DestroyTaskResult : public TaskImplResult {
 struct CompileScriptTaskResult : TaskImplResult {
     CompileScriptTaskResult() {}
     CompileScriptTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
 };
 
 struct HandleEventsTaskResult : TaskImplResult {
     HandleEventsTaskResult() {}
     HandleEventsTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
 };
 
 struct CallContractOfflineTaskResult : TaskImplResult {
     CallContractOfflineTaskResult() {}
     CallContractOfflineTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
 };
 
 //task
