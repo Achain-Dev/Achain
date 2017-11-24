@@ -32,36 +32,33 @@ void TaskDispatcher::delete_lua_task_dispatcher() {
     }
 }
 
-
-#define EVL_STATE_NIL (30000)
-#define PARAMS_INVALID (31000)
-
-void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
+void TaskDispatcher::on_lua_request(TaskBase* task) {
+    LuaRequestTask* plua_request = (LuaRequestTask*)task;
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     thinkyoung::blockchain::TransactionEvaluationState* trx_evl_state;
     //TODO make_shared
-    // std::shared_ptr<LuaRequestTaskResult> result = std::make_shared<LuaRequestTaskResult>();
+    //std::shared_ptr<LuaRequestTaskResult> result = std::make_shared<LuaRequestTaskResult>();
     LuaRequestTaskResult* result = new LuaRequestTaskResult;
-    result->method = task.method;
-    int par_size = task.params.size();
+    result->method = plua_request->method;
+    int par_size = plua_request->params.size();
     
     if (par_size < 1) {
-        result->err_num = EVL_STATE_NIL;
+        result->ret = -1;
     }
     
-    trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(task.statevalue);
+    trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(plua_request->statevalue);
     lvm::api::LvmInterface lvm_req(trx_evl_state);
     
-    switch (plua_result->method) {
+    switch (result->method) {
         case GET_STORED_CONTRACT_INFO_BY_ADDRESS:
             if (par_size < 2) {
-                result->ret = fc::raw::pack<bool>(false));
+                result->ret = -1;
                 break;
             }
             
             {
                 std::string address;
-                address = fc::raw::unpack<std::string>(task.params[1]);
+                address = fc::raw::unpack<std::string>(plua_request->params[1]);
                 lvm_req.get_stored_contract_info_by_address(address);
             }
             
@@ -69,13 +66,13 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
             
         case GET_CONTRACT_ADDRESS_BY_NAME:
             if (par_size < 2) {
-                result->ret_params.push_back(fc::raw::pack<bool>(false));
+                result->ret = -1;
                 break;
             }
             
             {
                 std::string contract_name;
-                contract_name = fc::raw::unpack<std::string>(task.params[1]);
+                contract_name = fc::raw::unpack<std::string>(plua_request->params[1]);
                 lvm_req.get_contract_address_by_name(contract_name);
             }
             
@@ -83,13 +80,13 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
             
         case CHECK_CONTRACT_EXIST_BY_ADDRESS:
             if (par_size < 2) {
-                result->ret_params.push_back(fc::raw::pack<bool>(false));
+                result->ret = -1;
                 break;
             }
             
             {
                 std::string contract_address;
-                contract_address = fc::raw::unpack<std::string>(task.params[1]);
+                contract_address = fc::raw::unpack<std::string>(plua_request->params[1]);
                 lvm_req.check_contract_exist_by_address(contract_address);
             }
             
@@ -97,13 +94,13 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
             
         case  CHECK_CONTRACT_EXIST:
             if (par_size < 2) {
-                result->ret_params.push_back(fc::raw::pack<bool>(false));
+                result->ret = -1;
                 break;
             }
             
             {
                 std::string contract_name;
-                contract_name = fc::raw::unpack<std::string>(task.params[1]);
+                contract_name = fc::raw::unpack<std::string>(plua_request->params[1]);
                 lvm_req.check_contract_exist(contract_name);
             }
             
@@ -111,56 +108,183 @@ void TaskDispatcher::on_lua_request(LuaRequestTask& task) {
             
         case OPEN_CONTRACT:
             if (par_size < 2) {
-                result->ret_params.push_back(fc::raw::pack<bool>(false));
+                result->ret = -1;
                 break;
+            }
+            
+            {
+                std::string contract_name;
+                contract_name = fc::raw::unpack<std::string>(plua_request->params[1]);
+                lvm_req.open_contract(contract_name);
             }
             
             break;
             
         case OPEN_CONTRACT_BY_ADDRESS:
+            if (par_size < 2) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_address;
+                contract_address = fc::raw::unpack<std::string>(plua_request->params[1]);
+                lvm_req.open_contract_by_address(contract_address);
+            }
+            
             break;
             
         case GET_STORAGE_VALUE_FROM_THINKYOUNG:
+            if (par_size < 3) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_name;
+                std::string storage_name;
+                contract_name = fc::raw::unpack<std::string>(plua_request->params[1]);
+                storage_name = fc::raw::unpack<std::string>(plua_request->params[2]);
+                lvm_req.get_storage_value_from_thinkyoung(contract_name, storage_name);
+            }
+            
             break;
             
         case GET_CONTRACT_BALANCE_AMOUNT:
+            if (par_size < 2) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_address;
+                std::string asset_sym;
+                contract_address = fc::raw::unpack<std::string>(plua_request->params[1]);
+                asset_sym = fc::raw::unpack<std::string>(plua_request->params[2]);
+                lvm_req.get_contract_balance_amount(contract_address, asset_sym);
+            }
+            
             break;
             
         case GET_TRANSACTION_FEE:
+            lvm_req.get_transaction_fee();
             break;
             
         case GET_CHAIN_NOW:
+            lvm_req.get_chain_now();
             break;
             
         case GET_CHAIN_RANDOM:
+            lvm_req.get_chain_random();
             break;
             
         case GET_TRANSACTION_ID:
+            lvm_req.get_transaction_id();
             break;
             
         case GET_HEADER_BLOCK_NUM:
+            lvm_req.get_header_block_num();
             break;
             
         case WAIT_FOR_FUTURE_RANDOM:
+            if (par_size < 2) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                int next;
+                next = fc::raw::unpack<int>(plua_request->params[1]);
+                lvm_req.wait_for_future_random(next);
+            }
+            
             break;
             
         case GET_WAITED:
+            if (par_size < 2) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                uint32_t next;
+                next = fc::raw::unpack<uint32_t>(plua_request->params[1]);
+                lvm_req.get_waited(next);
+            }
+            
             break;
             
         case COMMIT_STORAGE_CHANGES_TO_THINKYOUNG:
+            if (par_size < 2) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                AllContractsChangesMapRPC contract_change_item;
+                contract_change_item = fc::raw::unpack<AllContractsChangesMapRPC>(plua_request->params[1]);
+                lvm_req.commit_storage_changes_to_thinkyoung(contract_change_item);
+            }
+            
             break;
             
         case TRANSFER_FROM_CONTRACT_TO_ADDRESS:
+            if (par_size < 5) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_addr, to_address, asset_type;
+                int64_t amount;
+                contract_addr = fc::raw::unpack<std::string>(plua_request->params[1]);
+                to_address = fc::raw::unpack<std::string>(plua_request->params[2]);
+                asset_type = fc::raw::unpack<std::string>(plua_request->params[3]);
+                amount = fc::raw::unpack<int64_t>(plua_request->params[4]);
+                lvm_req.transfer_from_contract_to_address(contract_addr, to_address, asset_type, amount);
+            }
+            
             break;
             
         case TRANSFER_FROM_CONTRACT_TO_PUBLIC_ACCOUNT:
+            if (par_size < 5) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_addr, to_address_name, asset_type;
+                int64_t amount;
+                contract_addr = fc::raw::unpack<std::string>(plua_request->params[1]);
+                to_address_name = fc::raw::unpack<std::string>(plua_request->params[2]);
+                asset_type = fc::raw::unpack<std::string>(plua_request->params[3]);
+                amount = fc::raw::unpack<int64_t>(plua_request->params[4]);
+                lvm_req.transfer_from_contract_to_public_account(contract_addr, to_address_name, asset_type, amount);
+            }
+            
             break;
             
         case EMIT:
+            if (par_size < 4) {
+                result->ret = -1;
+                break;
+            }
+            
+            {
+                std::string contract_id, event_name, event_param;
+                contract_id = fc::raw::unpack<std::string>(plua_request->params[1]);
+                event_name = fc::raw::unpack<std::string>(plua_request->params[2]);
+                event_param = fc::raw::unpack<std::string>(plua_request->params[3]);
+                lvm_req.emit(contract_id, event_name, event_param);
+            }
+            
             break;
     }
-    p_rpc_mgr->post_message(task_base, nullptr);
-    delete task_base;
+    
+    result->params = lvm_req.result;
+    result->err_num = lvm_req.err_num;
+    p_rpc_mgr->post_message(result, nullptr);
+    delete result;
 }
 
 TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {

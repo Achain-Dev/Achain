@@ -4,7 +4,6 @@ date: 2017.11.20
 lvm interface in glua runtime
 */
 #include "lvm/lvm_interface.h"
-#include "fc/io/raw.hpp"
 namespace lvm {
     namespace api {
     
@@ -24,7 +23,7 @@ namespace lvm {
                 }
                 
                 if (!_entry.valid()) {
-                    _ret = fc::raw::pack(0);
+                    push_result(fc::raw::pack(0));
                     return;
                 }
                 
@@ -32,7 +31,7 @@ namespace lvm {
                 get_stored_contract_info_by_address(addr_str);
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         /*
@@ -48,7 +47,7 @@ namespace lvm {
                 _entry = _evaluate_state->_current_state->get_contract_entry(thinkyoung::blockchain::Address(address, AddressType::contract_address));
                 
                 if (!_entry.valid()) {
-                    _ret = fc::raw::pack(0);
+                    push_result(fc::raw::pack(0));
                     return;
                 }
                 
@@ -57,7 +56,7 @@ namespace lvm {
                 push_result(fc::raw::pack(code.offline_abi));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -79,7 +78,7 @@ namespace lvm {
                 }
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -94,7 +93,7 @@ namespace lvm {
                 push_result(fc::raw::pack(_entry.valid()));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -108,7 +107,7 @@ namespace lvm {
                 push_result(fc::raw::pack(_entry.valid()));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -129,7 +128,7 @@ namespace lvm {
                 }
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -151,7 +150,7 @@ namespace lvm {
                 }
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -175,7 +174,7 @@ namespace lvm {
                 get_storage_value_from_thinkyoung_by_address(_entry->id.AddressToString(AddressType::contract_address), storage_name);
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -208,7 +207,7 @@ namespace lvm {
                 push_result(fc::raw::pack<thinkyoung::blockchain::StorageDataType>(storage_data));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -242,7 +241,7 @@ namespace lvm {
                 push_result(fc::raw::pack(asset.amount));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::get_transaction_fee() {
@@ -264,7 +263,7 @@ namespace lvm {
                 push_result(fc::raw::pack(fee.amount));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::get_chain_now() {
@@ -277,7 +276,7 @@ namespace lvm {
                 push_result(fc::raw::pack(time_stamp.sec_since_epoch()));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -290,7 +289,7 @@ namespace lvm {
                 push_result(fc::raw::pack(_evaluate_state->p_result_trx.id().hash(_chain_interface->get_current_random_seed())._hash[2]));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::get_transaction_id() {
@@ -302,7 +301,7 @@ namespace lvm {
                 push_result(fc::raw::pack<std::string>(_evaluate_state->trx.id().str()));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::get_header_block_num() {
@@ -314,7 +313,7 @@ namespace lvm {
                 push_result(fc::raw::pack(_chain_interface->get_head_block_num()));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::wait_for_future_random(const int next) {
@@ -333,7 +332,7 @@ namespace lvm {
                 }
                 
             } catch (fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
                 return ;
             }
         }
@@ -369,7 +368,7 @@ namespace lvm {
                 push_result(fc::raw::pack(_hash._hash[3] % (1 << 31 - 1)));
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -397,7 +396,7 @@ namespace lvm {
                 }
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         
@@ -430,7 +429,7 @@ namespace lvm {
                 _evaluate_state->_contract_balance_remain -= amount;
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::transfer_from_contract_to_public_account(const std::string& contract_address, const std::string& to_account_name,
@@ -453,7 +452,7 @@ namespace lvm {
                 transfer_from_contract_to_address(contract_address, acc_entry->owner_address().AddressToString(), asset_type, amount);
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
             }
         }
         void LvmInterface::emit(const std::string& contract_id, const std::string& event_name, const std::string& event_param) {
@@ -466,18 +465,13 @@ namespace lvm {
                 _evaluate_state->p_result_trx.push_event_operation(event_op);
                 
             } catch (const fc::exception& e) {
-                _err_num = e.code();
+                err_num = e.code();
                 return;
             }
         }
         void LvmInterface::push_result(std::vector<char>& value) {
-            _result.push_back(value);
+            result.push_back(value);
         }
-        
-        void LvmInterface::set_ret(std::vector<char>& value) {
-            _ret = value;
-        }
-        
     }
 }
 

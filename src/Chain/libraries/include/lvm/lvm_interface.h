@@ -32,6 +32,9 @@ namespace lvm {
             explicit LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr);
             ~LvmInterface();
             
+            uint64_t err_num;
+            std::vector < std::vector<char> > result;
+            
             //NO OPERATION
             void get_stored_contract_info(const std::string& name);
             void get_stored_contract_info_by_address(const std::string& contract_address);
@@ -53,20 +56,18 @@ namespace lvm {
             
             //OPERATION
             void commit_storage_changes_to_thinkyoung(AllContractsChangesMapRPC&);
-            void transfer_from_contract_to_address(const std::string&, const std::string&, const std::string&, int64_t amount);
-            void transfer_from_contract_to_public_account(const std::string&, const std::string&, const std::string&, int64_t amount);
-            void emit(const std::string&, const std::string&, const std::string&);
+            void transfer_from_contract_to_address(const std::string& contract_address, const std::string& to_address,
+                                                   const std::string& asset_type, int64_t amount);
+            void transfer_from_contract_to_public_account(const std::string& contract_address, const std::string& to_account_name,
+                    const std::string& asset_type, int64_t amount);
+            void emit(const std::string& contract_id, const std::string& event_name, const std::string& event_param);
             
           private:
             void push_result(std::vector<char>& value);
-            void set_ret(std::vector<char>& value);
             
-            uint64_t _err_num;
-            std::vector<char> _ret;
             thinkyoung::blockchain::oContractEntry _entry;
             thinkyoung::blockchain::ChainInterface* _chain_interface;
             thinkyoung::blockchain::TransactionEvaluationState* _evaluate_state;
-            std::vector < std::vector<char> > _result;
         };
     }
 }

@@ -403,19 +403,6 @@ typedef struct GluaStorageChangeItem {
     struct GluaStorageValue after;
 } GluaStorageChangeItem;
 
-
-#include "fc/reflect/reflect.hpp"
-
-FC_REFLECT(lua_table_binary_function)
-FC_REFLECT(lua_table_less, (lua_table_binary_function))
-FC_REFLECT(GluaTableMap)
-FC_REFLECT(GluaStorageValueUnion)
-FC_REFLECT_TYPENAME(thinkyoung::blockchain::StorageValueTypes)
-FC_REFLECT(GluaStorageValue, (type)(value))
-FC_REFLECT(GluaStorageChangeItem, (contract_id)(key)(before)(after))
-
-
-
 typedef std::list<GluaStorageChangeItem> GluaStorageChangeList;
 
 typedef std::list<GluaStorageChangeItem> GluaStorageTableReadList;
@@ -433,6 +420,16 @@ typedef std::shared_ptr<ContractChangesMap> ContractChangesMapP;
 typedef std::unordered_map<std::string, ContractChangesMapP> AllContractsChangesMap;
 typedef std::unordered_map<std::string, ContractChangesMap> AllContractsChangesMapRPC;//for chain-lvm rpc
 
+
+#include "fc/reflect/reflect.hpp"
+
+FC_REFLECT(lua_table_binary_function)
+FC_REFLECT(lua_table_less, (lua_table_binary_function))
+FC_REFLECT(GluaTableMap)
+FC_REFLECT(GluaStorageValueUnion)
+FC_REFLECT(thinkyoung::blockchain::StorageValueTypes)
+FC_REFLECT(GluaStorageValue, (type)(value))
+FC_REFLECT(GluaStorageChangeItem, (contract_id)(key)(before)(after))
 
 namespace thinkyoung {
     namespace blockchain {
