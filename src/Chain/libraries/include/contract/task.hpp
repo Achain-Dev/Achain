@@ -104,8 +104,6 @@ struct CompileTaskResult : public TaskImplResult {
     CompileTaskResult() {}
     CompileTaskResult(TaskBase* task);
     
-    void  process_result(RpcClientMgr* msg_p = nullptr);
-    
     std::string  gpc_path_file;
 };
 
@@ -113,40 +111,28 @@ struct RegisterTaskResult : public TaskImplResult {
     RegisterTaskResult() {}
     RegisterTaskResult(TaskBase* task);
     
-    void  process_result(RpcClientMgr* msg_p = nullptr);
+    //void  process_result(RpcClientMgr* msg_p = nullptr){}
     //TODO
 };
 
 struct CallTaskResult : public TaskImplResult {
     CallTaskResult() {}
     CallTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
-    //TODO
 };
 
 struct TransferTaskResult : public TaskImplResult {
     TransferTaskResult() {}
     TransferTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
-    //TODO
 };
 
 struct UpgradeTaskResult : public TaskImplResult {
     UpgradeTaskResult() {}
     UpgradeTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
-    //TODO
 };
 
 struct DestroyTaskResult : public TaskImplResult {
     DestroyTaskResult() {}
     DestroyTaskResult(TaskBase* task);
-    
-    void  process_result(RpcClientMgr* msg_p = nullptr);
-    //TODO
 };
 
 struct CompileScriptTaskResult : TaskImplResult {
@@ -174,6 +160,7 @@ struct CallContractOfflineTaskResult : TaskImplResult {
 struct CompileTask : public TaskBase {
     CompileTask() {
         task_type = COMPILE_TASK;
+        task_from = FROM_RPC;
     };
     fc::path glua_path_file;
 };
@@ -181,6 +168,7 @@ struct CompileTask : public TaskBase {
 struct RegisterTask : public TaskBase {
     RegisterTask() {
         task_type = REGISTER_TASK;
+        task_from = FROM_RPC;
     };
     
     std::string             gpc_code;
@@ -196,6 +184,7 @@ struct RegisterTask : public TaskBase {
 struct UpgradeTask : public TaskBase {
     UpgradeTask() {
         task_type = UPGRADE_TASK;
+        task_from = FROM_RPC;
     };
     intptr_t                statevalue;
     int                     num_limit;
@@ -209,6 +198,7 @@ struct UpgradeTask : public TaskBase {
 struct CallTask : public TaskBase {
     CallTask() {
         task_type = CALL_TASK;
+        task_from = FROM_RPC;
     };
     intptr_t                statevalue;
     int                     num_limit;
@@ -224,6 +214,7 @@ struct CallTask : public TaskBase {
 struct TransferTask : public TaskBase {
     TransferTask() {
         task_type = TRANSFER_TASK;
+        task_from = FROM_RPC;
     };
     intptr_t                statevalue;
     int                     num_limit;
@@ -238,6 +229,7 @@ struct TransferTask : public TaskBase {
 struct DestroyTask : public TaskBase {
     DestroyTask() {
         task_type = DESTROY_TASK;
+        task_from = FROM_RPC;
     };
     intptr_t               statevalue;
     int                    num_limit;
