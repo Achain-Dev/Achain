@@ -9,6 +9,7 @@ namespace lvm {
     
         LvmInterface::LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr = nullptr)
             :_evaluate_state(ptr) {
+            err_num = 0;
             _evaluate_state = ptr;
         }
         
