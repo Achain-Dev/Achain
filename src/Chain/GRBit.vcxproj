@@ -308,6 +308,7 @@
     <ClCompile Include="libraries\glua\lvm.cpp" />
     <ClCompile Include="libraries\glua\lzio.cpp" />
     <ClCompile Include="libraries\lvm\LvmMgr.cpp" />
+    <ClCompile Include="libraries\lvm\lvm_interface.cpp" />
     <ClCompile Include="libraries\net\ChainDownloader.cpp" />
     <ClCompile Include="libraries\net\ChainServer.cpp" />
     <ClCompile Include="libraries\net\CoreMessages.cpp" />
@@ -451,6 +452,7 @@
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
     <ClInclude Include="libraries\include\lvm\LvmMgr.hpp" />
+    <ClInclude Include="libraries\include\lvm\lvm_interface.h" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />
     <ClInclude Include="libraries\include\net\ChainDownloader.hpp" />
     <ClInclude Include="libraries\include\net\ChainMessages.hpp" />
