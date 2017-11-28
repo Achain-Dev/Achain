@@ -53,7 +53,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='GRBit|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -238,6 +238,9 @@
     <ClCompile Include="libraries\cli\Cli.cpp" />
     <ClCompile Include="libraries\cli\Pretty.cpp" />
     <ClCompile Include="libraries\cli\PrintResult.cpp" />
+    <ClCompile Include="libraries\contract\rpc_mgr.cpp" />
+    <ClCompile Include="libraries\contract\task.cpp" />
+    <ClCompile Include="libraries\contract\task_dispatcher.cpp" />
     <ClCompile Include="libraries\db\UpgradeLeveldb.cpp" />
     <ClCompile Include="libraries\glua\glua_api_types.cpp" />
     <ClCompile Include="libraries\glua\glua_astparser.cpp" />
@@ -304,6 +307,8 @@
     <ClCompile Include="libraries\glua\lutf8lib.cpp" />
     <ClCompile Include="libraries\glua\lvm.cpp" />
     <ClCompile Include="libraries\glua\lzio.cpp" />
+    <ClCompile Include="libraries\lvm\LvmMgr.cpp" />
+    <ClCompile Include="libraries\lvm\lvm_interface.cpp" />
     <ClCompile Include="libraries\net\ChainDownloader.cpp" />
     <ClCompile Include="libraries\net\ChainServer.cpp" />
     <ClCompile Include="libraries\net\CoreMessages.cpp" />
@@ -390,6 +395,10 @@
     <ClInclude Include="libraries\include\cli\Cli.hpp" />
     <ClInclude Include="libraries\include\cli\Pretty.hpp" />
     <ClInclude Include="libraries\include\cli\PrintResult.hpp" />
+    <ClInclude Include="libraries\include\contract\rpc_message.hpp" />
+    <ClInclude Include="libraries\include\contract\rpc_mgr.hpp" />
+    <ClInclude Include="libraries\include\contract\task.hpp" />
+    <ClInclude Include="libraries\include\contract\task_dispatcher.hpp" />
     <ClInclude Include="libraries\include\db\CachedLevelMap.hpp" />
     <ClInclude Include="libraries\include\db\Exception.hpp" />
     <ClInclude Include="libraries\include\db\FastLevelMap.hpp" />
@@ -442,6 +451,8 @@
     <ClInclude Include="libraries\include\lua\lundump.h" />
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
+    <ClInclude Include="libraries\include\lvm\LvmMgr.hpp" />
+    <ClInclude Include="libraries\include\lvm\lvm_interface.h" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />
     <ClInclude Include="libraries\include\net\ChainDownloader.hpp" />
     <ClInclude Include="libraries\include\net\ChainMessages.hpp" />
