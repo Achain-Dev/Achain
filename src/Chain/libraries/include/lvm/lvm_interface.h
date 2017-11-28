@@ -26,7 +26,10 @@ return : lvm-function return
 */
 namespace lvm {
     namespace api {
-    
+        using namespace thinkyoung;
+        using namespace thinkyoung::blockchain;
+        typedef std::map<std::string, StorageDataChangeType> StorageDataChangeMap;
+        typedef std::map<std::string, StorageDataChangeMap> AllStorageDataChange;
         class LvmInterface {
           public:
             explicit LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr);
@@ -55,7 +58,7 @@ namespace lvm {
             void get_waited (uint32_t num);
             
             //OPERATION
-            void commit_storage_changes_to_thinkyoung(AllContractsChangesMapRPC&);
+            void commit_storage_changes_to_thinkyoung(AllStorageDataChange&);
             void transfer_from_contract_to_address(const std::string& contract_address, const std::string& to_address,
                                                    const std::string& asset_type, int64_t amount);
             void transfer_from_contract_to_public_account(const std::string& contract_address, const std::string& to_account_name,

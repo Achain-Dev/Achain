@@ -1,6 +1,7 @@
 #include <contract/task_dispatcher.hpp>
 #include <contract/rpc_mgr.hpp>
 #include <blockchain/GluaChainApi.hpp>
+#include <blockchain/StorageTypes.hpp>
 
 #include <lvm/lvm_interface.h>
 
@@ -221,8 +222,8 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             }
             
             {
-                AllContractsChangesMapRPC contract_change_item;
-                contract_change_item = fc::raw::unpack<AllContractsChangesMapRPC>(plua_request->params[1]);
+                lvm::api::AllStorageDataChange  contract_change_item;
+                contract_change_item = fc::raw::unpack<lvm::api::AllStorageDataChange>(plua_request->params[1]);
                 lvm_req.commit_storage_changes_to_thinkyoung(contract_change_item);
             }
             

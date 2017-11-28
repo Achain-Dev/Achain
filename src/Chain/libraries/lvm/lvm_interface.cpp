@@ -48,11 +48,12 @@ namespace lvm {
                 _entry = _evaluate_state->_current_state->get_contract_entry(thinkyoung::blockchain::Address(address, AddressType::contract_address));
                 
                 if (!_entry.valid()) {
-                    push_result(fc::raw::pack(0));
+                    push_result(fc::raw::pack(false));
                     return;
                 }
                 
                 thinkyoung::blockchain::Code& code = _entry->code;
+                push_result(fc::raw::pack(true));
                 push_result(fc::raw::pack(code.abi));
                 push_result(fc::raw::pack(code.offline_abi));
                 
@@ -121,12 +122,17 @@ namespace lvm {
                 _entry = _evaluate_state->_current_state->get_contract_entry(contract_name);
                 
                 if (!_entry.valid()) {
+                    push_result(fc::raw::pack(false));
                     return;
                 }
                 
                 if (_entry.valid() && (_entry->code.byte_code.size() <= LUA_MODULE_BYTE_STREAM_BUF_SIZE)) {
+                    push_result(fc::raw::pack(true));
                     push_result(fc::raw::pack<Code>(_entry->code));
+                    return;
                 }
+                
+                push_result(fc::raw::pack(false));
                 
             } catch (const fc::exception& e) {
                 err_num = e.code();
@@ -143,11 +149,17 @@ namespace lvm {
                              thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
                              
                 if (!_entry.valid()) {
+                    push_result(fc::raw::pack(false));
                     return;
                 }
                 
                 if (_entry.valid() && (_entry->code.byte_code.size() <= LUA_MODULE_BYTE_STREAM_BUF_SIZE)) {
+                    push_result(fc::raw::pack(true));
                     push_result(fc::raw::pack<Code>(_entry->code));
+                    return;
+                    
+                } else {
+                    push_result(fc::raw::pack(false));
                 }
                 
             } catch (const fc::exception& e) {
@@ -157,10 +169,10 @@ namespace lvm {
         
         void LvmInterface::get_storage_value_from_thinkyoung(const std::string& contract_name, const std::string& storage_name) {
             try {
-                GluaStorageValue null_storage;
+                StorageDataType null_storage;
                 
                 if (_evaluate_state == nullptr) {
-                    push_result(fc::raw::pack<GluaStorageValue>(null_storage));
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                     return;
                 }
@@ -168,7 +180,7 @@ namespace lvm {
                 _entry = _evaluate_state->_current_state->get_contract_entry(contract_name);
                 
                 if (!_entry.valid()) {
-                    push_result(fc::raw::pack<GluaStorageValue>(null_storage));
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
                     return;
                 }
                 
@@ -181,10 +193,10 @@ namespace lvm {
         
         void LvmInterface::get_storage_value_from_thinkyoung_by_address(const std::string& contract_address, const std::string& storage_name) {
             try {
-                GluaStorageValue null_storage;
+                StorageDataType null_storage;
                 
                 if (_evaluate_state == nullptr) {
-                    push_result(fc::raw::pack<GluaStorageValue>(null_storage));
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                     return;
                 }
@@ -193,14 +205,14 @@ namespace lvm {
                             thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
                             
                 if (!entry.valid()) {
-                    push_result(fc::raw::pack<GluaStorageValue>(null_storage));
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
                     return;
                 }
                 
                 auto iter = entry->contract_storages.find(std::string(storage_name));
                 
                 if (iter == entry->contract_storages.end()) {
-                    push_result(fc::raw::pack<GluaStorageValue>(null_storage));
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
                     return;
                 }
                 
@@ -230,9 +242,11 @@ namespace lvm {
                 //if (!balance_entry.valid())
                 //    FC_CAPTURE_AND_THROW(unknown_balance_entry, ("Get balance entry failed"));
                 
-                if (!balance_entry.valid())
+                if (!balance_entry.valid()) {
+                    push_result(fc::raw::pack(0));
                     return ;
-                    
+                }
+                
                 oAssetEntry asset_entry = _chain_interface->get_asset_entry(balance_entry->asset_id());
                 
                 if (!asset_entry.valid() || asset_entry->id != 0)
@@ -261,6 +275,7 @@ namespace lvm {
                     return;
                 }
                 
+                push_result(fc::raw::pack(1));
                 push_result(fc::raw::pack(fee.amount));
                 
             } catch (const fc::exception& e) {
@@ -287,7 +302,8 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                 }
                 
-                push_result(fc::raw::pack(_evaluate_state->p_result_trx.id().hash(_chain_interface->get_current_random_seed())._hash[2]));
+                uint32_t ret = _evaluate_state->p_result_trx.id().hash(_chain_interface->get_current_random_seed())._hash[2];
+                push_result(fc::raw::pack(ret));
                 
             } catch (const fc::exception& e) {
                 err_num = e.code();
@@ -311,7 +327,8 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                 }
                 
-                push_result(fc::raw::pack(_chain_interface->get_head_block_num()));
+                uint32_t ret = _chain_interface->get_head_block_num();
+                push_result(fc::raw::pack(ret));
                 
             } catch (const fc::exception& e) {
                 err_num = e.code();
@@ -323,14 +340,13 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                 }
                 
-                int target = _chain_interface->get_head_block_num() + next;
+                uint32_t target = _chain_interface->get_head_block_num() + next;
                 
                 if (target < next) {
-                    push_result(fc::raw::pack(0));
-                    
-                } else {
-                    push_result(fc::raw::pack(target));
+                    target = 0;
                 }
+                
+                push_result(fc::raw::pack(target));
                 
             } catch (fc::exception& e) {
                 err_num = e.code();
@@ -339,8 +355,11 @@ namespace lvm {
         }
         void LvmInterface::get_waited(uint32_t num) {
             try {
+                int32_t ret;
+                
                 if (num <= 1) {
-                    push_result(fc::raw::pack(-2));
+                    ret = -2;
+                    push_result(fc::raw::pack(ret));
                     return;
                 }
                 
@@ -349,7 +368,8 @@ namespace lvm {
                 }
                 
                 if (_chain_interface->get_head_block_num() < num) {
-                    push_result(fc::raw::pack(-1));
+                    ret = -1;
+                    push_result(fc::raw::pack(ret));
                     return ;
                 }
                 
@@ -366,14 +386,17 @@ namespace lvm {
                     _hash = _hash.hash(_header.previous_secret);
                 }
                 
-                push_result(fc::raw::pack(_hash._hash[3] % (1 << 31 - 1)));
+                ret = 1;
+                push_result(fc::raw::pack(ret));
+                ret = _hash._hash[3] % (1 << 31 - 1);
+                push_result(fc::raw::pack(ret));
                 
             } catch (const fc::exception& e) {
                 err_num = e.code();
             }
         }
         
-        void LvmInterface::commit_storage_changes_to_thinkyoung(AllContractsChangesMapRPC& change_items) {
+        void LvmInterface::commit_storage_changes_to_thinkyoung(AllStorageDataChange& change_items) {
             try {
                 if (!_evaluate_state || !(_chain_interface = _evaluate_state->_current_state)) {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
@@ -382,17 +405,8 @@ namespace lvm {
                 for (auto all_con_chg_iter = change_items.begin(); all_con_chg_iter != change_items.end(); ++all_con_chg_iter) {
                     StorageOperation storage_op;
                     std::string contract_id = all_con_chg_iter->first;
-                    ContractChangesMap contract_change = all_con_chg_iter->second;
+                    storage_op.contract_change_storages=all_con_chg_iter->second;
                     storage_op.contract_id = Address(contract_id, AddressType::contract_address);
-                    
-                    for (auto con_chg_iter = contract_change.begin(); con_chg_iter != contract_change.end(); ++con_chg_iter) {
-                        std::string contract_name = con_chg_iter->first;
-                        StorageDataChangeType storage_change;
-                        storage_change.storage_before = StorageDataType::get_storage_data_from_lua_storage(con_chg_iter->second.before);
-                        storage_change.storage_after = StorageDataType::get_storage_data_from_lua_storage(con_chg_iter->second.after);
-                        storage_op.contract_change_storages.insert(make_pair(contract_name, storage_change));
-                    }
-                    
                     _evaluate_state->p_result_trx.push_storage_operation(storage_op);
                 }
                 
@@ -419,15 +433,18 @@ namespace lvm {
                 
                 if (!Address::is_valid(contract_address, CONTRACT_ADDRESS_PREFIX)) {
                     push_result(fc::raw::pack(-3));
+                    return;
                 }
                 
                 if (!Address::is_valid(to_addr, ALP_ADDRESS_PREFIX)) {
                     push_result(fc::raw::pack(-4));
+                    return;
                 }
                 
                 _evaluate_state->transfer_asset_from_contract(amount, asset_type, Address(contract_address,
                         AddressType::contract_address), Address(to_addr, AddressType::alp_address));
                 _evaluate_state->_contract_balance_remain -= amount;
+                push_result(fc::raw::pack(0));
                 
             } catch (const fc::exception& e) {
                 err_num = e.code();
@@ -442,12 +459,14 @@ namespace lvm {
                 
                 if (!_evaluate_state->_current_state->is_valid_account_name(to_account_name)) {
                     push_result(fc::raw::pack(-7));
+                    return;
                 }
                 
                 auto acc_entry = _evaluate_state->_current_state->get_account_entry(to_account_name);
                 
                 if (!acc_entry.valid()) {
                     push_result(fc::raw::pack(-7));
+                    return;
                 }
                 
                 transfer_from_contract_to_address(contract_address, acc_entry->owner_address().AddressToString(), asset_type, amount);
