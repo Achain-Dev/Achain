@@ -471,6 +471,9 @@
     <ClCompile Include="libraries\contract\task_dispatcher.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="libraries\lvm\lvm_interface.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libraries\include\api\ApiMetadata.hpp">
@@ -1029,6 +1032,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="libraries\include\contract\task_dispatcher.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\lvm\lvm_interface.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
