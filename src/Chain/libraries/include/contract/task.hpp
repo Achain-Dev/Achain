@@ -93,6 +93,7 @@ struct TaskImplResult : public TaskBase {
     virtual  void  func2() {};
   public:
     uint64_t      error_code;
+    uint64_t      execute_count;
     std::string   error_msg;
     std::string   json_string;
 };
@@ -385,9 +386,9 @@ FC_REFLECT_DERIVED(CallContractOfflineTask, (TaskBase), (statevalue)(num_limit)
                    (str_caller)(str_caller_address)(str_contract_address)
                    (str_contract_id)(str_method)(str_args)(contract_code))
 
-FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params))
+FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params)(statevalue))
 FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(params)(ret)(err_num))
-FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(error_msg)(json_string))
+FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(execute_count)(error_msg)(json_string))
 FC_REFLECT_DERIVED(CompileTaskResult, (TaskImplResult), (gpc_path_file))
 FC_REFLECT_DERIVED(RegisterTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(CallTaskResult, (TaskImplResult))

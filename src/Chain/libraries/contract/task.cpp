@@ -34,6 +34,7 @@ RegisterTaskResult::RegisterTaskResult(TaskBase* task) {
     this->task_from = registerTask_p->task_from;
     this->task_id = registerTask_p->task_id;
     this->task_type = registerTask_p->task_type;
+    this->execute_count = registerTask_p->execute_count;
 }
 
 CallTaskResult::CallTaskResult(TaskBase* task) {
@@ -139,12 +140,29 @@ LuaRequestTask::LuaRequestTask(TaskBase* task) {
     if (!task) {
         return;
     }
+    
+    LuaRequestTask* requestTask_p = (LuaRequestTask*)task;
+    this->method = requestTask_p->method;
+    this->params = requestTask_p->params;
+    this->statevalue = requestTask_p->statevalue;
+    this->task_from = requestTask_p->task_from;
+    this->task_id = requestTask_p->task_id;
+    this->task_type = requestTask_p->task_type;
 }
 
 LuaRequestTaskResult::LuaRequestTaskResult(TaskBase* task) {
     if (!task) {
         return;
     }
+    
+    LuaRequestTaskResult* requestResult_p = (LuaRequestTaskResult*)task;
+    this->err_num = requestResult_p->err_num;
+    this->method = requestResult_p->method;
+    this->params = requestResult_p->params;
+    this->ret = requestResult_p->ret;
+    this->task_from = requestResult_p->task_from;
+    this->task_id = requestResult_p->task_id;
+    this->task_type = requestResult_p->task_type;
 }
 
 void TaskImplResult::process_result(RpcClientMgr* msg_p) {
