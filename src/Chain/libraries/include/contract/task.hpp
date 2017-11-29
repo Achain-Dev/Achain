@@ -295,7 +295,12 @@ struct LuaRequestTaskResult : public TaskBase {
         task_from = FROM_RPC;
     }
     
-    LuaRequestTaskResult(TaskBase* task);
+    LuaRequestTaskResult(LuaRequestTask* task) {
+        task_type = LUA_REQUEST_RESULT_TASK;
+        task_from = FROM_RPC;
+        task_id = task->task_id;
+        method = task->method;
+    }
     
     LUA_REQUEST_METHOD     method;
     std::vector<std::vector<char>> params;
