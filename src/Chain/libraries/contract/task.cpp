@@ -155,42 +155,6 @@ CallContractOfflineTaskResult::CallContractOfflineTaskResult(TaskBase* base) {
     }
 }
 
-
-LuaRequestTask::LuaRequestTask(TaskBase* task) {
-    if (!task) {
-        return;
-    }
-    
-    LuaRequestTask* requestTask_p = (LuaRequestTask*)task;
-    
-    if (this != requestTask_p) {
-        method = requestTask_p->method;
-        params = requestTask_p->params;
-        statevalue = requestTask_p->statevalue;
-        task_from = requestTask_p->task_from;
-        task_id = requestTask_p->task_id;
-        task_type = requestTask_p->task_type;
-    }
-}
-
-LuaRequestTaskResult::LuaRequestTaskResult(TaskBase* task) {
-    if (!task) {
-        return;
-    }
-    
-    LuaRequestTaskResult* requestResult_p = (LuaRequestTaskResult*)task;
-    
-    if (this != requestResult_p) {
-        err_num = requestResult_p->err_num;
-        method = requestResult_p->method;
-        params = requestResult_p->params;
-        ret = requestResult_p->ret;
-        task_from = requestResult_p->task_from;
-        task_id = requestResult_p->task_id;
-        task_type = requestResult_p->task_type;
-    }
-}
-
 void TaskImplResult::process_result(RpcClientMgr* msg_p) {
     if (msg_p) {
         msg_p->set_last_receive_time();
