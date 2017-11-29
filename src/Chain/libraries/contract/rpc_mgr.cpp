@@ -210,7 +210,11 @@ void RpcClientMgr::read_loop() {
             //receive response from lvm
             result_p = parse_msg(m);
             
-            if (result_p->task_type == LUA_REQUEST_RESULT_TASK) {
+            if (result_p == nullptr) {
+                continue;
+            }
+            
+            if (result_p->task_type == LUA_REQUEST_TASK) {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
                 delete (LuaRequestTask*)result_p;
                 

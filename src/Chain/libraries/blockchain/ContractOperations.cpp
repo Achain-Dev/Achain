@@ -713,8 +713,9 @@ namespace thinkyoung {
                     FC_CAPTURE_AND_THROW(insufficient_funds, ("no enough balance"));
                 }
             }
-
-            RegisterTask _registertask;
+            
+            auto _registertask = std::make_shared<RegisterTask>();
+            RegisterTaskResult* pregister_result = nullptr;
             ContractEntry entry;
             entry.owner = owner;
             entry.code = contract_code;
@@ -722,79 +723,88 @@ namespace thinkyoung {
             entry.state = ContractState::valid;
             entry.id = get_contract_id();
             entry.trx_id = eval_state.trx.id();
-
+            GluaStateValue statevalue;
+            statevalue.pointer_value = &eval_state;
+            int limit = eval_state._current_state->get_limit(0, initcost.amount);
+            
             if (this->contract_code.code_hash != this->contract_code.GetHash()) {
                 FC_CAPTURE_AND_THROW(code_hash_error, ("code hash not match"));
             }
-
+            
             eval_state._current_state->store_contract_entry(entry);
             //记录合约注册者
             eval_state.contract_operator = owner;
             eval_state.required_fees = transaction_fee + eval_state._current_state->get_contract_register_fee(this->contract_code);
-
+            
             if (!eval_state.skipexec) {
-                lua::lib::GluaStateScope scope;
-                int exception_code = 0;
                 string exception_msg;
-
+                int exception_code = 0;
+                int execute_count = 0;
+                FC_ASSERT(eval_state.p_result_trx.operations.size() == 0);
+                
                 try {
-                    FC_ASSERT(eval_state.p_result_trx.operations.size() == 0);
-                    GluaStateValue statevalue;
-                    statevalue.pointer_value = &eval_state;
-                    lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
-                    lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(this->owner)).c_str());
-                    lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(this->owner))).c_str());
-                    lua::api::global_glua_chain_api->clear_exceptions(scope.L());
-                    int limit = eval_state._current_state->get_limit(0, initcost.amount);
-
-                    if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
-                        //register task info
-                        _registertask.num_limit = limit;
-                        _registertask.statevalue = reinterpret_cast<intptr_t>(&statevalue);
-                        _registertask.str_caller = (string)(this->owner);
-                        _registertask.str_caller_address = (string)(Address(this->owner));
-                        _registertask.contract_code = this->contract_code;
-                        _registertask.str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
-                        _registertask.gpc_code = "";                        //need compile contract file path
-                        thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                        //TODO
-                        oContractEntry entry = cur_state->get_contract_entry(Address(_registertask.str_contract_address, AddressType::contract_address));
-
-                        if (entry.valid()) {
-                            _registertask.str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
-                        }
-
-                        TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_registertask);                            //call interface to send msg to LVM
-                    }
-
+                    bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled();
+                    
                     if (limit <= 0) {
                         FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
                     }
-
-                    scope.set_instructions_limit(limit);
+                    
                     eval_state.p_result_trx.operations.resize(0);
                     eval_state.p_result_trx.push_transaction(eval_state.trx);
                     eval_state.p_result_trx.expiration = eval_state.trx.expiration;
                     eval_state.p_result_trx.operations.push_back(ContractInfoOperation(get_contract_id(), owner, contract_code, register_time));
-                    scope.execute_contract_init_by_address(get_contract_id().AddressToString(AddressType::contract_address).c_str(), nullptr, nullptr);
-                    exception_code = lua::lib::get_lua_state_value(scope.L(), "exception_code").int_value;
-
-                    if (exception_code > 0) {
-                        exception_msg = ((char*)lua::lib::get_lua_state_value(scope.L(), "exception_msg").string_value);
-
-                        if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
-                            FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
-
-                        } else {
-                            thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
-                            throw con_err;
+                    
+                    if (enable_lvm) {
+                        //register task info
+                        _registertask->num_limit = limit;
+                        _registertask->statevalue = reinterpret_cast<intptr_t>(&statevalue);
+                        _registertask->str_caller = (string)(this->owner);
+                        _registertask->str_caller_address = (string)(Address(this->owner));
+                        _registertask->contract_code = this->contract_code;
+                        _registertask->str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
+                        _registertask->gpc_code = "";                        //need compile contract file path
+                        thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
+                        oContractEntry entry = cur_state->get_contract_entry(Address(_registertask->str_contract_address, AddressType::contract_address));
+                        
+                        if (entry.valid()) {
+                            _registertask->str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
                         }
+                        
+                        pregister_result = (RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());                            //call interface to send msg to LVM
+                        exception_code = pregister_result->error_code;
+                        execute_count = pregister_result->execute_count;
+                        exception_msg = pregister_result->error_msg;
+                        
+                    } else {
+                        lua::lib::GluaStateScope scope;
+                        lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
+                        lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(this->owner)).c_str());
+                        lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(this->owner))).c_str());
+                        lua::api::global_glua_chain_api->clear_exceptions(scope.L());
+                        scope.set_instructions_limit(limit);
+                        scope.execute_contract_init_by_address(get_contract_id().AddressToString(AddressType::contract_address).c_str(), nullptr, nullptr);
+                        exception_code = lua::lib::get_lua_state_value(scope.L(), "exception_code").int_value;
+                        
+                        if (exception_code > 0) {
+                            exception_msg = ((char*)lua::lib::get_lua_state_value(scope.L(), "exception_msg").string_value);
+                            
+                            if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR)
+                                FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+                                
+                            else {
+                                thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                throw con_err;
+                            }
+                        }
+                        
+                        execute_count = scope.get_instructions_executed_count();
                     }
-
-                    ShareType exec_cost = eval_state._current_state->get_amount(scope.get_instructions_executed_count()).amount;
+                    
+                    ShareType exec_cost = eval_state._current_state->get_amount(execute_count).amount;
                     eval_state.exec_cost = Asset(exec_cost, 0);
-                    FC_ASSERT(exec_cost <= initcost.amount&&exec_cost > 0, "costs of execution can be only between 0 and initcost");
-
+                    int numamount = initcost.amount;
+                    //FC_ASSERT(exec_cost <= initcost.amount&&exec_cost > 0, "costs of execution can be only between 0 and initcost");
+                    
                     if (!eval_state.evaluate_contract_testing) {
                         ShareType required = get_amount_sum(exec_cost, eval_state._current_state->get_default_margin().amount);
                         required = get_amount_sum(required, register_fee);
@@ -829,8 +839,8 @@ namespace thinkyoung {
                         if (eval_state.throw_exec_exception) {
                             FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_execute_error, (exception_msg));
                         }
-
-                        Asset exec_cost = eval_state._current_state->get_amount(scope.get_instructions_executed_count());
+                        
+                        Asset exec_cost = eval_state._current_state->get_amount(execute_count);
                         std::map<BalanceIdType, ShareType> withdraw_map;
                         withdraw_enough_balances(balances, (exec_cost + eval_state.required_fees).amount, withdraw_map);
                         eval_state.p_result_trx.operations.resize(1);
