@@ -241,20 +241,18 @@ namespace thinkyoung {
                                 _upgradetask.str_caller_address = ((string)(Address(contract_entry->owner))).c_str();
                                 _upgradetask.str_contract_address = this->id.AddressToString(AddressType::contract_address).c_str();
                                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                                oContractEntry entry = cur_state->get_contract_entry(_upgradetask.str_contract_address);
+                                oContractEntry entry = cur_state->get_contract_entry(Address(_upgradetask.str_contract_address, AddressType::contract_address));
 
                                 if (entry.valid()) {
                                     string address_str = entry->id.AddressToString(AddressType::contract_address);
                                     _upgradetask.str_contract_id = address_str.c_str();
-                                    //*address_size = address_str.length();
-                                    //strncpy(address, address_str.c_str(), CONTRACT_ID_MAX_LENGTH - 1);
-                                    //address[CONTRACT_ID_MAX_LENGTH - 1] = '\0';
                                     //
                                     Code& _code = entry->code;
                                     _upgradetask.contract_code = _code;
                                 }
 
-                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);                            //call interface to send msg to LVM
+                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);
+                                //call interface to send msg to LVM
                                 //TODO
                                 // to get the result returned by lvm
 
@@ -494,14 +492,11 @@ namespace thinkyoung {
                                 _destroytask.str_caller_address = ((string)(Address(entry->owner))).c_str();
                                 _destroytask.str_contract_address = id.AddressToString(AddressType::contract_address).c_str();
                                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                                oContractEntry entry = cur_state->get_contract_entry(_destroytask.str_contract_address);
+                                oContractEntry entry = cur_state->get_contract_entry(Address(_destroytask.str_contract_address, AddressType::contract_address));
 
                                 if (entry.valid()) {
                                     string address_str = entry->id.AddressToString(AddressType::contract_address);
                                     _destroytask.str_contract_id = address_str.c_str();
-                                    //*address_size = address_str.length();
-                                    //strncpy(address, address_str.c_str(), CONTRACT_ID_MAX_LENGTH - 1);
-                                    //address[CONTRACT_ID_MAX_LENGTH - 1] = '\0';
                                     Code& _code = entry->code;
                                     _destroytask.contract_code = _code;
                                 }
@@ -762,7 +757,8 @@ namespace thinkyoung {
                         _registertask.str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
                         _registertask.gpc_code = "";                        //need compile contract file path
                         thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                        oContractEntry entry = cur_state->get_contract_entry(_registertask.str_contract_address);
+                        //TODO
+                        oContractEntry entry = cur_state->get_contract_entry(Address(_registertask.str_contract_address, AddressType::contract_address));
 
                         if (entry.valid()) {
                             _registertask.str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
@@ -944,14 +940,11 @@ namespace thinkyoung {
                             _calltask.str_method = method.c_str();
                             _calltask.str_args = this->args.c_str();
                             thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                            oContractEntry entry = cur_state->get_contract_entry(_calltask.str_contract_address);
+                            oContractEntry entry = cur_state->get_contract_entry(Address(_calltask.str_contract_address, AddressType::contract_address));
 
                             if (entry.valid()) {
                                 string address_str = entry->id.AddressToString(AddressType::contract_address);
                                 _calltask.str_contract_id = address_str.c_str();
-                                //*address_size = address_str.length();
-                                //strncpy(address, address_str.c_str(), CONTRACT_ID_MAX_LENGTH - 1);
-                                //address[CONTRACT_ID_MAX_LENGTH - 1] = '\0';
                                 Code& _code = entry->code;
                                 _calltask.contract_code = _code;
                             }
@@ -1187,14 +1180,11 @@ namespace thinkyoung {
                                 _transfertask.str_contract_address = this->contract_id.AddressToString(AddressType::contract_address).c_str();
                                 _transfertask.str_args = transfer_str.c_str();
                                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                                oContractEntry entry = cur_state->get_contract_entry(_transfertask.str_contract_address);
+                                oContractEntry entry = cur_state->get_contract_entry(Address(_transfertask.str_contract_address, AddressType::contract_address));
 
                                 if (entry.valid()) {
                                     string address_str = entry->id.AddressToString(AddressType::contract_address);
                                     _transfertask.str_contract_id = address_str.c_str();
-                                    //*address_size = address_str.length();
-                                    //strncpy(address, address_str.c_str(), CONTRACT_ID_MAX_LENGTH - 1);
-                                    //address[CONTRACT_ID_MAX_LENGTH - 1] = '\0';
                                     //
                                     Code& _code = entry->code;
                                     _transfertask.contract_code = _code;
