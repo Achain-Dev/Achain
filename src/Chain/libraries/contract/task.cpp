@@ -106,6 +106,23 @@ DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
     }
 }
 
+LuaRequestTask::LuaRequestTask(TaskBase* task) {
+    if (!task) {
+        return;
+    }
+    
+    LuaRequestTask* lua_requtst_p = (LuaRequestTask*)task;
+    
+    if (this != lua_requtst_p) {
+        statevalue = lua_requtst_p->statevalue;
+        method = lua_requtst_p->method;
+        task_from = lua_requtst_p->task_from;
+        task_id = lua_requtst_p->task_id;
+        task_type = lua_requtst_p->task_type;
+        params = lua_requtst_p->params;
+    }
+}
+
 CompileScriptTaskResult::CompileScriptTaskResult(TaskBase* base) {
     if (!base) {
         return;
