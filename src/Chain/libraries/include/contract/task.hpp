@@ -139,6 +139,8 @@ struct DestroyTaskResult : public TaskImplResult {
 struct CompileScriptTaskResult : TaskImplResult {
     CompileScriptTaskResult() {}
     CompileScriptTaskResult(TaskBase* task);
+    
+    std::string  script_path_file;
 };
 
 struct HandleEventsTaskResult : TaskImplResult {
@@ -293,7 +295,12 @@ struct LuaRequestTaskResult : public TaskBase {
         task_from = FROM_RPC;
     }
     
-    LuaRequestTaskResult(TaskBase* task);
+    LuaRequestTaskResult(LuaRequestTask* task) {
+        task_type = LUA_REQUEST_RESULT_TASK;
+        task_from = FROM_RPC;
+        task_id = task->task_id;
+        method = task->method;
+    }
     
     LUA_REQUEST_METHOD     method;
     std::vector<std::vector<char>> params;
@@ -395,7 +402,7 @@ FC_REFLECT_DERIVED(CallTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(TransferTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(UpgradeTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(DestroyTaskResult, (TaskImplResult))
-FC_REFLECT_DERIVED(CompileScriptTaskResult, (TaskImplResult))
+FC_REFLECT_DERIVED(CompileScriptTaskResult, (TaskImplResult), (script_path_file))
 FC_REFLECT_DERIVED(HandleEventsTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(CallContractOfflineTaskResult, (TaskImplResult))
 
