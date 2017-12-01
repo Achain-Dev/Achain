@@ -267,21 +267,22 @@ void RpcClientMgr::set_value(TaskBase* task_result) {
 void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr prom) {
     Message m(generate_message(task_msg));
     
-    try {
+    fc::sync_call(_socket_thread_ptr.get(), [&](){ try {
         send_to_lvm(m);
-        
+
         //if msg from FROM_RPC, store the task and promise;when receive the result,promosi->set_value
         //if msg from FROM_LUA_TO_CHAIN, do not store,just send the msg to LVM
         if (task_msg->task_from == FROM_RPC) {
             store_request(task_msg, prom);
         }
-        
-    } catch (thinkyoung::blockchain::socket_send_error& e) {
+
+    }
+    catch (thinkyoung::blockchain::socket_send_error& e) {
         elog("async socket send message exception");
         reconnect_to_server();
         FC_THROW_EXCEPTION(thinkyoung::blockchain::async_socket_error, \
-                           "post msg error. ");
-    }
+            "post msg error. ");
+    }; }, "post_message");
 }
 
 void RpcClientMgr::close_rpc_client() {
