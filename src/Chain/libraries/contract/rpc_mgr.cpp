@@ -101,6 +101,7 @@ void RpcClientMgr::start_loop() {
     //if the interval bigger than TIME_INTERVAL, the lvm maybe error, then restart the lvm
     if (interval > TIME_INTERVAL) {
         //start lvm
+        _rpc_client_ptr->close();
         FC_ASSERT(_client_ptr);
         thinkyoung::lvm::LvmMgrPtr lvm_mgr = _client_ptr->get_lvm_mgr();
         FC_ASSERT(lvm_mgr);
@@ -126,20 +127,6 @@ void RpcClientMgr::connect_to_server() {
         return;
         
     _rpc_client_ptr->connect_to(_end_point);
-}
-
-void RpcClientMgr::reconnect_to_server() {
-    int times = 0;
-    
-    while (times < RECONNECT_TIMES) {
-        try {
-            start();
-            break;
-            
-        } catch (fc::exception& e) {
-            times++;
-        }
-    }
 }
 
 //receive msg
@@ -228,7 +215,6 @@ void RpcClientMgr::read_loop() {
         
     } catch (thinkyoung::blockchain::socket_read_error& e) {
         elog("socket read message error.");
-        reconnect_to_server();
     }
 }
 
@@ -279,7 +265,6 @@ void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr prom
     }
     catch (thinkyoung::blockchain::socket_send_error& e) {
         elog("async socket send message exception");
-        reconnect_to_server();
         FC_THROW_EXCEPTION(thinkyoung::blockchain::async_socket_error, \
             "post msg error. ");
     }; }, "post_message");

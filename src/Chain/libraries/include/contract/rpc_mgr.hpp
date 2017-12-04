@@ -48,7 +48,6 @@ class RpcClientMgr {
   private:
     void start();
     void read_loop();
-    void reconnect_to_server();
     Message generate_message(TaskBase*);
     void send_to_lvm(Message&);
     void read_from_lvm(Message&);
