@@ -5753,6 +5753,38 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        std::vector<thinkyoung::blockchain::EventOperation> CommonApiClient::call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
+        {
+            ilog("received RPC call: call_contract_local_emit(${contract}, ${caller_name}, ${function_name}, ${params})", ("contract", contract)("caller_name", caller_name)("function_name", function_name)("params", params));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(contract) );
+                args.push_back( fc::variant(caller_name) );
+                args.push_back( fc::variant(function_name) );
+                args.push_back( fc::variant(params) );
+                call_id = glog->log_call_started( this, "call_contract_local_emit", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call call_contract_local_emit finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                std::vector<thinkyoung::blockchain::EventOperation> result =             get_impl()->call_contract_local_emit(contract, caller_name, function_name, params);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "call_contract_local_emit", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         std::string CommonApiClient::call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
         {
             ilog("received RPC call: call_contract_offline(${contract}, ${caller_name}, ${function_name}, ${params})", ("contract", contract)("caller_name", caller_name)("function_name", function_name)("params", params));

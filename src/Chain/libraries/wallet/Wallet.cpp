@@ -3119,6 +3119,30 @@ namespace thinkyoung {
             return asset_vec;
         }
         
+        std::vector<thinkyoung::blockchain::EventOperation> Wallet::call_contract_local_emit(const string caller, const ContractIdType contract, const string method, const string& arguments) {
+            FC_ASSERT(is_open(), "Wallet not open!");
+            FC_ASSERT(is_unlocked(), "Wallet not unlock!");
+            FC_ASSERT(my->is_receive_account(caller), "Invalid account name");
+            Asset fee = get_transaction_fee(0);
+            Asset asset_for_exec = my->_blockchain->get_amount(CONTRACT_TESTING_LIMIT_MAX);
+            auto trans_entry = call_contract(caller,
+                                             contract,
+                                             method,
+                                             arguments,
+                                             ALP_BLOCKCHAIN_SYMBOL,
+                                             (double)asset_for_exec.amount / ALP_BLOCKCHAIN_PRECISION,
+                                             true);
+            vector<EventOperation> ops;
+            
+            for (const auto& op : trans_entry.trx.operations) {
+                if (op.type == OperationTypeEnum::event_op_type) {
+                    ops.push_back(op.as<EventOperation>());
+                }
+            }
+            
+            return ops;
+        }
+        
         std::string Wallet::call_contract_offline(const string caller, const ContractIdType contract, const string method, const string& arguments) {
             FC_ASSERT(is_open(), "Wallet not open!");
             FC_ASSERT(is_unlocked(), "Wallet not unlock!");
@@ -3564,6 +3588,7 @@ namespace thinkyoung {
             
             return  res;
         }
+        
         WalletTransactionEntry Wallet::transfer_asset_to_address(
             const string& real_amount_to_transfer,
             const string& amount_to_transfer_symbol,

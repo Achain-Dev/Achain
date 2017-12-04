@@ -933,6 +933,11 @@ namespace thinkyoung {
             fc::variant result = get_json_connection()->async_call("call_contract_testing", std::vector<fc::variant>{fc::variant(contract), fc::variant(caller_name), fc::variant(function_name), fc::variant(params)}).wait();
             return result.as<std::vector<thinkyoung::blockchain::Asset>>();
         }
+        std::vector<thinkyoung::blockchain::EventOperation> CommonApiRpcClient::call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
+        {
+            fc::variant result = get_json_connection()->async_call("call_contract_local_emit", std::vector<fc::variant>{fc::variant(contract), fc::variant(caller_name), fc::variant(function_name), fc::variant(params)}).wait();
+            return result.as<std::vector<thinkyoung::blockchain::EventOperation>>();
+        }
         std::string CommonApiRpcClient::call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
         {
             fc::variant result = get_json_connection()->async_call("call_contract_offline", std::vector<fc::variant>{fc::variant(contract), fc::variant(caller_name), fc::variant(function_name), fc::variant(params)}).wait();
