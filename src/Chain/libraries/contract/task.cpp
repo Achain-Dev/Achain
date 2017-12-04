@@ -14,12 +14,15 @@ CompileTaskResult::CompileTaskResult(TaskBase* task) {
     }
     
     CompileTaskResult* compileTask_p = (CompileTaskResult*)task;
-    this->task_from = task->task_from;
-    this->task_id = task->task_id;
-    this->task_type = task->task_type;
-    this->error_code = compileTask_p->error_code;
-    this->error_msg = compileTask_p->error_msg;
-    this->gpc_path_file = compileTask_p->gpc_path_file;
+    
+    if (this != compileTask_p) {
+        task_from = task->task_from;
+        task_id = task->task_id;
+        task_type = task->task_type;
+        error_code = compileTask_p->error_code;
+        error_msg = compileTask_p->error_msg;
+        gpc_path_file = compileTask_p->gpc_path_file;
+    }
 }
 
 RegisterTaskResult::RegisterTaskResult(TaskBase* task) {
@@ -27,13 +30,16 @@ RegisterTaskResult::RegisterTaskResult(TaskBase* task) {
         return;
     }
     
-    //TODO
     RegisterTaskResult* registerTask_p = (RegisterTaskResult*)task;
-    this->error_code = registerTask_p->error_code;
-    this->error_msg = registerTask_p->error_msg;
-    this->task_from = registerTask_p->task_from;
-    this->task_id = registerTask_p->task_id;
-    this->task_type = registerTask_p->task_type;
+    
+    if (this != registerTask_p) {
+        error_code = registerTask_p->error_code;
+        error_msg = registerTask_p->error_msg;
+        task_from = registerTask_p->task_from;
+        task_id = registerTask_p->task_id;
+        task_type = registerTask_p->task_type;
+        execute_count = registerTask_p->execute_count;
+    }
 }
 
 CallTaskResult::CallTaskResult(TaskBase* task) {
@@ -41,13 +47,15 @@ CallTaskResult::CallTaskResult(TaskBase* task) {
         return;
     }
     
-    //TODO
     CallTaskResult* callTask_p = (CallTaskResult*)task;
-    this->error_code = callTask_p->error_code;
-    this->error_msg = callTask_p->error_msg;
-    this->task_from = callTask_p->task_from;
-    this->task_id = callTask_p->task_id;
-    this->task_type = callTask_p->task_type;
+    
+    if (this != callTask_p) {
+        error_code = callTask_p->error_code;
+        error_msg = callTask_p->error_msg;
+        task_from = callTask_p->task_from;
+        task_id = callTask_p->task_id;
+        task_type = callTask_p->task_type;
+    }
 }
 
 TransferTaskResult::TransferTaskResult(TaskBase* task) {
@@ -55,13 +63,15 @@ TransferTaskResult::TransferTaskResult(TaskBase* task) {
         return;
     }
     
-    //TODO
     TransferTaskResult* transferTask_p = (TransferTaskResult*)task;
-    this->error_code = transferTask_p->error_code;
-    this->error_msg = transferTask_p->error_msg;
-    this->task_from = transferTask_p->task_from;
-    this->task_id = transferTask_p->task_id;
-    this->task_type = transferTask_p->task_type;
+    
+    if (this != transferTask_p) {
+        error_code = transferTask_p->error_code;
+        error_msg = transferTask_p->error_msg;
+        task_from = transferTask_p->task_from;
+        task_id = transferTask_p->task_id;
+        task_type = transferTask_p->task_type;
+    }
 }
 
 UpgradeTaskResult::UpgradeTaskResult(TaskBase* task) {
@@ -69,13 +79,15 @@ UpgradeTaskResult::UpgradeTaskResult(TaskBase* task) {
         return;
     }
     
-    //TODO
     UpgradeTaskResult* upgradeTask_p = (UpgradeTaskResult*)task;
-    this->error_code = upgradeTask_p->error_code;
-    this->error_msg = upgradeTask_p->error_msg;
-    this->task_from = upgradeTask_p->task_from;
-    this->task_id = upgradeTask_p->task_id;
-    this->task_type = upgradeTask_p->task_type;
+    
+    if (this != upgradeTask_p) {
+        error_code = upgradeTask_p->error_code;
+        error_msg = upgradeTask_p->error_msg;
+        task_from = upgradeTask_p->task_from;
+        task_id = upgradeTask_p->task_id;
+        task_type = upgradeTask_p->task_type;
+    }
 }
 
 DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
@@ -83,13 +95,32 @@ DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
         return;
     }
     
-    //TODO
     DestroyTaskResult* destroyTask_p = (DestroyTaskResult*)task;
-    this->error_code = destroyTask_p->error_code;
-    this->error_msg = destroyTask_p->error_msg;
-    this->task_from = destroyTask_p->task_from;
-    this->task_id = destroyTask_p->task_id;
-    this->task_type = destroyTask_p->task_type;
+    
+    if (this != destroyTask_p) {
+        error_code = destroyTask_p->error_code;
+        error_msg = destroyTask_p->error_msg;
+        task_from = destroyTask_p->task_from;
+        task_id = destroyTask_p->task_id;
+        task_type = destroyTask_p->task_type;
+    }
+}
+
+LuaRequestTask::LuaRequestTask(TaskBase* task) {
+    if (!task) {
+        return;
+    }
+    
+    LuaRequestTask* lua_requtst_p = (LuaRequestTask*)task;
+    
+    if (this != lua_requtst_p) {
+        statevalue = lua_requtst_p->statevalue;
+        method = lua_requtst_p->method;
+        task_from = lua_requtst_p->task_from;
+        task_id = lua_requtst_p->task_id;
+        task_type = lua_requtst_p->task_type;
+        params = lua_requtst_p->params;
+    }
 }
 
 CompileScriptTaskResult::CompileScriptTaskResult(TaskBase* base) {
@@ -97,13 +128,16 @@ CompileScriptTaskResult::CompileScriptTaskResult(TaskBase* base) {
         return;
     }
     
-    //TODO
     CompileScriptTaskResult* compileResult_p = (CompileScriptTaskResult*)base;
-    this->error_code = compileResult_p->error_code;
-    this->error_msg = compileResult_p->error_msg;
-    this->task_from = compileResult_p->task_from;
-    this->task_id = compileResult_p->task_id;
-    this->task_type = compileResult_p->task_type;
+    
+    if (this != compileResult_p) {
+        error_code = compileResult_p->error_code;
+        error_msg = compileResult_p->error_msg;
+        task_from = compileResult_p->task_from;
+        task_id = compileResult_p->task_id;
+        task_type = compileResult_p->task_type;
+        script_path_file = compileResult_p->script_path_file;
+    }
 }
 
 HandleEventsTaskResult::HandleEventsTaskResult(TaskBase* base) {
@@ -111,13 +145,15 @@ HandleEventsTaskResult::HandleEventsTaskResult(TaskBase* base) {
         return;
     }
     
-    //TODO
     HandleEventsTaskResult* handleEventTask_p = (HandleEventsTaskResult*)base;
-    this->error_code = handleEventTask_p->error_code;
-    this->error_msg = handleEventTask_p->error_msg;
-    this->task_from = handleEventTask_p->task_from;
-    this->task_id = handleEventTask_p->task_id;
-    this->task_type = handleEventTask_p->task_type;
+    
+    if (this != handleEventTask_p) {
+        error_code = handleEventTask_p->error_code;
+        error_msg = handleEventTask_p->error_msg;
+        task_from = handleEventTask_p->task_from;
+        task_id = handleEventTask_p->task_id;
+        task_type = handleEventTask_p->task_type;
+    }
 }
 
 CallContractOfflineTaskResult::CallContractOfflineTaskResult(TaskBase* base) {
@@ -125,25 +161,14 @@ CallContractOfflineTaskResult::CallContractOfflineTaskResult(TaskBase* base) {
         return;
     }
     
-    //TODO
     CallContractOfflineTaskResult* callContractOfflineResult_p = (CallContractOfflineTaskResult*)base;
-    this->error_code = callContractOfflineResult_p->error_code;
-    this->error_msg = callContractOfflineResult_p->error_msg;
-    this->task_from = callContractOfflineResult_p->task_from;
-    this->task_id = callContractOfflineResult_p->task_id;
-    this->task_type = callContractOfflineResult_p->task_type;
-}
-
-
-LuaRequestTask::LuaRequestTask(TaskBase* task) {
-    if (!task) {
-        return;
-    }
-}
-
-LuaRequestTaskResult::LuaRequestTaskResult(TaskBase* task) {
-    if (!task) {
-        return;
+    
+    if (this != callContractOfflineResult_p) {
+        error_code = callContractOfflineResult_p->error_code;
+        error_msg = callContractOfflineResult_p->error_msg;
+        task_from = callContractOfflineResult_p->task_from;
+        task_id = callContractOfflineResult_p->task_id;
+        task_type = callContractOfflineResult_p->task_type;
     }
 }
 

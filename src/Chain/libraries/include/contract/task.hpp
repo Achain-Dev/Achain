@@ -93,6 +93,7 @@ struct TaskImplResult : public TaskBase {
     virtual  void  func2() {};
   public:
     uint64_t      error_code;
+    uint64_t      execute_count;
     std::string   error_msg;
     std::string   json_string;
 };
@@ -138,6 +139,8 @@ struct DestroyTaskResult : public TaskImplResult {
 struct CompileScriptTaskResult : TaskImplResult {
     CompileScriptTaskResult() {}
     CompileScriptTaskResult(TaskBase* task);
+    
+    std::string  script_path_file;
 };
 
 struct HandleEventsTaskResult : TaskImplResult {
@@ -282,7 +285,8 @@ struct LuaRequestTask : public TaskBase {
     LuaRequestTask(TaskBase* task);
     
     LUA_REQUEST_METHOD     method;
-    std::vector<fc::variant> params;
+    std::vector<std::vector<char>> params;
+    intptr_t statevalue;
 };
 
 struct LuaRequestTaskResult : public TaskBase {
@@ -291,10 +295,17 @@ struct LuaRequestTaskResult : public TaskBase {
         task_from = FROM_RPC;
     }
     
-    LuaRequestTaskResult(TaskBase* task);
+    LuaRequestTaskResult(LuaRequestTask* task) {
+        task_type = LUA_REQUEST_RESULT_TASK;
+        task_from = FROM_RPC;
+        task_id = task->task_id;
+        method = task->method;
+    }
     
     LUA_REQUEST_METHOD     method;
-    std::vector<fc::variant> result;
+    std::vector<std::vector<char>> params;
+    int ret;
+    int err_num;
 };
 
 FC_REFLECT_TYPENAME(LUA_TASK_TYPE)
@@ -382,16 +393,16 @@ FC_REFLECT_DERIVED(CallContractOfflineTask, (TaskBase), (statevalue)(num_limit)
                    (str_caller)(str_caller_address)(str_contract_address)
                    (str_contract_id)(str_method)(str_args)(contract_code))
 
-FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params))
-FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(result))
-FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(error_msg)(json_string))
+FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params)(statevalue))
+FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(params)(ret)(err_num))
+FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(execute_count)(error_msg)(json_string))
 FC_REFLECT_DERIVED(CompileTaskResult, (TaskImplResult), (gpc_path_file))
 FC_REFLECT_DERIVED(RegisterTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(CallTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(TransferTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(UpgradeTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(DestroyTaskResult, (TaskImplResult))
-FC_REFLECT_DERIVED(CompileScriptTaskResult, (TaskImplResult))
+FC_REFLECT_DERIVED(CompileScriptTaskResult, (TaskImplResult), (script_path_file))
 FC_REFLECT_DERIVED(HandleEventsTaskResult, (TaskImplResult))
 FC_REFLECT_DERIVED(CallContractOfflineTaskResult, (TaskImplResult))
 
