@@ -6024,6 +6024,56 @@ namespace thinkyoung {
             return fc::variant(result);
         }
 
+        fc::variant CommonApiRpcServer::call_contract_local_emit_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            verify_wallet_is_unlocked();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (contract)");
+            std::string contract = parameters[0].as<std::string>();
+            if (parameters.size() <= 1)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 2 (caller_name)");
+            std::string caller_name = parameters[1].as<std::string>();
+            if (parameters.size() <= 2)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 3 (function_name)");
+            std::string function_name = parameters[2].as<std::string>();
+            if (parameters.size() <= 3)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 4 (params)");
+            std::string params = parameters[3].as<std::string>();
+
+            std::vector<thinkyoung::blockchain::EventOperation> result = get_client()->call_contract_local_emit(contract, caller_name, function_name, params);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::call_contract_local_emit_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            verify_wallet_is_unlocked();
+            // done checking prerequisites
+
+            if (!parameters.contains("contract"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'contract'");
+            std::string contract = parameters["contract"].as<std::string>();
+            if (!parameters.contains("caller_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'caller_name'");
+            std::string caller_name = parameters["caller_name"].as<std::string>();
+            if (!parameters.contains("function_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'function_name'");
+            std::string function_name = parameters["function_name"].as<std::string>();
+            if (!parameters.contains("params"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'params'");
+            std::string params = parameters["params"].as<std::string>();
+
+            std::vector<thinkyoung::blockchain::EventOperation> result = get_client()->call_contract_local_emit(contract, caller_name, function_name, params);
+            return fc::variant(result);
+        }
+
         fc::variant CommonApiRpcServer::call_contract_offline_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
         {
             // check all of this method's prerequisites
@@ -9227,6 +9277,14 @@ namespace thinkyoung {
                 this, capture_con, _1);
             json_connection->add_named_param_method("call_contract_testing", bound_named_method);
 
+           // register method call_contract_local_emit
+            bound_positional_method = boost::bind(&CommonApiRpcServer::call_contract_local_emit_positional,
+                this, capture_con, _1);
+            json_connection->add_method("call_contract_local_emit", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::call_contract_local_emit_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("call_contract_local_emit", bound_named_method);
+
            // register method call_contract_offline
             bound_positional_method = boost::bind(&CommonApiRpcServer::call_contract_offline_positional,
                 this, capture_con, _1);
@@ -12285,6 +12343,23 @@ namespace thinkyoung {
             }
 
             {
+                // register method call_contract_local_emit
+                thinkyoung::api::MethodData call_contract_local_emit_method_metadata{ "call_contract_local_emit", nullptr,
+                    /* description */ "call contract function by contract name or contract address on local endpoint, and do not spread it on P2P network",
+                    /* returns */ "eventoperation_array",
+                    /* params: */{
+                        {"contract", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"caller_name", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"function_name", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"params", "string", thinkyoung::api::required_positional, fc::ovariant()}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
+                    /* detailed description */ "call contract function by contract name or contract address on local endpoint, and do not spread it on P2P network\n\nParameters:\n  contract (string, required): contract name or contract address need to be called\n  caller_name (string, required): caller name\n  function_name (string, required): function in contract \n  params (string, required): parameters which would be passed to function\n\nReturns:\n  eventoperation_array\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(call_contract_local_emit_method_metadata);
+            }
+
+            {
                 // register method call_contract_offline
                 thinkyoung::api::MethodData call_contract_offline_method_metadata{ "call_contract_offline", nullptr,
                     /* description */ "call contract offline function by contract name or contract address",
@@ -13241,6 +13316,8 @@ namespace thinkyoung {
                 return get_contract_balance_positional(nullptr, parameters);
             if (method_name == "call_contract_testing")
                 return call_contract_testing_positional(nullptr, parameters);
+            if (method_name == "call_contract_local_emit")
+                return call_contract_local_emit_positional(nullptr, parameters);
             if (method_name == "call_contract_offline")
                 return call_contract_offline_positional(nullptr, parameters);
             if (method_name == "load_contract_to_file")

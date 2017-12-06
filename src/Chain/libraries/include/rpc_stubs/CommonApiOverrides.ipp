@@ -206,6 +206,7 @@
             thinkyoung::blockchain::ContractEntryPrintable get_contract_info(const std::string& contract) override;
             std::vector<thinkyoung::blockchain::BalanceEntry> get_contract_balance(const std::string& contract) override;
             std::vector<thinkyoung::blockchain::Asset> call_contract_testing(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) override;
+            std::vector<thinkyoung::blockchain::EventOperation> call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) override;
             std::string call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) override;
             thinkyoung::blockchain::ContractEntryPrintable load_contract_to_file(const std::string& contract, const fc::path& file) override;
             thinkyoung::blockchain::TransactionIdType get_result_trx_id(const thinkyoung::blockchain::TransactionIdType& request_id) override;

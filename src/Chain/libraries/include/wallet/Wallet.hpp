@@ -10,45 +10,43 @@
 #define INVALIDE_SUB_ADDRESS ("ffffffffffffffffffffffffffffffff")
 namespace thinkyoung {
     namespace wallet {
-
+    
         using namespace thinkyoung::blockchain;
-
-        namespace detail { class WalletImpl; }
-
+        
+        namespace detail {
+            class WalletImpl;
+        }
+        
         typedef map<string, vector<BalanceEntry>> AccountBalanceEntrySummaryType;
         typedef map<string, unordered_set<BalanceIdType>> AccountBalanceIdSummaryType;
         typedef map<string, map<AssetIdType, ShareType>> AccountBalanceSummaryType;
         typedef map<string, map<string, vector<Asset>>> AccountExtendedBalanceType;
-
+        
         typedef map<string, vector<PrettyReserveBalance>> AccountReserveBalanceSummaryType;
-
+        
         typedef map<string, int64_t> AccountVoteSummaryType;
-
+        
         // typedef std::pair<order_type_enum, vector<string>> order_description;
-
-        enum DelegateStatusFlags
-        {
+        
+        enum DelegateStatusFlags {
             any_delegate_status = 0,
             enabled_delegate_status = 1 << 0,
             active_delegate_status = 1 << 1,
             disabled_delegate_status = 1 << 2,
             inactive_delegate_status = 1 << 3
         };
-
-        enum AccountKeyType
-        {
+        
+        enum AccountKeyType {
             owner_key = 0,
             active_key = 1,
             signing_key = 2
         };
-
-        class Wallet
-        {
-        public:
+        
+        class Wallet {
+          public:
             Wallet(ChainDatabasePtr chain, bool enabled = true);
             virtual ~Wallet();
-            enum TrxType
-            {
+            enum TrxType {
                 trx_type_desipate,
                 trx_type_withdraw,
                 trx_type_all
@@ -70,14 +68,14 @@ namespace thinkyoung {
             * @return void
             */
             void sign_transaction_creator(TransactionCreationState& c);
-
+            
             //Emitted when wallet is locked or unlocked. Argument is true if wallet is now locked; false otherwise.
             fc::signal<void(bool)>  wallet_lock_state_changed;
             //Emitted when wallet claims a new transaction. Argument is new ledger entry.
             fc::signal<void(LedgerEntry)> wallet_claimed_transaction;
             //Emitted when someone (partially or fully) fills your short, thereby giving you a margin position
             fc::signal<void(LedgerEntry)> update_margin_position;
-
+            
             /**
             * Set the wallet data path
             *
@@ -92,8 +90,8 @@ namespace thinkyoung {
             * @return path
             */
             path    get_data_directory()const;
-
-
+            
+            
             /**
             * Creates a wallet with the given name.
             *
@@ -103,8 +101,8 @@ namespace thinkyoung {
             *                  number
             */
             void    create(const string& wallet_name,
-                const string& password,
-                const string& brainkey = string());
+                           const string& password,
+                           const string& brainkey = string());
             /**
             * On the basis of the wallet name to load the local database
             * @param wallet_name the name of the wallet to open
@@ -118,8 +116,8 @@ namespace thinkyoung {
             *@return void
             */
             void    close();
-
-
+            
+            
             /**
             * Whether the client open wallet function
             *
@@ -138,7 +136,7 @@ namespace thinkyoung {
             * @return string
             */
             string  get_wallet_name()const;
-
+            
             /**
             * Exports the current wallet to a JSON file.
             *
@@ -155,7 +153,7 @@ namespace thinkyoung {
             * @param passphrase passphrase of the imported wallet
             */
             void    create_from_json(const path& filename, const string& wallet_name, const string& passphrase);
-
+            
             /**
             * Perform a wallet backup
             *
@@ -164,7 +162,7 @@ namespace thinkyoung {
             * @return void
             */
             void    auto_backup(const string& reason)const;
-
+            
             /**
             * Write latest transaction builder into specific file
             *
@@ -174,8 +172,8 @@ namespace thinkyoung {
             * @return void
             */
             void    write_latest_builder(const TransactionBuilder& builder,
-                const string& alternate_path);
-
+                                         const string& alternate_path);
+                                         
             /**
             * Set wallet version
             *
@@ -190,7 +188,7 @@ namespace thinkyoung {
             * @return uint32_t
             */
             uint32_t               get_version()const;
-
+            
             /**
             * Enables or disables automatic wallet backups.
             *
@@ -205,7 +203,7 @@ namespace thinkyoung {
             * @return bool
             */
             bool                   get_automatic_backups()const;
-
+            
             /**
             * Set wallet property of transaction scanning
             *
@@ -220,7 +218,7 @@ namespace thinkyoung {
             * @return bool
             */
             bool                   get_transaction_scanning()const;
-
+            
             /**
             * Set wallet property of last scanned block number
             *
@@ -229,15 +227,15 @@ namespace thinkyoung {
             * @return void
             */
             void                   set_last_scanned_block_number(uint32_t block_num);
-            void					set_last_scanned_block_number_for_alp(uint32_t block_num);
+            void                    set_last_scanned_block_number_for_alp(uint32_t block_num);
             /**
             * Get wallet property of last scanned block number.
             *
             * @return uint32_t
             */
             uint32_t               get_last_scanned_block_number()const;
-            uint32_t				get_last_scanned_block_number_for_alp()const;
-
+            uint32_t                get_last_scanned_block_number_for_alp()const;
+            
             /**
             * Set wallet property of every transaction's fee
             *
@@ -263,7 +261,7 @@ namespace thinkyoung {
             * @return bool
             */
             bool                   asset_can_pay_fee(const AssetIdType desired_fee_asset_id = 0)const;
-
+            
             /**
             * Set transaction expiration time.
             *
@@ -288,7 +286,7 @@ namespace thinkyoung {
             * @return float
             */
             float                  get_scan_progress()const;
-
+            
             /**
             * Set specified setting of the wallet
             * @param  name  setting name
@@ -305,7 +303,7 @@ namespace thinkyoung {
             * @return fc::optional<variant>
             */
             fc::optional<variant>  get_setting(const string& name)const;
-
+            
             /**
             * Lock the private keys in wallet, disables spending commands until unlocked.
             *
@@ -339,7 +337,7 @@ namespace thinkyoung {
             * @return fc::optional<fc::time_point_sec>
             */
             fc::optional<fc::time_point_sec>   unlocked_until()const;
-
+            
             /**
             * Change the password of the current wallet.The need to change the password interface enter the original password.
             *
@@ -360,7 +358,7 @@ namespace thinkyoung {
             *
             * @return bool
             */
-            bool								check_passphrase(const string& passphrase);
+            bool                                check_passphrase(const string& passphrase);
             /**
             * Get active private key of the specified account
             *
@@ -385,7 +383,7 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             PublicKeyType            get_owner_public_key(const string& account_name)const;
-
+            
             /**
             * Convert to public key summary contains a compressed format address the compressed format, and so on
             *
@@ -410,8 +408,8 @@ namespace thinkyoung {
             * @return transaction_entry
             */
             WalletTransactionEntry get_transaction(const string& transaction_id_prefix)const;
-
-
+            
+            
             /**
             * All transactions in pending zones.
             *
@@ -424,7 +422,7 @@ namespace thinkyoung {
             * @return map<TransactionIdType, fc::exception>
             */
             map<TransactionIdType, fc::exception>    get_pending_transaction_errors()const;
-
+            
             /**
             * Start to scan block data.
             *
@@ -440,14 +438,14 @@ namespace thinkyoung {
             * @return void
             */
             void cancel_scan();
-
-			/**
-			* get all the contracts in wallet
-			*
-			* @return vector<string>
-			*/
-			vector<string> get_contracts(const string &account_name = "all");
-
+            
+            /**
+            * get all the contracts in wallet
+            *
+            * @return vector<string>
+            */
+            vector<string> get_contracts(const string &account_name = "all");
+            
             /**
             * Scan all transactions wallet.
             *
@@ -455,16 +453,16 @@ namespace thinkyoung {
             *
             * @return WalletTransactionEntry
             */
-            WalletTransactionEntry		   scan_all_transaction(bool overwrite_existing);
-
+            WalletTransactionEntry         scan_all_transaction(bool overwrite_existing);
+            
             /**
-           * Scan the specified transaction from wallet db.
-           *
-           * @param transaction_id_prefix the specified transaction
-           * @param overwrite_existing Whether reconstruction already exists transaction
-           *
-           * @return WalletTransactionEntry
-           */
+            * Scan the specified transaction from wallet db.
+            *
+            * @param transaction_id_prefix the specified transaction
+            * @param overwrite_existing Whether reconstruction already exists transaction
+            *
+            * @return WalletTransactionEntry
+            */
             WalletTransactionEntry         scan_transaction(const string& transaction_id_prefix, bool overwrite_existing);
             /**
             * To be deleted.
@@ -498,7 +496,7 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             vector<WalletTransactionEntry> get_transactions(const string& transaction_id_prefix);
-
+            
             /**
             * Add new account for receiving payments.
             *
@@ -508,7 +506,7 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             PublicKeyType  create_account(const string& account_name,
-                const variant& private_data = variant());
+                                          const variant& private_data = variant());
             /**
             * Delete the specific account from current wallet
             *
@@ -526,8 +524,8 @@ namespace thinkyoung {
             * @return void
             */
             void update_account_private_data(const string& account_to_update,
-                const variant& private_data);
-
+                                             const variant& private_data);
+                                             
             /**  account_set_favorite
             * Updates the specified account favorite property
             *
@@ -537,7 +535,7 @@ namespace thinkyoung {
             * @return void
             */
             void account_set_favorite(const string& account_name,
-                const bool is_favorite);
+                                      const bool is_favorite);
             /**
             * Retrieves account entry from wallet db according name
             *
@@ -574,9 +572,9 @@ namespace thinkyoung {
             * @return void
             */
             void     add_contact_account(const string& account_name,
-                const PublicKeyType& key,
-                const variant& private_data = variant());
-
+                                         const PublicKeyType& key,
+                                         const variant& private_data = variant());
+                                         
             /**
             * Delete account from the local wallet db
             *
@@ -585,7 +583,7 @@ namespace thinkyoung {
             * @return void
             */
             void     remove_contact_account(const string& account_name);
-
+            
             /**
             * rename local account name. Be sure the account is not registered
             * @param  old_account_name  string
@@ -594,8 +592,8 @@ namespace thinkyoung {
             * @return void
             */
             void     rename_account(const string& old_contact_name,
-                const string& new_contact_name);
-
+                                    const string& new_contact_name);
+                                    
             /**
             * List wallet all contact accounts.
             *
@@ -642,7 +640,7 @@ namespace thinkyoung {
             * @return oWalletContactEntry
             */
             oWalletContactEntry remove_contact(const string& label);
-
+            
             /**
             * Get wallet data from the address entered.
             *
@@ -651,15 +649,15 @@ namespace thinkyoung {
             * @return oWalletAccountEntry
             */
             oWalletAccountEntry  get_account_for_address(Address addr)const;
-
+            
             /**
              * Return general information about the wallet
              *
              * @return variant
              **/
             variant get_info()const;
-
-
+            
+            
             /**
             * Setting delegate generate block status
             *
@@ -685,7 +683,7 @@ namespace thinkyoung {
             * @return vector<WalletAccountEntry>
             */
             vector<WalletAccountEntry> get_my_delegates(uint32_t delegates_to_retrieve = any_delegate_status)const;
-
+            
             /**  get_next_producible_block_timestamp
             *
             * @param  delegate_entrys  vector<WalletAccountEntry>
@@ -693,7 +691,7 @@ namespace thinkyoung {
             * @return optional<time_point_sec>
             */
             optional<time_point_sec> get_next_producible_block_timestamp(const vector<WalletAccountEntry>& delegate_entrys)const;
-
+            
             /**
             * sign a block if this wallet controls the key for the active delegate, or throw
             *
@@ -702,7 +700,7 @@ namespace thinkyoung {
             * @return void
             */
             void sign_block(SignedBlockHeader& header)const;
-
+            
             /**
             * Sign a block based on the input address or public key
             *
@@ -712,14 +710,14 @@ namespace thinkyoung {
             * @return fc::ecc::compact_signature
             */
             fc::ecc::compact_signature  sign_hash(const string& signer, const fc::sha256& hash)const;
-
+            
             /**
             * Return a list of wallets in the current data directory.
             *
             * @return vector<string>
             */
             vector<string> list() const; // list wallets
-
+            
             /**
             * List wallet all accounts.
             *
@@ -750,7 +748,7 @@ namespace thinkyoung {
             * @return vector<WalletAccountEntry>
             */
             vector<AccountAddressData> list_addresses() const;
-
+            
             /**
             * Import private key into current wallet. If the account has been registered in the chain is not used to enter the name
             *
@@ -770,9 +768,9 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             PublicKeyType import_private_key(const PrivateKeyType& new_private_key,
-                const optional<string>& account_name,
-                bool create_account = false);
-
+                                             const optional<string>& account_name,
+                                             bool create_account = false);
+                                             
             /**
             * Loads the private key into the specified account. Returns which account it was actually imported to.
             *
@@ -785,9 +783,9 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             PublicKeyType import_wif_private_key(const string& wif_key,
-                const optional<string>& account_name,
-                bool create_account = false);
-
+                                                 const optional<string>& account_name,
+                                                 bool create_account = false);
+                                                 
             /**
             * Creates an address which can be used for a simple (non-TITAN) transfer.
             *
@@ -805,8 +803,8 @@ namespace thinkyoung {
             * @return Address
             */
             Address               create_new_address(const string& account_name, const string& label = "");
-
-
+            
+            
             /**
             * nothing happened.will delete.
             *
@@ -849,7 +847,7 @@ namespace thinkyoung {
             * @return vector<Address>
             */
             vector<Address>   get_addresses_for_group_label(const string& group_label);
-
+            
             /**
             * Transaction Generation Methods
             *
@@ -872,8 +870,8 @@ namespace thinkyoung {
             * @return std::shared_ptr<TransactionBuilder>
             */
             std::shared_ptr<TransactionBuilder> create_transaction_builder_from_file(const string& old_builder_path = "");
-
-
+            
+            
             /**
             * Save transaction to broadcast area and local wallet data area
             *
@@ -882,7 +880,7 @@ namespace thinkyoung {
             * @return void
             */
             void cache_transaction(WalletTransactionEntry& transaction_entry, bool store=true);
-
+            
             /**
              *  Multi-Part transfers provide additional security by not combining inputs, but they
              *  show up to the user as multiple unique transfers.  This is an advanced feature
@@ -896,14 +894,14 @@ namespace thinkyoung {
                 const string& to_account_name,
                 const string& memo_message,
                 bool sign
-                );
+            );
             /**
             *  This transfer works like a bitcoin transaction combining multiple inputs
             *  and producing a single output. The only different aspect with transfer_asset is that
             *  this will send to a address.
             *
             * @param real_amount_to_transfer the amount of shares to transfer
-            * @param amount_to_transfer_symbol the asset to transfer like ALP 
+            * @param amount_to_transfer_symbol the asset to transfer like ALP
             * @param from_account_name the source account to draw the shares from
             * @param to_address the address or pubkey to transfer to
             * @param memo_message a memo to store with the transaction
@@ -923,8 +921,8 @@ namespace thinkyoung {
                 VoteStrategy selection_method,
                 bool sign,
                 const string& alp_account = ""
-                );
-
+            );
+            
             WalletTransactionEntry transfer_asset_to_contract(
                 double real_amount_to_transfer,
                 const string& amount_to_transfer_symbol,
@@ -933,46 +931,46 @@ namespace thinkyoung {
                 double exec_cost,
                 bool sign,
                 bool is_testing = false);
-
+                
             std::vector<thinkyoung::blockchain::Asset> transfer_asset_to_contract_testing(
                 double real_amount_to_transfer,
                 const string& amount_to_transfer_symbol,
                 const string& from_account_name,
                 const Address& to_contract_address,
                 bool sign);
-
+                
             WalletTransactionEntry upgrade_contract(
-				const Address& contract_id,
-				const string& upgrader_name,
-				const string& contract_name,
-				const string& contract_desc,
-				const std::string& asset_symbol,
-				const double exec_limit,
-				bool sign = true,
-				bool is_testing = false);
-
-			std::vector<thinkyoung::blockchain::Asset> upgrade_contract_testing(
-				const Address& contract_id,
-				const string& upgrader_name,
-				const string& contract_name,
-				const string& contract_desc,
-				bool sign = true
-				);
-
+                const Address& contract_id,
+                const string& upgrader_name,
+                const string& contract_name,
+                const string& contract_desc,
+                const std::string& asset_symbol,
+                const double exec_limit,
+                bool sign = true,
+                bool is_testing = false);
+                
+            std::vector<thinkyoung::blockchain::Asset> upgrade_contract_testing(
+                const Address& contract_id,
+                const string& upgrader_name,
+                const string& contract_name,
+                const string& contract_desc,
+                bool sign = true
+            );
+            
             WalletTransactionEntry destroy_contract(
                 const Address& contract_id,
                 const string& destroyer_name,
-				const std::string& asset_symbol,
-				double exec_limit,
+                const std::string& asset_symbol,
+                double exec_limit,
                 bool sign = true,
-				bool is_testting = false);
-
-			std::vector<thinkyoung::blockchain::Asset> destroy_contract_testing(
-				const Address& contract_id,
-				const string& destroyer_name,
-				bool sign = true
-				);
-
+                bool is_testting = false);
+                
+            std::vector<thinkyoung::blockchain::Asset> destroy_contract_testing(
+                const Address& contract_id,
+                const string& destroyer_name,
+                bool sign = true
+            );
+            
             /*
             transaction_builder builder_transfer_asset_to_address(
             double real_amount_to_transfer,
@@ -983,7 +981,7 @@ namespace thinkyoung {
             vote_strategy selection_method
             );
             */
-
+            
             /**
             * This transfer works like a bitcoin send many transaction combining multiple inputs
             * and producing a single output.
@@ -1002,8 +1000,8 @@ namespace thinkyoung {
                 const unordered_map<Address, double>& to_address_amounts,
                 const string& memo_message,
                 bool sign
-                );
-
+            );
+            
             /**
             * register a new account
             *
@@ -1023,7 +1021,7 @@ namespace thinkyoung {
                 const string& pay_with_account_name,
                 thinkyoung::blockchain::AccountType new_account_type,
                 bool sign
-                );
+            );
             /**
             * Update Account Registration Information
             *
@@ -1042,7 +1040,7 @@ namespace thinkyoung {
                 optional<variant> public_data,
                 uint8_t delegate_pay_rate,
                 bool sign
-                );
+            );
             /**
             * Update active key. active key change can hide your owner address.
             *
@@ -1058,7 +1056,7 @@ namespace thinkyoung {
                 const std::string& pay_from_account,
                 const std::string& new_active_key,
                 bool sign
-                );
+            );
             /**
             * retract has registered account
             *
@@ -1072,7 +1070,7 @@ namespace thinkyoung {
                 const std::string& account_to_retract,
                 const std::string& pay_from_account,
                 bool sign
-                );
+            );
             /**
             * Designated delegate to receive salary
             *
@@ -1088,7 +1086,7 @@ namespace thinkyoung {
                 const string& amount_to_withdraw,
                 const string& withdraw_to_account_name,
                 bool sign
-                );
+            );
             /**
             * Query delegate salary
             *
@@ -1099,7 +1097,7 @@ namespace thinkyoung {
             DelegatePaySalary query_delegate_salary(
                 const string& delegate_name);
             std::map<std::string, thinkyoung::blockchain::DelegatePaySalary> query_delegate_salarys();
-
+            
             /**
             * The balance of all the money designated to vote again according to the voter_address
             *
@@ -1113,7 +1111,7 @@ namespace thinkyoung {
                 const BalanceIdType& balance_id,
                 const Address& voter_address,
                 VoteStrategy selection_method
-                );
+            );
             /**
             * Broadcast voting combination from current wallet
             *
@@ -1127,7 +1125,7 @@ namespace thinkyoung {
                 const string& account_to_publish_under,
                 const string& account_to_pay_with,
                 bool sign
-                );
+            );
             /**
             *  Broadcast current wallet version
             *
@@ -1141,7 +1139,7 @@ namespace thinkyoung {
                 const string& account_to_publish_under,
                 const string& account_to_pay_with,
                 bool sign
-                );
+            );
             /**
             * Collect all the designated account balance by the filter.
             *
@@ -1155,7 +1153,7 @@ namespace thinkyoung {
                 const function<bool(const BalanceEntry&)> filter,
                 const string& memo_message,
                 bool sign
-                );
+            );
             /**
             * To Do.
             *
@@ -1173,7 +1171,7 @@ namespace thinkyoung {
                 const Address& key,
                 const ObjectIdType meta,
                 bool sign
-                );
+            );
             /**
             * update delegate's signature which used to generate block
             *
@@ -1189,7 +1187,7 @@ namespace thinkyoung {
                 const string& delegate_name,
                 const PublicKeyType& signing_key,
                 bool sign
-                );
+            );
             /**
             * create a new asset.
             *
@@ -1215,7 +1213,7 @@ namespace thinkyoung {
                 uint64_t precision,
                 bool is_market_issued,
                 bool sign
-                );
+            );
             /**
             * update the specific asset.
             *
@@ -1251,7 +1249,7 @@ namespace thinkyoung {
                 uint32_t required_sigs,
                 const vector<Address>& authority,
                 bool sign
-                );
+            );
             /**
             * issue the asset by who created it.
             *
@@ -1269,7 +1267,7 @@ namespace thinkyoung {
                 const string& to_account_name,
                 const string& memo_message,
                 bool sign
-                );
+            );
             /**
             * issue the asset to addresses by who created it.
             *
@@ -1282,11 +1280,11 @@ namespace thinkyoung {
             WalletTransactionEntry issue_asset_to_addresses(
                 const string& symbol,
                 const map<string, ShareType>& addresses);
-
-
-
-
-
+                
+                
+                
+                
+                
             /**
             * Get account name from wallet db by public key.
             *
@@ -1296,8 +1294,8 @@ namespace thinkyoung {
             */
             string                             get_key_label(const PublicKeyType& key)const;
             PrettyTransaction                  to_pretty_trx(const WalletTransactionEntry& trx_rec) const;
-
-
+            
+            
             /**
             * Formatted transactions to pretty transaction.
             *
@@ -1306,12 +1304,12 @@ namespace thinkyoung {
             *
             * @return string
             */
-            PrettyTransaction				    to_pretty_trx(const thinkyoung::blockchain::TransactionEntry& trx_entry, const std::string addr_for_fee) const;
-
-
+            PrettyTransaction                   to_pretty_trx(const thinkyoung::blockchain::TransactionEntry& trx_entry, const std::string addr_for_fee) const;
+            
+            
             PrettyContractTransaction           to_pretty_contract_trx(const thinkyoung::blockchain::TransactionEntry& trx_entry) const;
-
-
+            
+            
             /**
             * Updates your approval of the specified account.
             *
@@ -1328,7 +1326,7 @@ namespace thinkyoung {
             *
             * @return void
             */
-            vector<AccountEntry>				get_all_approved_accounts(const int8_t approval);
+            vector<AccountEntry>                get_all_approved_accounts(const int8_t approval);
             /**
             * clear all account approval.
             *
@@ -1336,7 +1334,7 @@ namespace thinkyoung {
             *
             * @return void
             */
-            void								clear_account_approval(const string& account_name);
+            void                                clear_account_approval(const string& account_name);
             /**
             * Get your approval of the specified account.
             *
@@ -1345,7 +1343,7 @@ namespace thinkyoung {
             * @return int8_t
             */
             int8_t                             get_account_approval(const string& account_name)const;
-
+            
             /**
             * Validate the address.
             *
@@ -1362,7 +1360,7 @@ namespace thinkyoung {
             * @return bool
             */
             bool                               is_receive_address(const Address& addr)const;
-
+            
             /**
             * By specifying function to scan balance.
             *
@@ -1371,7 +1369,7 @@ namespace thinkyoung {
             * @return void
             */
             void                               scan_balances(const function<void(const BalanceIdType&,
-                const BalanceEntry&)> callback)const;
+                    const BalanceEntry&)> callback)const;
             /**
             * Get spendable balance entry controlled by this account.
             *
@@ -1388,7 +1386,7 @@ namespace thinkyoung {
             * @return AccountBalanceSummaryType
             */
             AccountBalanceSummaryType       get_spendable_account_balances(const string& account_name = "")const;
-
+            
             /**
             * Get all the balance ids from the specific account
             *
@@ -1397,7 +1395,7 @@ namespace thinkyoung {
             * @return AccountBalanceIdSummaryType
             */
             AccountBalanceIdSummaryType    get_account_balance_ids(const string& account_name = "")const;
-
+            
             AccountReserveBalanceSummaryType get_account_reserve_balances(const string& account_name = "")const;
             /**
             * Get the specific account voting combination
@@ -1407,7 +1405,7 @@ namespace thinkyoung {
             * @return AccountVoteSummaryType
             */
             AccountVoteSummaryType          get_account_vote_summary(const string& account_name = "")const;
-
+            
             /**
             * Not used.
             *
@@ -1416,8 +1414,8 @@ namespace thinkyoung {
             * @return vector<EscrowSummary>
             */
             vector<EscrowSummary>             get_escrow_balances(const string& account_name);
-
-
+            
+            
             /**
             * According to the account name lookup for all relevant transactions .
             *
@@ -1430,11 +1428,11 @@ namespace thinkyoung {
             * @return vector<PrettyTransaction>
             */
             vector<WalletTransactionEntry>  get_transaction_history(const string& account_name = string(),
-                uint32_t start_block_num = 0,
-                uint32_t end_block_num = -1,
-                const string& asset_symbol = "",
-                TrxType trx_search_type = trx_type_all)const;
-
+                    uint32_t start_block_num = 0,
+                    uint32_t end_block_num = -1,
+                    const string& asset_symbol = "",
+                    TrxType trx_search_type = trx_type_all)const;
+                    
             /**
             * According to the account name lookup for all relevant transactions .
             *
@@ -1445,8 +1443,8 @@ namespace thinkyoung {
             * @return vector<PrettyTransaction>
             */
             vector<WalletTransactionEntry>  get_transaction_history_splite(const string& account_name = string(),
-                const string& asset_symbol = "",
-                TrxType trx_search_type = trx_type_all)const;
+                    const string& asset_symbol = "",
+                    TrxType trx_search_type = trx_type_all)const;
             /**
             * According to the account name lookup for all relevant transactions and format conversion.
             *
@@ -1460,12 +1458,12 @@ namespace thinkyoung {
             * @return vector<PrettyTransaction>
             */
             vector<PrettyTransaction>         get_pretty_transaction_history(const string& account_name = string(),
-                uint32_t start_block_num = 0,
-                uint32_t end_block_num = -1,
-                const string& asset_symbol = "",
-                TrxType trx_splite = trx_type_all,
-                bool wither_splite = false)const;
-
+                    uint32_t start_block_num = 0,
+                    uint32_t end_block_num = -1,
+                    const string& asset_symbol = "",
+                    TrxType trx_splite = trx_type_all,
+                    bool wither_splite = false)const;
+                    
             /**
             * Lists wallet's balance at the given block number.
             *
@@ -1475,15 +1473,15 @@ namespace thinkyoung {
             * @return account_balance_summary_type
             */
             AccountBalanceSummaryType       compute_historic_balance(const string &account_name,
-                uint32_t block_num)const;
-
+                    uint32_t block_num)const;
+                    
             /**
             * Removes the specified transaction entry from your transaction history.
             *
             * @param entry_id the id (or id prefix) of the transaction entry
             */
             void                               remove_transaction_entry(const string& entry_id);
-
+            
             /**
             * Try to fix all the entry of the account in the current wallet
             *
@@ -1510,7 +1508,7 @@ namespace thinkyoung {
             * @return int32_t
             */
             int32_t                            recover_accounts(int32_t number_of_accounts, int32_t max_number_of_attempts);
-
+            
             /**
             * recover transaction info by rebuild transaction entry.
             *
@@ -1536,7 +1534,7 @@ namespace thinkyoung {
             * @return VoteSummary
             */
             VoteSummary get_vote_status(const string& account_name);
-
+            
             /**
             * Get private key by address.
             *
@@ -1553,7 +1551,7 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             PublicKeyType get_public_key(const Address& addr) const;
-
+            
             /**
             * Http rpc server function for login.
             *
@@ -1562,7 +1560,7 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             std::string login_start(const std::string& account_name);
-
+            
             /**
             * Http rpc server function for logout.
             *
@@ -1571,28 +1569,29 @@ namespace thinkyoung {
             * @return PublicKeyType
             */
             fc::variant login_finish(const PublicKeyType& server_key,
-                const PublicKeyType& client_key,
-                const fc::ecc::compact_signature& client_signature);
-
+                                     const PublicKeyType& client_key,
+                                     const fc::ecc::compact_signature& client_signature);
+                                     
             WalletTransactionEntry register_contract(const string& owner, const fc::path codefile, const string& asset_symbol, double init_limit, bool is_testing = false);
             std::vector<thinkyoung::blockchain::Asset> register_contract_testing(const string& owner, const fc::path codefile);
-
+            
             WalletTransactionEntry call_contract(const string caller, const ContractIdType contract, const string method, const string& arguments, const string& asset_symbol, double cost_limit, bool is_testing = false);
             std::vector<thinkyoung::blockchain::Asset> call_contract_testing(const string caller, const ContractIdType contract, const string method, const string& arguments);
+            std::vector<thinkyoung::blockchain::EventOperation> call_contract_local_emit(const string caller, const ContractIdType contract, const string method, const string& arguments);
             std::string call_contract_offline(const string caller, const ContractIdType contract, const string method, const string& arguments);
-
+            
             void get_enough_balances(const string& account_name, const Asset target, std::map<BalanceIdType, ShareType>& balances, unordered_set<Address>& required_signatures);
-			void sandbox_get_enough_balances(const string& account_name, const Asset target, std::map<BalanceIdType, ShareType>& balances, unordered_set<Address>& required_signatures);
-			AccountBalanceEntrySummaryType sandbox_get_spendable_account_balance_entries(const string& account_name);
-
+            void sandbox_get_enough_balances(const string& account_name, const Asset target, std::map<BalanceIdType, ShareType>& balances, unordered_set<Address>& required_signatures);
+            AccountBalanceEntrySummaryType sandbox_get_spendable_account_balance_entries(const string& account_name);
+            
             //sandbox relate function
             ChainInterfacePtr get_correct_state_ptr() const;
-			WalletDb& get_wallet_db() const;
+            WalletDb& get_wallet_db() const;
             /*WalletTransactionEntry sandbox_register_contract(const string& owner, const fc::path codefile, const string& asset_symbol, double init_limit);*/
-			void scan_contracts();
-
+            void scan_contracts();
+            
             vector<ScriptEntry> list_scripts();
-
+            
             oScriptEntry get_script_entry(const ScriptIdType&);
             ScriptIdType add_script(const fc::path& filename, const string& description = string(""));
             void delete_script(const ScriptIdType& script_id);
@@ -1603,22 +1602,22 @@ namespace thinkyoung {
             vector<ScriptIdType> list_event_handler(const ContractIdType& contract_id, const std::string& event_type);
             void add_event_handler(const ContractIdType& contract_id, const std::string& event_type, const ScriptIdType& script_id, uint32_t index);
             void delete_event_handler(const ContractIdType& contract_id, const std::string& event_type, const ScriptIdType& script_id);
-			std::vector<std::string> get_events_bound(const std::string& script_id);
-        private:
-
+            std::vector<std::string> get_events_bound(const std::string& script_id);
+          private:
+          
             unique_ptr<detail::WalletImpl> my;
-        public:
+          public:
             bool _generating_block;
         };
-
+        
         typedef shared_ptr<Wallet> WalletPtr;
         typedef std::weak_ptr<Wallet> WalletWeakPtr;
-
+        
     }
 } // thinkyoung::wallet
 
 FC_REFLECT_ENUM(thinkyoung::wallet::AccountKeyType,
-    (owner_key)
-    (active_key)
-    (signing_key)
-    )
+                (owner_key)
+                (active_key)
+                (signing_key)
+               )
