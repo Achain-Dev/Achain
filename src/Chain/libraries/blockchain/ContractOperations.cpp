@@ -235,6 +235,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 UpgradeTask _upgradetask;
+                                UpgradeTaskResult* _upgradetaskresult = nullptr;
                                 _upgradetask.num_limit = limit;
                                 _upgradetask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _upgradetask.str_caller = ((string)(contract_entry->owner)).c_str();
@@ -251,10 +252,23 @@ namespace thinkyoung {
                                     _upgradetask.contract_code = _code;
                                 }
 
-                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);
-                                //call interface to send msg to LVM
-                                //TODO
-                                // to get the result returned by lvm
+                                _upgradetaskresult =(UpgradeTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);
+
+                                if (_upgradetaskresult) {
+                                    executed_count = _upgradetaskresult->execute_count;
+                                    exception_code = _upgradetaskresult->error_code;
+                                    exception_msg = _upgradetaskresult->error_msg;
+
+                                    if (exception_code > 0) {
+                                        if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                            FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+
+                                        } else {
+                                            thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                            throw con_err;
+                                        }
+                                    }
+                                }
 
                             } else {
                                 lua::lib::GluaStateScope scope;
@@ -371,7 +385,6 @@ namespace thinkyoung {
 
             FC_CAPTURE_AND_RETHROW((*this))
         }
-
         void DestroyContractOperation::evaluate(TransactionEvaluationState& eval_state)const {
             try {
                 FC_ASSERT(transaction_fee.amount >= 0, "transaction should not be negtive num");
@@ -486,6 +499,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 DestroyTask _destroytask;
+                                DestroyTaskResult* _destroytaskresult = nullptr;
                                 _destroytask.num_limit = limit;
                                 _destroytask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _destroytask.str_caller = ((string)(entry->owner)).c_str();
@@ -501,9 +515,23 @@ namespace thinkyoung {
                                     _destroytask.contract_code = _code;
                                 }
 
-                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);                            //call interface to send msg to LVM
-                                //TODO
-                                //to get the result returned by lvm
+                                _destroytaskresult = (DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);                            //call interface to send msg to LVM
+
+                                if (_destroytaskresult) {
+                                    executed_count = _destroytaskresult->execute_count;
+                                    exception_code = _destroytaskresult->error_code;
+                                    exception_msg = _destroytaskresult->error_msg;
+
+                                    if (exception_code > 0) {
+                                        if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                            FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+
+                                        } else {
+                                            thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                            throw con_err;
+                                        }
+                                    }
+                                }
 
                             } else {
                                 lua::lib::GluaStateScope scope;
@@ -598,7 +626,6 @@ namespace thinkyoung {
 
             FC_CAPTURE_AND_RETHROW((*this))
         }
-
         void OnDestroyOperation::evaluate(TransactionEvaluationState& eval_state)const {
             try {
                 if (!eval_state.evaluate_contract_result) {
@@ -661,7 +688,6 @@ namespace thinkyoung {
 
             FC_CAPTURE_AND_RETHROW((*this))
         }
-
         ContractIdType RegisterContractOperation::get_contract_id() const {
             ContractIdType id;
             fc::sha512::encoder enc;
@@ -669,7 +695,6 @@ namespace thinkyoung {
             id.addr = fc::ripemd160::hash(enc.result());
             return id;
         }
-
         void RegisterContractOperation::evaluate(TransactionEvaluationState& eval_state) const {
 #if CLOSE_REGISTER_CONTRACT
             return;
@@ -713,7 +738,7 @@ namespace thinkyoung {
                     FC_CAPTURE_AND_THROW(insufficient_funds, ("no enough balance"));
                 }
             }
-            
+
             auto _registertask = std::make_shared<RegisterTask>();
             RegisterTaskResult* pregister_result = nullptr;
             ContractEntry entry;
@@ -726,34 +751,34 @@ namespace thinkyoung {
             GluaStateValue statevalue;
             statevalue.pointer_value = &eval_state;
             int limit = eval_state._current_state->get_limit(0, initcost.amount);
-            
+
             if (this->contract_code.code_hash != this->contract_code.GetHash()) {
                 FC_CAPTURE_AND_THROW(code_hash_error, ("code hash not match"));
             }
-            
+
             eval_state._current_state->store_contract_entry(entry);
             //记录合约注册者
             eval_state.contract_operator = owner;
             eval_state.required_fees = transaction_fee + eval_state._current_state->get_contract_register_fee(this->contract_code);
-            
+
             if (!eval_state.skipexec) {
                 string exception_msg;
                 int exception_code = 0;
                 int execute_count = 0;
                 FC_ASSERT(eval_state.p_result_trx.operations.size() == 0);
-                
+
                 try {
                     bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled();
-                    
+
                     if (limit <= 0) {
                         FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
                     }
-                    
+
                     eval_state.p_result_trx.operations.resize(0);
                     eval_state.p_result_trx.push_transaction(eval_state.trx);
                     eval_state.p_result_trx.expiration = eval_state.trx.expiration;
                     eval_state.p_result_trx.operations.push_back(ContractInfoOperation(get_contract_id(), owner, contract_code, register_time));
-                    
+
                     if (enable_lvm) {
                         //register task info
                         _registertask->num_limit = limit;
@@ -765,16 +790,29 @@ namespace thinkyoung {
                         _registertask->gpc_code = "";                        //need compile contract file path
                         thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
                         oContractEntry entry = cur_state->get_contract_entry(Address(_registertask->str_contract_address, AddressType::contract_address));
-                        
+
                         if (entry.valid()) {
                             _registertask->str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
                         }
-                        
+
                         pregister_result = (RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());                            //call interface to send msg to LVM
-                        exception_code = pregister_result->error_code;
-                        execute_count = pregister_result->execute_count;
-                        exception_msg = pregister_result->error_msg;
-                        
+
+                        if (pregister_result) {
+                            exception_code = pregister_result->error_code;
+                            execute_count = pregister_result->execute_count;
+                            exception_msg = pregister_result->error_msg;
+
+                            if (exception_code > 0) {
+                                if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                    FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+
+                                } else {
+                                    thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                    throw con_err;
+                                }
+                            }
+                        }
+
                     } else {
                         lua::lib::GluaStateScope scope;
                         lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
@@ -784,27 +822,27 @@ namespace thinkyoung {
                         scope.set_instructions_limit(limit);
                         scope.execute_contract_init_by_address(get_contract_id().AddressToString(AddressType::contract_address).c_str(), nullptr, nullptr);
                         exception_code = lua::lib::get_lua_state_value(scope.L(), "exception_code").int_value;
-                        
+
                         if (exception_code > 0) {
                             exception_msg = ((char*)lua::lib::get_lua_state_value(scope.L(), "exception_msg").string_value);
-                            
-                            if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR)
+
+                            if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
                                 FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
-                                
-                            else {
+
+                            } else {
                                 thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
                                 throw con_err;
                             }
                         }
-                        
+
                         execute_count = scope.get_instructions_executed_count();
                     }
-                    
+
                     ShareType exec_cost = eval_state._current_state->get_amount(execute_count).amount;
                     eval_state.exec_cost = Asset(exec_cost, 0);
                     int numamount = initcost.amount;
                     //FC_ASSERT(exec_cost <= initcost.amount&&exec_cost > 0, "costs of execution can be only between 0 and initcost");
-                    
+
                     if (!eval_state.evaluate_contract_testing) {
                         ShareType required = get_amount_sum(exec_cost, eval_state._current_state->get_default_margin().amount);
                         required = get_amount_sum(required, register_fee);
@@ -839,7 +877,7 @@ namespace thinkyoung {
                         if (eval_state.throw_exec_exception) {
                             FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_execute_error, (exception_msg));
                         }
-                        
+
                         Asset exec_cost = eval_state._current_state->get_amount(execute_count);
                         std::map<BalanceIdType, ShareType> withdraw_map;
                         withdraw_enough_balances(balances, (exec_cost + eval_state.required_fees).amount, withdraw_map);
@@ -855,7 +893,6 @@ namespace thinkyoung {
 
             eval_state._current_state->remove_contract_entry(get_contract_id());
         }
-
         void CallContractOperation::evaluate(TransactionEvaluationState& eval_state) const {
             try {
                 FC_ASSERT(costlimit.amount > 0, "costlimit should be greater than 0");
@@ -942,6 +979,7 @@ namespace thinkyoung {
                             // this part neeed to tune while debuging
                             // some code need to be added/del
                             CallTask _calltask;
+                            CallTaskResult *_calltaskresult;
                             _calltask.num_limit = limit;
                             _calltask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                             _calltask.str_caller = ((string)(this->caller)).c_str();
@@ -959,12 +997,34 @@ namespace thinkyoung {
                                 _calltask.contract_code = _code;
                             }
 
-                            TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);                       //call interface to send msg to LVM
-                            //TODO
-                            // got the result returned by lvm
-                        }   /*else */
+                            _calltaskresult = ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);                       //call interface to send msg to LVM
 
-                        {
+                            //TODO
+                            if (_calltaskresult) {
+                                exception_code = _calltaskresult->error_code;
+                                exception_msg = _calltaskresult->error_msg;
+
+                                if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                    FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+
+                                } else {
+                                    thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                    throw con_err;
+                                }
+
+                                executed_count = _calltaskresult->execute_count;
+                                int left = limit - executed_count;
+                                eval_state.exec_cost = eval_state._current_state->get_amount(executed_count);
+
+                                if (left > 0) {
+                                    //合约调用初始化费用没有花完
+                                    //实际扣费调整
+                                    auto refund = eval_state._current_state->get_amount(left);
+                                    required = required - refund.amount;
+                                }
+                            }
+
+                        } else {
                             lua::lib::GluaStateScope scope;
                             GluaStateValue statevalue;
                             statevalue.pointer_value = &eval_state;
@@ -1056,7 +1116,6 @@ namespace thinkyoung {
 
             FC_CAPTURE_AND_RETHROW((*this));
         }
-
         void ContractInfoOperation::evaluate(TransactionEvaluationState & eval_state) const {
             try {
                 if (!eval_state.evaluate_contract_result) {
@@ -1087,7 +1146,6 @@ namespace thinkyoung {
 
             FC_CAPTURE_AND_RETHROW((*this));
         }
-
         void TransferContractOperation::evaluate(TransactionEvaluationState& eval_state)const {
             try {
                 FC_ASSERT(transaction_fee.amount >= 0, "transaction should not be negtive num");
@@ -1183,6 +1241,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 TransferTask _transfertask;
+                                TransferTaskResult* _transfertaskresult = nullptr;
                                 _transfertask.num_limit = limit;
                                 _transfertask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _transfertask.str_caller = ((string)(this->from)).c_str();
@@ -1200,9 +1259,24 @@ namespace thinkyoung {
                                     _transfertask.contract_code = _code;
                                 }
 
-                                TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask);                            //call interface to send msg to LVM
+                                _transfertaskresult =(TransferTaskResult*) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask);                            //call interface to send msg to LVM
+
                                 //TODO
-                                // to get the result returned by lvm
+                                if (_transfertaskresult) {
+                                    executed_count = _transfertaskresult->execute_count;
+                                    exception_msg = _transfertaskresult->error_msg;
+                                    exception_code = _transfertaskresult->error_code;
+
+                                    if (exception_code > 0) {
+                                        if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                            FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+
+                                        } else {
+                                            thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                            throw con_err;
+                                        }
+                                    }
+                                }
 
                             } else {
                                 lua::lib::GluaStateScope scope;
