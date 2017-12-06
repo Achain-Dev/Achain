@@ -69,7 +69,8 @@ namespace thinkyoung {
                 "pairs", "ipairs", "pairsByKeys", "collectgarbage", "error", "getmetatable", "_VERSION",
                 "tostring", "tojsonstring", "tonumber", "tointeger", "todouble", "totable",
                 "next", "rawequal", "rawlen", "rawget", "rawset", "select",
-                "setmetatable", "check_act_address"
+                "setmetatable"
+                //  , "check_act_address"
             };
             
             // 这里用ordered_map而不是unordered_map是为了保持顺序，比如Stream type要在Stream构造函数前面
@@ -327,7 +328,7 @@ next: (table) => bool
                 { "rawset", "(object, object, object) => void" },
                 { "select", "(...) => object" },
                 { "setmetatable", "(table, table) => void" },
-                { "check_act_address", "(string) => bool" }
+                //      { "check_act_address", "(string) => bool" }
             };
             
             const std::map<std::string, std::string> *get_globalvar_type_infos() {
@@ -653,7 +654,18 @@ next: (table) => bool
                 thinkyoung::lua::api::global_glua_chain_api->emit(L, contract_id, event_name, event_param);
                 return 0;
             }
-            
+            static int check_act_address(lua_State *L) {
+                if (lua_gettop(L) > 0 && !lua_isstring(L, 1)) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR,
+                            "get_contract_balance_amount need 1 string argument of contract address");
+                    return 0;
+                }
+                
+                auto act_address = luaL_checkstring(L, 1);
+                auto result = thinkyoung::lua::api::global_glua_chain_api->check_act_address(L, act_address);
+                lua_pushboolean(L, result);
+                return 1;
+            }
             static int glua_core_lib_Stream_size(lua_State *L) {
                 auto stream = (GluaByteStream*) luaL_checkudata(L, 1, "GluaByteStream_metatable");
                 
@@ -1144,6 +1156,7 @@ end
                     add_global_c_function(L, "emit", emit_thinkyoung_event);
                 }
                 
+                //       add_global_c_function(L, "check_act_address", check_act_address);
                 return L;
             }
             
@@ -2671,20 +2684,7 @@ break;
             }
 
 
-            static int check_act_address(lua_State *L) {
-               if (lua_gettop(L) > 0 && !lua_isstring(L, 1)) {
-                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR,
-                            "get_contract_balance_amount need 1 string argument of contract address");
-                    return 0;
-                }
-                
-                auto act_address = luaL_checkstring(L, 1);
-               
-				auto result = thinkyoung::lua::api::global_glua_chain_api->check_act_address(L, act_address);
-                lua_pushboolean(L, result);
-                return 1;
 
-            }
 
         }
     }
