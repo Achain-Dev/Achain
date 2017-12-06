@@ -7,8 +7,7 @@ Achain is making efforts to build up a high performance discentralized enterpris
 Replicas of the state machine are kept consistent using the Result Delegated Proof-of-Stake distributed consensus protocol.
 
 For more information about Achain, please read following document:
-* [Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf).
-* [Business White Paper](https://www.achain.com/Achain_business_white_paper.pdf).
+* [Achain White Paper](https://www.achain.com/Achain%20Whitepaper%202.0_EN.pdf).
 
 Building
 --------
