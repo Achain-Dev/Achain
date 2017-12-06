@@ -292,12 +292,12 @@ struct LuaRequestTask : public TaskBase {
 struct LuaRequestTaskResult : public TaskBase {
     LuaRequestTaskResult() {
         task_type = LUA_REQUEST_RESULT_TASK;
-        task_from = FROM_RPC;
+        task_from = FROM_LUA_TO_CHAIN;
     }
     
     LuaRequestTaskResult(LuaRequestTask* task) {
         task_type = LUA_REQUEST_RESULT_TASK;
-        task_from = FROM_RPC;
+        task_from = FROM_LUA_TO_CHAIN;
         task_id = task->task_id;
         method = task->method;
     }
