@@ -112,7 +112,7 @@ void RpcClientMgr::start_loop() {
 
     fc::schedule([this]() {
         start_loop();
-    }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
+    }, fc::time_point::now() + fc::seconds(/*START_LOOP_TIME*/ 999999999),
     "start_loop");
 }
 
