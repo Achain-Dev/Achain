@@ -10,6 +10,8 @@
 TaskDispatcher* TaskDispatcher::_p_lua_task_dispatcher = nullptr;
 
 TaskDispatcher::TaskDispatcher() {
+    _exec_lua_task_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("exec_lua_task_promise"));
+    
     if (thinkyoung::lua::api::global_glua_chain_api == nullptr) {
         thinkyoung::lua::api::global_glua_chain_api = new thinkyoung::lua::api::GluaChainApi;
     }
@@ -37,7 +39,11 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     LuaRequestTask* plua_request = (LuaRequestTask*)task;
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     thinkyoung::blockchain::TransactionEvaluationState* trx_evl_state;
-    std::shared_ptr<LuaRequestTaskResult> result = std::make_shared<LuaRequestTaskResult>(plua_request);
+    //TODO make_shared
+    //std::shared_ptr<LuaRequestTaskResult> result = std::make_shared<LuaRequestTaskResult>();
+    LuaRequestTaskResult* result = new LuaRequestTaskResult;
+    result->task_id = plua_request->task_id;
+    result->method = plua_request->method;
     int par_size = plua_request->params.size();
     void* eval_state_ptr = (((GluaStateValue*)plua_request->statevalue)->pointer_value);
     trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(eval_state_ptr);
@@ -277,7 +283,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     
     result->params = lvm_req.result;
     result->err_num = lvm_req.err_num;
-    p_rpc_mgr->post_message(result.get(), nullptr);
+    p_rpc_mgr->post_message(result, nullptr);
 }
 
 TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {
