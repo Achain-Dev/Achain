@@ -796,6 +796,11 @@ namespace thinkyoung {
             fc::variant result = get_json_connection()->async_call("wallet_get_contracts", std::vector<fc::variant>{fc::variant(account_name)}).wait();
             return result.as<vector<string>>();
         }
+        thinkyoung::blockchain::SignedTransaction CommonApiRpcClient::create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>() */)
+        {
+            fc::variant result = get_json_connection()->async_call("create_transfer_transaction", std::vector<fc::variant>{fc::variant(amount_to_transfer), fc::variant(asset_symbol), fc::variant(from_account_name), fc::variant(to_address), fc::variant(memo_message), fc::variant(strategy)}).wait();
+            return result.as<thinkyoung::blockchain::SignedTransaction>();
+        }
         void CommonApiRpcClient::wallet_scan_contracts()
         {
             fc::variant result = get_json_connection()->async_call("wallet_scan_contracts", std::vector<fc::variant>{}).wait();
@@ -932,6 +937,11 @@ namespace thinkyoung {
         {
             fc::variant result = get_json_connection()->async_call("call_contract_testing", std::vector<fc::variant>{fc::variant(contract), fc::variant(caller_name), fc::variant(function_name), fc::variant(params)}).wait();
             return result.as<std::vector<thinkyoung::blockchain::Asset>>();
+        }
+        std::vector<thinkyoung::blockchain::EventOperation> CommonApiRpcClient::call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
+        {
+            fc::variant result = get_json_connection()->async_call("call_contract_local_emit", std::vector<fc::variant>{fc::variant(contract), fc::variant(caller_name), fc::variant(function_name), fc::variant(params)}).wait();
+            return result.as<std::vector<thinkyoung::blockchain::EventOperation>>();
         }
         std::string CommonApiRpcClient::call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
         {
