@@ -5094,6 +5094,66 @@ namespace thinkyoung {
             return fc::variant(result);
         }
 
+        fc::variant CommonApiRpcServer::create_transfer_transaction_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (amount_to_transfer)");
+            std::string amount_to_transfer = parameters[0].as<std::string>();
+            if (parameters.size() <= 1)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 2 (asset_symbol)");
+            std::string asset_symbol = parameters[1].as<std::string>();
+            if (parameters.size() <= 2)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 3 (from_account_name)");
+            std::string from_account_name = parameters[2].as<std::string>();
+            if (parameters.size() <= 3)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 4 (to_address)");
+            std::string to_address = parameters[3].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = (parameters.size() <= 4) ?
+            (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+            parameters[4].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
+            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            parameters[5].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::blockchain::SignedTransaction result = get_client()->create_transfer_transaction(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::create_transfer_transaction_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (!parameters.contains("amount_to_transfer"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'amount_to_transfer'");
+            std::string amount_to_transfer = parameters["amount_to_transfer"].as<std::string>();
+            if (!parameters.contains("asset_symbol"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'asset_symbol'");
+            std::string asset_symbol = parameters["asset_symbol"].as<std::string>();
+            if (!parameters.contains("from_account_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'from_account_name'");
+            std::string from_account_name = parameters["from_account_name"].as<std::string>();
+            if (!parameters.contains("to_address"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'to_address'");
+            std::string to_address = parameters["to_address"].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = parameters.contains("memo_message") ?
+                (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+                parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
+                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::blockchain::SignedTransaction result = get_client()->create_transfer_transaction(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
+            return fc::variant(result);
+        }
+
         fc::variant CommonApiRpcServer::wallet_scan_contracts_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
         {
             // check all of this method's prerequisites
@@ -6021,6 +6081,56 @@ namespace thinkyoung {
             std::string params = parameters["params"].as<std::string>();
 
             std::vector<thinkyoung::blockchain::Asset> result = get_client()->call_contract_testing(contract, caller_name, function_name, params);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::call_contract_local_emit_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            verify_wallet_is_unlocked();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (contract)");
+            std::string contract = parameters[0].as<std::string>();
+            if (parameters.size() <= 1)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 2 (caller_name)");
+            std::string caller_name = parameters[1].as<std::string>();
+            if (parameters.size() <= 2)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 3 (function_name)");
+            std::string function_name = parameters[2].as<std::string>();
+            if (parameters.size() <= 3)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 4 (params)");
+            std::string params = parameters[3].as<std::string>();
+
+            std::vector<thinkyoung::blockchain::EventOperation> result = get_client()->call_contract_local_emit(contract, caller_name, function_name, params);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::call_contract_local_emit_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            verify_wallet_is_unlocked();
+            // done checking prerequisites
+
+            if (!parameters.contains("contract"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'contract'");
+            std::string contract = parameters["contract"].as<std::string>();
+            if (!parameters.contains("caller_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'caller_name'");
+            std::string caller_name = parameters["caller_name"].as<std::string>();
+            if (!parameters.contains("function_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'function_name'");
+            std::string function_name = parameters["function_name"].as<std::string>();
+            if (!parameters.contains("params"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'params'");
+            std::string params = parameters["params"].as<std::string>();
+
+            std::vector<thinkyoung::blockchain::EventOperation> result = get_client()->call_contract_local_emit(contract, caller_name, function_name, params);
             return fc::variant(result);
         }
 
@@ -8975,6 +9085,14 @@ namespace thinkyoung {
                 this, capture_con, _1);
             json_connection->add_named_param_method("wallet_get_contracts", bound_named_method);
 
+           // register method create_transfer_transaction
+            bound_positional_method = boost::bind(&CommonApiRpcServer::create_transfer_transaction_positional,
+                this, capture_con, _1);
+            json_connection->add_method("create_transfer_transaction", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::create_transfer_transaction_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("create_transfer_transaction", bound_named_method);
+
            // register method wallet_scan_contracts
             bound_positional_method = boost::bind(&CommonApiRpcServer::wallet_scan_contracts_positional,
                 this, capture_con, _1);
@@ -9226,6 +9344,14 @@ namespace thinkyoung {
             bound_named_method = boost::bind(&CommonApiRpcServer::call_contract_testing_named, 
                 this, capture_con, _1);
             json_connection->add_named_param_method("call_contract_testing", bound_named_method);
+
+           // register method call_contract_local_emit
+            bound_positional_method = boost::bind(&CommonApiRpcServer::call_contract_local_emit_positional,
+                this, capture_con, _1);
+            json_connection->add_method("call_contract_local_emit", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::call_contract_local_emit_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("call_contract_local_emit", bound_named_method);
 
            // register method call_contract_offline
             bound_positional_method = boost::bind(&CommonApiRpcServer::call_contract_offline_positional,
@@ -11867,6 +11993,25 @@ namespace thinkyoung {
             }
 
             {
+                // register method create_transfer_transaction
+                thinkyoung::api::MethodData create_transfer_transaction_method_metadata{ "create_transfer_transaction", nullptr,
+                    /* description */ "create a simple (non-TITAN) transfer to an address without broadcast",
+                    /* returns */ "signed_transaction",
+                    /* params: */{
+                        {"amount_to_transfer", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"asset_symbol", "asset_symbol", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
+                    /* detailed description */ "create a simple (non-TITAN) transfer to an address without broadcast\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  signed_transaction\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(create_transfer_transaction_method_metadata);
+            }
+
+            {
                 // register method wallet_scan_contracts
                 thinkyoung::api::MethodData wallet_scan_contracts_method_metadata{ "wallet_scan_contracts", nullptr,
                     /* description */ "scan to get all the contracts",
@@ -12282,6 +12427,23 @@ namespace thinkyoung {
                     /* detailed description */ "call contract function by contract name or contract address on local endpoint, and do not spread it on P2P network\n\nParameters:\n  contract (string, required): contract name or contract address need to be called\n  caller_name (string, required): caller name\n  function_name (string, required): function in contract \n  params (string, required): parameters which would be passed to function\n\nReturns:\n  asset_array\n",
                     /* aliases */ {}, false};
                 store_method_metadata(call_contract_testing_method_metadata);
+            }
+
+            {
+                // register method call_contract_local_emit
+                thinkyoung::api::MethodData call_contract_local_emit_method_metadata{ "call_contract_local_emit", nullptr,
+                    /* description */ "call contract function by contract name or contract address on local endpoint, and do not spread it on P2P network",
+                    /* returns */ "eventoperation_array",
+                    /* params: */{
+                        {"contract", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"caller_name", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"function_name", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"params", "string", thinkyoung::api::required_positional, fc::ovariant()}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
+                    /* detailed description */ "call contract function by contract name or contract address on local endpoint, and do not spread it on P2P network\n\nParameters:\n  contract (string, required): contract name or contract address need to be called\n  caller_name (string, required): caller name\n  function_name (string, required): function in contract \n  params (string, required): parameters which would be passed to function\n\nReturns:\n  eventoperation_array\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(call_contract_local_emit_method_metadata);
             }
 
             {
@@ -13183,6 +13345,8 @@ namespace thinkyoung {
                 return wallet_transfer_to_contract_testing_positional(nullptr, parameters);
             if (method_name == "wallet_get_contracts")
                 return wallet_get_contracts_positional(nullptr, parameters);
+            if (method_name == "create_transfer_transaction")
+                return create_transfer_transaction_positional(nullptr, parameters);
             if (method_name == "wallet_scan_contracts")
                 return wallet_scan_contracts_positional(nullptr, parameters);
             if (method_name == "about")
@@ -13241,6 +13405,8 @@ namespace thinkyoung {
                 return get_contract_balance_positional(nullptr, parameters);
             if (method_name == "call_contract_testing")
                 return call_contract_testing_positional(nullptr, parameters);
+            if (method_name == "call_contract_local_emit")
+                return call_contract_local_emit_positional(nullptr, parameters);
             if (method_name == "call_contract_offline")
                 return call_contract_offline_positional(nullptr, parameters);
             if (method_name == "load_contract_to_file")

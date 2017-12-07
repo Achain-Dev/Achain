@@ -1400,6 +1400,20 @@ namespace thinkyoung {
              */
             virtual vector<string> wallet_get_contracts(const std::string& account_name = fc::json::from_string("\"\"").as<std::string>()) = 0;
             /**
+             * create a simple (non-TITAN) transfer to an address without broadcast.
+             *
+             * @param amount_to_transfer the amount of shares to transfer (string, required)
+             * @param asset_symbol the asset to transfer (asset_symbol, required)
+             * @param from_account_name the source account to draw the shares from (account_name, required)
+             * @param to_address the address or pubkey to transfer to (string, required)
+             * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
+             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
+             *                 optional, defaults to "vote_recommended")
+             *
+             * @return signed_transaction
+             */
+            virtual thinkyoung::blockchain::SignedTransaction create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            /**
              * scan to get all the contracts.
              */
             virtual void wallet_scan_contracts() = 0;
@@ -1633,6 +1647,18 @@ namespace thinkyoung {
              * @return asset_array
              */
             virtual std::vector<thinkyoung::blockchain::Asset> call_contract_testing(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) = 0;
+            /**
+             * call contract function by contract name or contract address on local endpoint, and do not spread it on
+             * P2P network.
+             *
+             * @param contract contract name or contract address need to be called (string, required)
+             * @param caller_name caller name (string, required)
+             * @param function_name function in contract (string, required)
+             * @param params parameters which would be passed to function (string, required)
+             *
+             * @return eventoperation_array
+             */
+            virtual std::vector<thinkyoung::blockchain::EventOperation> call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) = 0;
             /**
              * call contract offline function by contract name or contract address.
              *
