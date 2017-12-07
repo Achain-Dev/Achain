@@ -15,7 +15,9 @@
 #include "blockchain/ContractOperations.hpp"
 #include <utilities/CommonApi.hpp>
 
-
+#include <contract/task.hpp>
+#include <contract/task_dispatcher.hpp>
+#include <contract/rpc_mgr.hpp>
 #define FREE_LUA_MODULE(p_lua_module) \
 delete (p_lua_module);
 
@@ -245,38 +247,67 @@ namespace thinkyoung {
                     FC_THROW_EXCEPTION(thinkyoung::blockchain::invalid_contract_filename, "contract source file name should end with .lua or .glua");
                 }
                 
-                GluaModuleByteStream* p_lua_module = new GluaModuleByteStream();
-                FC_ASSERT(p_lua_module, "p_lua_module malloc fail!");
-                ChainInterfacePtr data_ptr = _wallet->get_correct_state_ptr();
-                PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(data_ptr);
-                TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
-                GluaStatePreProcessorFunction lua_state_pre;
-                lua_state_pre.processor = compile_contract_callback;
-                std::list<void*> args_list;
-                args_list.push_back(trx_eval_state.get());
-                lua_state_pre.args = args_list;
+                bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled();
+                int exception_code = 0;
+                string exception_msg;
+                int executed_count = 0;
                 glua::util::TimeDiff time_diff;
                 time_diff.start();
                 
-                if (NOT thinkyoung::lua::lib::compile_contract_to_stream(filename_str.c_str(), p_lua_module, err_msg, &lua_state_pre, USE_TYPE_CHECK)) {
-                    delete p_lua_module;
-                    err_msg[LUA_EXCEPTION_MULTILINE_STRNG_MAX_LENGTH] = '\0';
-                    FC_THROW_EXCEPTION(thinkyoung::blockchain::compile_contract_fail, err_msg);
+                if (enable_lvm) {
+                    auto compile_task = std::make_shared<CompileTask>();
+                    compile_task->glua_path_file = out_filename;
+                    auto compile_result = (CompileTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());                            //call interface to send msg to LVM
+                    
+                    if (compile_result) {
+                        executed_count = compile_result->execute_count;
+                        exception_code = compile_result->error_code;
+                        exception_msg = compile_result->error_msg;
+                        
+                        if (exception_code > 0) {
+                            if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+                                
+                            } else {
+                                thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                throw con_err;
+                            }
+                        }
+                    }
+                    
+                    out_filename = compile_result->gpc_path_file;
+                    
+                } else {
+                    GluaModuleByteStream* p_lua_module = new GluaModuleByteStream();
+                    FC_ASSERT(p_lua_module, "p_lua_module malloc fail!");
+                    ChainInterfacePtr data_ptr = _wallet->get_correct_state_ptr();
+                    PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(data_ptr);
+                    TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
+                    GluaStatePreProcessorFunction lua_state_pre;
+                    lua_state_pre.processor = compile_contract_callback;
+                    std::list<void*> args_list;
+                    args_list.push_back(trx_eval_state.get());
+                    lua_state_pre.args = args_list;
+                    
+                    if (NOT thinkyoung::lua::lib::compile_contract_to_stream(filename_str.c_str(), p_lua_module, err_msg, &lua_state_pre, USE_TYPE_CHECK)) {
+                        delete p_lua_module;
+                        err_msg[LUA_EXCEPTION_MULTILINE_STRNG_MAX_LENGTH] = '\0';
+                        FC_THROW_EXCEPTION(thinkyoung::blockchain::compile_contract_fail, err_msg);
+                    }
+                    
+                    if (save_code_to_file(out_filename, p_lua_module, err_msg) < 0) {
+                        delete p_lua_module;
+                        p_lua_module = nullptr;
+                        err_msg[LUA_EXCEPTION_MULTILINE_STRNG_MAX_LENGTH] = '\0';
+                        FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_gpcfile_fail, err_msg);
+                    }
+                    
+                    if(p_lua_module)
+                        delete p_lua_module;
                 }
                 
                 time_diff.end();
                 std::cout << "compile using time " << time_diff.diff_timestamp() << "s" << std::endl;
-                
-                if (save_code_to_file(out_filename, p_lua_module, err_msg) < 0) {
-                    delete p_lua_module;
-                    p_lua_module = nullptr;
-                    err_msg[LUA_EXCEPTION_MULTILINE_STRNG_MAX_LENGTH] = '\0';
-                    FC_THROW_EXCEPTION(thinkyoung::blockchain::save_bytecode_to_gpcfile_fail, err_msg);
-                }
-                
-                if(p_lua_module)
-                    delete p_lua_module;
-                    
                 return fc::path(out_filename);
             }
             

@@ -34,19 +34,17 @@ namespace lvm {
           public:
             explicit LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr);
             ~LvmInterface();
-            
+
             uint64_t err_num;
             std::vector < std::vector<char> > result;
-            
+
             //NO OPERATION
-            void get_stored_contract_info(const std::string& name);
             void get_stored_contract_info_by_address(const std::string& contract_address);
             void get_contract_address_by_name(const std::string& contract_name);
             void check_contract_exist_by_address(const std::string& contract_address);
             void check_contract_exist(const std::string& contract_name);
             void open_contract(const std::string& contract_name);
             void open_contract_by_address(const std::string& contract_address);
-            void get_storage_value_from_thinkyoung(const std::string& contract_name, const std::string& storage_name);
             void get_storage_value_from_thinkyoung_by_address(const std::string& contract_address, const std::string& storage_name);
             void get_contract_balance_amount (const std::string& contract_address, const std::string& asset_symbol);
             void get_transaction_fee ();
@@ -56,7 +54,7 @@ namespace lvm {
             void get_header_block_num ();
             void wait_for_future_random (const int next);
             void get_waited (uint32_t num);
-            
+
             //OPERATION
             void commit_storage_changes_to_thinkyoung(AllStorageDataChange&);
             void transfer_from_contract_to_address(const std::string& contract_address, const std::string& to_address,
@@ -64,10 +62,10 @@ namespace lvm {
             void transfer_from_contract_to_public_account(const std::string& contract_address, const std::string& to_account_name,
                     const std::string& asset_type, int64_t amount);
             void emit(const std::string& contract_id, const std::string& event_name, const std::string& event_param);
-            
+
           private:
             void push_result(std::vector<char>& value);
-            
+
             thinkyoung::blockchain::oContractEntry _entry;
             thinkyoung::blockchain::ChainInterface* _chain_interface;
             thinkyoung::blockchain::TransactionEvaluationState* _evaluate_state;
