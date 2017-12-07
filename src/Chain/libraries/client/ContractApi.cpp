@@ -257,7 +257,7 @@ namespace thinkyoung {
                 if (enable_lvm) {
                     auto compile_task = std::make_shared<CompileTask>();
                     compile_task->glua_path_file = out_filename;
-                    auto compile_result = (CompileTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());                            //call interface to send msg to LVM
+                    auto compile_result = (CompileTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(compile_task.get());                            //call interface to send msg to LVM
                     
                     if (compile_result) {
                         executed_count = compile_result->execute_count;
