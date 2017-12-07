@@ -61,7 +61,7 @@ class RpcClientMgr {
     fc::ip::endpoint _end_point;
     std::shared_ptr<fc::thread> _socket_thread_ptr;
     Client* _client_ptr;
-    std::vector<ProcTaskRequest>  _tasks;
+    std::list<ProcTaskRequest>  _tasks;
     std::mutex              _task_mutex;
     fc::time_point _last_hello_message_received_time;
     bool _b_valid_flag;
