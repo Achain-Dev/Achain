@@ -40,12 +40,11 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     thinkyoung::blockchain::TransactionEvaluationState* trx_evl_state;
     //TODO make_shared
-    //std::shared_ptr<LuaRequestTaskResult> result = std::make_shared<LuaRequestTaskResult>();
-    LuaRequestTaskResult* result = new LuaRequestTaskResult;
+    auto result = std::make_shared<LuaRequestTaskResult>();
     result->task_id = plua_request->task_id;
     result->method = plua_request->method;
     int par_size = plua_request->params.size();
-    void* eval_state_ptr = (((GluaStateValue*)plua_request->statevalue)->pointer_value);
+    void* eval_state_ptr = (void*)plua_request->statevalue;
     trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(eval_state_ptr);
     lvm::api::LvmInterface lvm_req(trx_evl_state);
     
@@ -145,7 +144,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
                 std::string storage_name;
                 contract_name = fc::raw::unpack<std::string>(plua_request->params[0]);
                 storage_name = fc::raw::unpack<std::string>(plua_request->params[1]);
-                lvm_req.get_storage_value_from_thinkyoung(contract_name, storage_name);
+                lvm_req.get_storage_value_from_thinkyoung_by_address(contract_name, storage_name);
             }
             
             break;
@@ -283,7 +282,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     
     result->params = lvm_req.result;
     result->err_num = lvm_req.err_num;
-    p_rpc_mgr->post_message(result, nullptr);
+    p_rpc_mgr->post_message(result.get(), nullptr);
 }
 
 TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {
