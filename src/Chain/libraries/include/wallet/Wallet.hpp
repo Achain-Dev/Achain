@@ -1577,6 +1577,7 @@ namespace thinkyoung {
             
             WalletTransactionEntry call_contract(const string caller, const ContractIdType contract, const string method, const string& arguments, const string& asset_symbol, double cost_limit, bool is_testing = false);
             std::vector<thinkyoung::blockchain::Asset> call_contract_testing(const string caller, const ContractIdType contract, const string method, const string& arguments);
+            std::vector<thinkyoung::blockchain::EventOperation> call_contract_local_emit(const string caller, const ContractIdType contract, const string method, const string& arguments);
             std::string call_contract_offline(const string caller, const ContractIdType contract, const string method, const string& arguments);
             
             void get_enough_balances(const string& account_name, const Asset target, std::map<BalanceIdType, ShareType>& balances, unordered_set<Address>& required_signatures);

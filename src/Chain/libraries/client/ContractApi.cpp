@@ -340,6 +340,16 @@ namespace thinkyoung {
                 return _wallet->call_contract_testing(caller_name, contract_address, function_name, params);
             }
             
+            std::vector<thinkyoung::blockchain::EventOperation> ClientImpl::call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) {
+                if (_chain_db->get_is_in_sandbox())
+                    FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
+                    
+                std::vector<thinkyoung::blockchain::EventOperation> event_op;
+                Address contract_address;
+                contract_address = get_contract_address(caller_name);
+                event_op = _wallet->call_contract_local_emit(contract, contract_address, function_name, params);
+                return event_op;
+            }
             std::string ClientImpl::call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
