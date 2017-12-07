@@ -363,6 +363,8 @@ namespace thinkyoung {
             fc::variant wallet_transfer_to_contract_testing_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant wallet_get_contracts_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant wallet_get_contracts_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant create_transfer_transaction_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant create_transfer_transaction_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant wallet_scan_contracts_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant wallet_scan_contracts_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant about_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);

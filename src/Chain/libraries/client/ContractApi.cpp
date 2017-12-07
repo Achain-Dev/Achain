@@ -503,6 +503,7 @@ namespace thinkyoung {
                 return entry;
             }
             
+            
             std::vector<thinkyoung::blockchain::Asset> ClientImpl::wallet_transfer_to_contract_testing(
                 double amount_to_transfer,
                 const string& asset_symbol,

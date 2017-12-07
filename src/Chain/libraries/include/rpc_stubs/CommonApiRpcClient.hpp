@@ -190,6 +190,7 @@ namespace thinkyoung {
             thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_contract(double amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_contract, double amount_for_exec) override;
             std::vector<thinkyoung::blockchain::Asset> wallet_transfer_to_contract_testing(double amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_contract) override;
             vector<string> wallet_get_contracts(const std::string& account_name = fc::json::from_string("\"\"").as<std::string>()) override;
+            thinkyoung::blockchain::SignedTransaction create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) override;
             void wallet_scan_contracts() override;
             fc::variant_object about() const override;
             fc::variant_object get_info() const override;
