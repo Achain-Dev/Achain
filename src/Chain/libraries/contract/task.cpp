@@ -22,6 +22,7 @@ CompileTaskResult::CompileTaskResult(TaskBase* task) {
         error_code = compileTask_p->error_code;
         error_msg = compileTask_p->error_msg;
         gpc_path_file = compileTask_p->gpc_path_file;
+        execute_count = compileTask_p->execute_count;
     }
 }
 
@@ -55,6 +56,7 @@ CallTaskResult::CallTaskResult(TaskBase* task) {
         task_from = callTask_p->task_from;
         task_id = callTask_p->task_id;
         task_type = callTask_p->task_type;
+        execute_count = callTask_p->execute_count;
     }
 }
 
@@ -71,6 +73,7 @@ TransferTaskResult::TransferTaskResult(TaskBase* task) {
         task_from = transferTask_p->task_from;
         task_id = transferTask_p->task_id;
         task_type = transferTask_p->task_type;
+        execute_count = transferTask_p->execute_count;
     }
 }
 
@@ -87,6 +90,7 @@ UpgradeTaskResult::UpgradeTaskResult(TaskBase* task) {
         task_from = upgradeTask_p->task_from;
         task_id = upgradeTask_p->task_id;
         task_type = upgradeTask_p->task_type;
+        execute_count = upgradeTask_p->execute_count;
     }
 }
 
@@ -103,6 +107,7 @@ DestroyTaskResult::DestroyTaskResult(TaskBase* task) {
         task_from = destroyTask_p->task_from;
         task_id = destroyTask_p->task_id;
         task_type = destroyTask_p->task_type;
+        execute_count = destroyTask_p->execute_count;
     }
 }
 
