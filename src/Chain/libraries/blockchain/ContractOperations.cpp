@@ -226,8 +226,6 @@ namespace thinkyoung {
                             }
 
                             eval_state.p_result_trx.push_transaction(eval_state.trx);
-                            GluaStateValue statevalue;
-                            statevalue.pointer_value = &eval_state;
                             auto contract_entry = eval_state._current_state->get_contract_entry(id);
 
                             if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
@@ -272,6 +270,8 @@ namespace thinkyoung {
 
                             } else {
                                 lua::lib::GluaStateScope scope;
+                                GluaStateValue statevalue;
+                                statevalue.pointer_value = &eval_state;
                                 lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(contract_entry->owner)).c_str());
                                 lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(contract_entry->owner))).c_str());
                                 lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
@@ -482,8 +482,6 @@ namespace thinkyoung {
                             }
 
                             eval_state.p_result_trx.push_transaction(eval_state.trx);
-                            GluaStateValue statevalue;
-                            statevalue.pointer_value = &eval_state;
 
                             if (contract_balance_entry.valid()) {
                                 // deposit contract account balance to destroyer account
@@ -535,6 +533,8 @@ namespace thinkyoung {
 
                             } else {
                                 lua::lib::GluaStateScope scope;
+                                GluaStateValue statevalue;
+                                statevalue.pointer_value = &eval_state;
                                 lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(entry->owner)).c_str());
                                 lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(entry->owner))).c_str());
                                 lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
@@ -748,8 +748,6 @@ namespace thinkyoung {
             entry.state = ContractState::valid;
             entry.id = get_contract_id();
             entry.trx_id = eval_state.trx.id();
-            GluaStateValue statevalue;
-            statevalue.pointer_value = &eval_state;
             int limit = eval_state._current_state->get_limit(0, initcost.amount);
 
             if (this->contract_code.code_hash != this->contract_code.GetHash()) {
@@ -782,7 +780,7 @@ namespace thinkyoung {
                     if (enable_lvm) {
                         //register task info
                         _registertask->num_limit = limit;
-                        _registertask->statevalue = reinterpret_cast<intptr_t>(&statevalue);
+                        _registertask->statevalue = reinterpret_cast<intptr_t>(&eval_state);
                         _registertask->str_caller = (string)(this->owner);
                         _registertask->str_caller_address = (string)(Address(this->owner));
                         _registertask->contract_code = this->contract_code;
@@ -815,6 +813,8 @@ namespace thinkyoung {
 
                     } else {
                         lua::lib::GluaStateScope scope;
+                        GluaStateValue statevalue;
+                        statevalue.pointer_value = &eval_state;
                         lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
                         lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(this->owner)).c_str());
                         lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(this->owner))).c_str());
@@ -1229,8 +1229,6 @@ namespace thinkyoung {
                             }
 
                             eval_state.p_result_trx.push_transaction(eval_state.trx);
-                            GluaStateValue statevalue;
-                            statevalue.pointer_value = &eval_state;
                             std::stringstream transfer_stream;
                             transfer_stream << transfer_amount.amount;
                             std::string transfer_str = transfer_stream.str();
@@ -1280,6 +1278,8 @@ namespace thinkyoung {
 
                             } else {
                                 lua::lib::GluaStateScope scope;
+                                GluaStateValue statevalue;
+                                statevalue.pointer_value = &eval_state;
                                 lua::lib::add_global_string_variable(scope.L(), "caller", ((string)(from)).c_str());
                                 lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(from))).c_str());
                                 lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);

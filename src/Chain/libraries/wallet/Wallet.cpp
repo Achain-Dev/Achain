@@ -3388,14 +3388,12 @@ namespace thinkyoung {
             Address        caller_address = Address(caller_public_key);
             PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(my->_blockchain);
             TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
-            GluaStateValue statevalue;
-            statevalue.pointer_value = trx_eval_state.get();
             std::string result;
             bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled();
 
             if (enable_lvm) {
                 auto task = std::make_shared<CallContractOfflineTask>();
-                task->statevalue = (intptr_t)statevalue.pointer_value;
+                task->statevalue = reinterpret_cast<intptr_t>(trx_eval_state.get());
                 task->num_limit = CONTRACT_OFFLINE_LIMIT_MAX;
                 task->str_caller = (string)(caller_public_key);
                 task->str_caller_address = (string)(Address(caller_address));
@@ -3418,6 +3416,8 @@ namespace thinkyoung {
 
             } else {
                 lua::lib::GluaStateScope scope;
+                GluaStateValue statevalue;
+                statevalue.pointer_value = trx_eval_state.get();
                 lua::lib::add_global_string_variable(scope.L(), "caller", (((string)(caller_public_key)).c_str()));
                 lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(caller_address))).c_str());
                 lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
