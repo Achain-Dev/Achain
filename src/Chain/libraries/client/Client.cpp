@@ -1300,8 +1300,9 @@ namespace thinkyoung {
                         task->path_file_name = filename.generic_string();
                         task->use_contract = false;
                         task->use_type_check = USE_TYPE_CHECK;
+                        task->statevalue = 0;
                         TaskImplResult* result = TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
-                        FC_ASSERT(result->task_type == COMPILE_SCRIPT_RESULT);
+                        FC_ASSERT(result->task_type == COMPILE_SCRIPT_TASK);
                         std::shared_ptr<CompileScriptTaskResult> task_result;
                         task_result.reset((CompileScriptTaskResult*)result);
                         
@@ -1711,7 +1712,6 @@ namespace thinkyoung {
                 _p_lvm_mgr = std::make_shared<thinkyoung::lvm::LvmMgr>();
                 fc::path path_file = fc::current_path();
                 _p_lvm_mgr->set_lvm_path_file(path_file);
-                _p_lvm_mgr->run_lvm();
             }
             
             my->configure_rpc_server(my->_config, option_variables);
