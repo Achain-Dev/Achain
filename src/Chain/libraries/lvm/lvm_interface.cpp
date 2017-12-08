@@ -156,8 +156,9 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                     return;
                 }
-
-                thinkyoung::blockchain::oContractStorage entry = _evaluate_state->_current_state->get_contractstorage_entry(
+                
+                thinkyoung::blockchain::ChainInterface* cur_state = _evaluate_state->_current_state;
+                thinkyoung::blockchain::oContractStorage entry = cur_state->get_contractstorage_entry(
                             thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
 
                 if (!entry.valid()) {
