@@ -44,7 +44,7 @@ namespace lvm {
 
         void LvmInterface::get_contract_address_by_name(const std::string& contract_name) {
             try {
-                if( (nullptr ==_evaluate_state->_current_state) || (_evaluate_state == nullptr)) {
+                if ((_evaluate_state == nullptr) || (nullptr == _evaluate_state->_current_state)) {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                 }
 
