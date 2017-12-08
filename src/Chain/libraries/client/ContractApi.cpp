@@ -14,6 +14,7 @@
 #include <boost/uuid/sha1.hpp>
 #include "blockchain/ContractOperations.hpp"
 #include <utilities/CommonApi.hpp>
+#include <contract/task_dispatcher.hpp>
 
 
 #define FREE_LUA_MODULE(p_lua_module) \
@@ -285,8 +286,38 @@ namespace thinkyoung {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
                     FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
-                    
-                return compile_contract_helper(filename);
+                
+                if (_self->lvm_enabled())
+                {
+                    try {
+
+                        auto _compiletask = std::make_shared<CompileTask>();
+                        CompileTaskResult* pcompile_result = nullptr;
+
+                        _compiletask->glua_path_file = filename;
+
+                        pcompile_result = (CompileTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_compiletask.get());
+
+                        if (pcompile_result) {
+                            if (pcompile_result->error_code > 0) {
+                                FC_THROW_EXCEPTION(thinkyoung::blockchain::contract_error, pcompile_result->error_msg);
+                            }
+                            return pcompile_result->gpc_path_file;
+                        }
+                        else
+                        {
+                            FC_THROW_EXCEPTION(thinkyoung::blockchain::contract_error, "compile contract error!");
+                        }
+                    }
+                    catch (const thinkyoung::blockchain::async_socket_error& e)
+                    {
+                        //do nothing
+                    }
+                }
+                else
+                {
+                    return compile_contract_helper(filename);
+                }
             }
             
             std::string ClientImpl::register_contract(
