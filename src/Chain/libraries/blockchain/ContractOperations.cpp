@@ -1003,13 +1003,15 @@ namespace thinkyoung {
                             if (_calltaskresult) {
                                 exception_code = _calltaskresult->error_code;
                                 exception_msg = _calltaskresult->error_msg;
-
-                                if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
-                                    FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
-
-                                } else {
-                                    thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
-                                    throw con_err;
+                                
+                                if (exception_code > 0) {
+                                    if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
+                                        FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
+                                        
+                                    } else {
+                                        thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
+                                        throw con_err;
+                                    }
                                 }
 
                                 executed_count = _calltaskresult->execute_count;
