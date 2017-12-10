@@ -2071,10 +2071,6 @@ namespace thinkyoung {
             return my->_delegate_config;
         }
         
-        void Client::send_rpc_msg(TaskBase* task) {
-            //my->rpcMgr->post_message(task);
-        }
-        
         bool Client::lvm_enabled() {
             return my->_config.lvm_enabled;
         }
