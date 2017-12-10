@@ -41,7 +41,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     result->task_id = plua_request->task_id;
     result->method = plua_request->method;
     int par_size = plua_request->params.size();
-    void* eval_state_ptr = (void*) plua_request->statevalue;
+    void* eval_state_ptr = (void*)plua_request->statevalue;
     trx_evl_state = (thinkyoung::blockchain::TransactionEvaluationState*)(eval_state_ptr);
     lvm::api::LvmInterface lvm_req(trx_evl_state);
     
