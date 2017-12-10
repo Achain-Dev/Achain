@@ -1296,15 +1296,14 @@ namespace thinkyoung {
                     }
                     
                     if (_config.lvm_enabled) {
-                        auto task = std::make_shared<CompileScriptTask>();
-                        task->path_file_name = filename.generic_string();
-                        task->use_contract = false;
-                        task->use_type_check = USE_TYPE_CHECK;
-                        task->statevalue = 0;
-                        TaskImplResult* result = TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
-                        FC_ASSERT(result->task_type == COMPILE_SCRIPT_TASK);
+                        CompileScriptTask task;
                         std::shared_ptr<CompileScriptTaskResult> task_result;
-                        task_result.reset((CompileScriptTaskResult*)result);
+                        task.path_file_name = filename.generic_string();
+                        task.use_contract = false;
+                        task.use_type_check = USE_TYPE_CHECK;
+                        task.statevalue = 0;
+                        task_result.reset((CompileScriptTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&task));
+                        FC_ASSERT(task_result->task_type == COMPILE_SCRIPT_TASK);
                         
                         if (task_result->error_code != 0) {
                             FC_THROW_EXCEPTION(compile_script_fail, task_result->error_msg);
