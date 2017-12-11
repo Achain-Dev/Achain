@@ -206,7 +206,7 @@ void RpcClientMgr::read_loop() {
             
             if (result_p->task_type != LUA_REQUEST_TASK && result_p->task_type != HELLO_MSG) {
                 set_value(result_p);
-                return;
+                continue;
             }
             
             sp_result.reset(result_p);
