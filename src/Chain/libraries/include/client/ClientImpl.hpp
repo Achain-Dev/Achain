@@ -168,8 +168,6 @@ namespace thinkyoung {
                     if (_chain_downloader_future.valid() && !_chain_downloader_future.ready())
                         _chain_downloader_future.cancel_and_wait(__FUNCTION__);
                         
-                    RpcClientMgr::delete_rpc_mgr();
-                    TaskDispatcher::delete_lua_task_dispatcher();
                     _rpc_server.reset(); // this needs to shut down before the _p2p_node because several RPC requests will try to dereference _p2p_node.  Shutting down _rpc_server kills all active/pending requests
                     delete _cli;
                     _cli = nullptr;
