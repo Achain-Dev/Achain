@@ -250,7 +250,10 @@ namespace thinkyoung {
                                     _upgradetask.contract_code = _code;
                                 }
 
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_upgradetask.statevalue, &eval_state);
                                 _upgradetaskresult =(UpgradeTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);
+                                //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_upgradetask.statevalue);
 
                                 if (_upgradetaskresult) {
                                     executed_count = _upgradetaskresult->execute_count;
@@ -513,7 +516,10 @@ namespace thinkyoung {
                                     _destroytask.contract_code = _code;
                                 }
 
-                                _destroytaskresult = (DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);                            //call interface to send msg to LVM
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_destroytask.statevalue, &eval_state);
+                                _destroytaskresult = (DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);
+                                //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_destroytask.statevalue);
 
                                 if (_destroytaskresult) {
                                     executed_count = _destroytaskresult->execute_count;
@@ -793,7 +799,10 @@ namespace thinkyoung {
                             _registertask->str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
                         }
 
-                        pregister_result = (RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());                            //call interface to send msg to LVM
+                        TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_registertask->statevalue, &eval_state);
+                        pregister_result = (RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());
+                        //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
+                        TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_registertask->statevalue);
 
                         if (pregister_result) {
                             exception_code = pregister_result->error_code;
@@ -997,17 +1006,19 @@ namespace thinkyoung {
                                 _calltask.contract_code = _code;
                             }
 
-                            _calltaskresult = ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);                       //call interface to send msg to LVM
+                            TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_calltask.statevalue, &eval_state);
+                            _calltaskresult = ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);
+                            //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
+                            TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_calltask.statevalue);
 
-                            //TODO
                             if (_calltaskresult) {
                                 exception_code = _calltaskresult->error_code;
                                 exception_msg = _calltaskresult->error_msg;
-                                
+
                                 if (exception_code > 0) {
                                     if (exception_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR) {
                                         FC_CAPTURE_AND_THROW(thinkyoung::blockchain::contract_run_out_of_money);
-                                        
+
                                     } else {
                                         thinkyoung::blockchain::contract_error con_err(32000, "exception", exception_msg);
                                         throw con_err;
@@ -1241,7 +1252,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 TransferTask _transfertask;
-                                TransferTaskResult* _transfertaskresult = nullptr;
+                                std::shared_ptr<TransferTaskResult> _transfertaskresult;
                                 _transfertask.num_limit = limit;
                                 _transfertask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _transfertask.str_caller = ((string)(this->from)).c_str();
@@ -1259,9 +1270,11 @@ namespace thinkyoung {
                                     _transfertask.contract_code = _code;
                                 }
 
-                                _transfertaskresult =(TransferTaskResult*) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask);                            //call interface to send msg to LVM
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_transfertask.statevalue, &eval_state);
+                                _transfertaskresult.reset((TransferTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask));
+                                //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_transfertask.statevalue);
 
-                                //TODO
                                 if (_transfertaskresult) {
                                     executed_count = _transfertaskresult->execute_count;
                                     exception_msg = _transfertaskresult->error_msg;
