@@ -30,9 +30,9 @@ class TaskDispatcher {
     ~TaskDispatcher();
 
   public:
-    static TaskDispatcher*  _p_lua_task_dispatcher;
     fc::promise<void*>::ptr _exec_lua_task_ptr;
   private:
+    static TaskDispatcher*  _p_lua_task_dispatcher;
     static std::map<intptr_t, thinkyoung::blockchain::TransactionEvaluationState*> _map_trx_state;
 };
 

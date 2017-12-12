@@ -318,7 +318,7 @@ TaskImplResult* TaskDispatcher::exec_lua_task(TaskBase* task) {
     RpcClientMgr* p_rpc_mgr = RpcClientMgr::get_rpc_mgr();
     _exec_lua_task_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("exec_lua_task_promise"));
     p_rpc_mgr->post_message(task, _exec_lua_task_ptr);
-    TaskImplResult* result = (TaskImplResult*)(void *)_exec_lua_task_ptr->wait();
+    TaskImplResult* impl_result = (TaskImplResult*)(void *)_exec_lua_task_ptr->wait();
     _exec_lua_task_ptr.reset();
-    return result;
+    return impl_result;
 }

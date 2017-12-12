@@ -187,7 +187,8 @@ void RpcClientMgr::send_to_lvm(Message& m) {
 
 //socket receive msg loop
 void RpcClientMgr::read_loop() {
-    TaskBase* result_p = NULL;
+    TaskBase* result_p = nullptr;
+    std::shared_ptr<TaskBase> sp_result;
     static_assert(BUFFER_SIZE >= sizeof(MessageHeader), "insufficient buffer");
     
     try {
@@ -203,15 +204,18 @@ void RpcClientMgr::read_loop() {
                 continue;
             }
             
+            if (result_p->task_type != LUA_REQUEST_TASK && result_p->task_type != HELLO_MSG) {
+                set_value(result_p);
+                continue;
+            }
+            
+            sp_result.reset(result_p);
+            
             if (result_p->task_type == LUA_REQUEST_TASK) {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
-                delete (LuaRequestTask*)result_p;
-                
-            } else if (result_p->task_type == HELLO_MSG) {
-                ((HelloMsgResult*)result_p)->process_result(this);
                 
             } else {
-                set_value(result_p);
+                ((HelloMsgResult*)result_p)->process_result(this);
             }
         }
         

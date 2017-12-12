@@ -233,7 +233,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 UpgradeTask _upgradetask;
-                                UpgradeTaskResult* _upgradetaskresult = nullptr;
+                                std::shared_ptr<UpgradeTaskResult> _upgradetaskresult;
                                 _upgradetask.num_limit = limit;
                                 _upgradetask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _upgradetask.str_caller = ((string)(contract_entry->owner)).c_str();
@@ -251,7 +251,7 @@ namespace thinkyoung {
                                 }
 
                                 TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_upgradetask.statevalue, &eval_state);
-                                _upgradetaskresult =(UpgradeTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask);
+                                _upgradetaskresult.reset((UpgradeTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask));
                                 //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
                                 TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_upgradetask.statevalue);
 
@@ -500,7 +500,7 @@ namespace thinkyoung {
                                 // this part neeed to tune while debuging
                                 // some code need to be added/del
                                 DestroyTask _destroytask;
-                                DestroyTaskResult* _destroytaskresult = nullptr;
+                                std::shared_ptr<DestroyTaskResult> _destroytaskresult;
                                 _destroytask.num_limit = limit;
                                 _destroytask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                                 _destroytask.str_caller = ((string)(entry->owner)).c_str();
@@ -517,7 +517,7 @@ namespace thinkyoung {
                                 }
 
                                 TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_destroytask.statevalue, &eval_state);
-                                _destroytaskresult = (DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask);
+                                _destroytaskresult.reset((DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask));
                                 //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
                                 TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_destroytask.statevalue);
 
@@ -745,8 +745,6 @@ namespace thinkyoung {
                 }
             }
 
-            auto _registertask = std::make_shared<RegisterTask>();
-            RegisterTaskResult* pregister_result = nullptr;
             ContractEntry entry;
             entry.owner = owner;
             entry.code = contract_code;
@@ -784,25 +782,27 @@ namespace thinkyoung {
                     eval_state.p_result_trx.operations.push_back(ContractInfoOperation(get_contract_id(), owner, contract_code, register_time));
 
                     if (enable_lvm) {
+                        RegisterTask _registertask;
+                        std::shared_ptr<RegisterTaskResult> pregister_result;
                         //register task info
-                        _registertask->num_limit = limit;
-                        _registertask->statevalue = reinterpret_cast<intptr_t>(&eval_state);
-                        _registertask->str_caller = (string)(this->owner);
-                        _registertask->str_caller_address = (string)(Address(this->owner));
-                        _registertask->contract_code = this->contract_code;
-                        _registertask->str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
-                        _registertask->gpc_code = "";                        //need compile contract file path
+                        _registertask.num_limit = limit;
+                        _registertask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
+                        _registertask.str_caller = (string)(this->owner);
+                        _registertask.str_caller_address = (string)(Address(this->owner));
+                        _registertask.contract_code = this->contract_code;
+                        _registertask.str_contract_address = get_contract_id().AddressToString(AddressType::contract_address);
+                        _registertask.gpc_code = "";                        //need compile contract file path
                         thinkyoung::blockchain::ChainInterface* cur_state = eval_state._current_state;
-                        oContractEntry entry = cur_state->get_contract_entry(Address(_registertask->str_contract_address, AddressType::contract_address));
+                        oContractEntry entry = cur_state->get_contract_entry(Address(_registertask.str_contract_address, AddressType::contract_address));
 
                         if (entry.valid()) {
-                            _registertask->str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
+                            _registertask.str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
                         }
 
-                        TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_registertask->statevalue, &eval_state);
-                        pregister_result = (RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(_registertask.get());
+                        TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_registertask.statevalue, &eval_state);
+                        pregister_result.reset((RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_registertask));
                         //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                        TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_registertask->statevalue);
+                        TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_registertask.statevalue);
 
                         if (pregister_result) {
                             exception_code = pregister_result->error_code;
@@ -988,7 +988,7 @@ namespace thinkyoung {
                             // this part neeed to tune while debuging
                             // some code need to be added/del
                             CallTask _calltask;
-                            CallTaskResult *_calltaskresult;
+                            std::shared_ptr<CallTaskResult> _calltaskresult;
                             _calltask.num_limit = limit;
                             _calltask.statevalue = reinterpret_cast<intptr_t>(&eval_state);
                             _calltask.str_caller = ((string)(this->caller)).c_str();
@@ -1007,7 +1007,7 @@ namespace thinkyoung {
                             }
 
                             TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_calltask.statevalue, &eval_state);
-                            _calltaskresult = ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask);
+                            _calltaskresult.reset( ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask));
                             //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
                             TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_calltask.statevalue);
 
