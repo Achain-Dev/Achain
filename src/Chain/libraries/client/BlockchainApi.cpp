@@ -21,7 +21,7 @@ namespace thinkyoung {
                 FC_ASSERT(first < ALP_BLOCKCHAIN_NUM_DELEGATES, "Only the first 99 delegates are active");
                 FC_ASSERT(first + count <= ALP_BLOCKCHAIN_NUM_DELEGATES, "Only the first 99 delegates are active");
                 vector<AccountIdType> all_delegate_ids = _chain_db->get_active_delegates();
-                FC_ASSERT(all_delegate_ids.size() == ALP_BLOCKCHAIN_NUM_DELEGATES, "The num of active delegates should equal to ALP_BLOCKCHAIN_NUM_DELEGATES");
+                FC_ASSERT(all_delegate_ids.size() == ALP_BLOCKCHAIN_NUM_DELEGATES, "The num of active delegates should equal to ABTC_BLOCKCHAIN_NUM_DELEGATES");
                 vector<AccountIdType> delegate_ids(all_delegate_ids.begin() + first, all_delegate_ids.begin() + first + count);
                 vector<AccountEntry> delegate_entrys;
                 delegate_entrys.reserve(count);

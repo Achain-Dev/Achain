@@ -8,17 +8,15 @@
 
 namespace thinkyoung {
     namespace client {
-        namespace detail
-        {
-            class AlpGntpNotifierImpl
-            {
-            public:
+        namespace detail {
+            class AlpGntpNotifierImpl {
+              public:
                 fc::gntp_notifier _notifier;
                 fc::gntp_icon_ptr _alp_icon;
                 std::string _alp_instance_identifier;
-
+                
                 bool     _shutting_down;
-
+                
                 uint32_t _last_reported_connection_count;
                 uint32_t _connection_count_notification_threshold;
                 fc::time_point _last_connection_count_notification_time;
@@ -26,18 +24,18 @@ namespace thinkyoung {
                 fc::time_point _last_head_block_too_old_notification_time;
                 fc::microseconds _head_block_too_old_notification_interval;
                 uint32_t _missed_block_count_threshold;
-
+                
                 AlpGntpNotifierImpl(const std::string& host_to_notify = "127.0.0.1", uint16_t port = 23053,
-                    const std::string& alp_instance_identifier = "Alp",
-                    const fc::optional<std::string>& password = fc::optional<std::string>());
+                                    const std::string& alp_instance_identifier = "Abtc",
+                                    const fc::optional<std::string>& password = fc::optional<std::string>());
                 void register_notification_types();
             };
             extern unsigned char alp_icon_png[];
             extern unsigned alp_icon_png_len;
-
+            
             AlpGntpNotifierImpl::AlpGntpNotifierImpl(const std::string&  host_to_notify /* = "127.0.0.1" */, uint16_t port /* = 23053 */,
-                const std::string& alp_instance_identifier /* = "Alp" */,
-                const fc::optional<std::string>& password /* = optional<std::string>() */) :
+                    const std::string& alp_instance_identifier /* = "Alp" */,
+                    const fc::optional<std::string>& password /* = optional<std::string>() */) :
                 _notifier(host_to_notify, port, password),
                 _alp_icon(std::make_shared<fc::gntp_icon>((const char*)alp_icon_png, alp_icon_png_len)),
                 _alp_instance_identifier(alp_instance_identifier),
@@ -46,106 +44,93 @@ namespace thinkyoung {
                 _connection_count_notification_threshold(5),
                 _connection_count_notification_interval(fc::seconds(300)),
                 _head_block_too_old_notification_interval(fc::seconds(300)),
-                _missed_block_count_threshold(3)
-            {
+                _missed_block_count_threshold(3) {
             }
-
-            void AlpGntpNotifierImpl::register_notification_types()
-            {
+            
+            void AlpGntpNotifierImpl::register_notification_types() {
                 fc::gntp_notification_type notification_type;
-
                 notification_type.name = "connection_count_below_threshold";
                 notification_type.display_name = "Connection Count Below Threshold";
                 notification_type.enabled = true;
                 notification_type.icon = _alp_icon;
                 _notifier.add_notification_type(notification_type);
-
                 notification_type.name = "client_exiting_unexpectedly";
                 notification_type.display_name = "Client Exiting Unexpectedly";
                 notification_type.enabled = true;
                 notification_type.icon = _alp_icon;
                 _notifier.add_notification_type(notification_type);
-
                 notification_type.name = "head_block_too_old";
                 notification_type.display_name = "Head Block is Too Old";
                 notification_type.enabled = true;
                 notification_type.icon = _alp_icon;
                 _notifier.add_notification_type(notification_type);
-
                 _notifier.register_notifications();
             }
         }
-
+        
         AlpGntpNotifier::AlpGntpNotifier(const std::string& host_to_notify /* = "127.0.0.1" */, uint16_t port /* = 23053 */,
-            const std::string& alp_instance_identifier /* = "Alp" */,
-            const fc::optional<std::string>& password /* = fc::optional<std::string>() */) :
-            my(new detail::AlpGntpNotifierImpl(host_to_notify, port, alp_instance_identifier, password))
-        {
+                                         const std::string& alp_instance_identifier /* = "Alp" */,
+                                         const fc::optional<std::string>& password /* = fc::optional<std::string>() */) :
+            my(new detail::AlpGntpNotifierImpl(host_to_notify, port, alp_instance_identifier, password)) {
             my->_notifier.set_application_name("Alp");
             my->_notifier.set_application_icon(my->_alp_icon);
             my->register_notification_types();
         }
-
-        AlpGntpNotifier::~AlpGntpNotifier()
-        {
+        
+        AlpGntpNotifier::~AlpGntpNotifier() {
         }
-
-        void AlpGntpNotifier::client_is_shutting_down()
-        {
+        
+        void AlpGntpNotifier::client_is_shutting_down() {
             my->_shutting_down = true;
         }
-
-        void AlpGntpNotifier::notify_connection_count_changed(uint32_t new_connection_count)
-        {
+        
+        void AlpGntpNotifier::notify_connection_count_changed(uint32_t new_connection_count) {
             // notify any time we drop below the threshold, unless we've already done so recently
             // (to cut down on noise if we're oscillating around the threshold)
             if (new_connection_count >= my->_connection_count_notification_threshold)
                 my->_last_reported_connection_count = new_connection_count;
+                
             else if (new_connection_count < my->_connection_count_notification_threshold &&
-                my->_last_reported_connection_count >= my->_connection_count_notification_threshold)
-            {
+                     my->_last_reported_connection_count >= my->_connection_count_notification_threshold) {
                 fc::time_point notification_time_cutoff = fc::time_point::now() - my->_connection_count_notification_interval;
-                if (my->_last_connection_count_notification_time < notification_time_cutoff)
-                {
+                
+                if (my->_last_connection_count_notification_time < notification_time_cutoff) {
                     std::ostringstream message;
                     message << my->_alp_instance_identifier << ": peer connection count dropped to " << new_connection_count <<
-                        ", which is below the warning threshold of " << my->_connection_count_notification_threshold;
+                            ", which is below the warning threshold of " << my->_connection_count_notification_threshold;
                     my->_notifier.send_notification("connection_count_below_threshold", "Connection Count Below Threshold", message.str(), my->_alp_icon);
                     my->_last_reported_connection_count = new_connection_count;
                     my->_last_connection_count_notification_time = fc::time_point::now();
                 }
             }
         }
-
-        void AlpGntpNotifier::notify_client_exiting_unexpectedly()
-        {
+        
+        void AlpGntpNotifier::notify_client_exiting_unexpectedly() {
             std::ostringstream message;
             message << my->_alp_instance_identifier << ": client is exiting due to an unhandled exception";
             my->_notifier.send_notification("client_exiting_unexpectedly", "Client Exiting Unexpectedly", message.str(), my->_alp_icon);
         }
-
-        void AlpGntpNotifier::notify_head_block_too_old(const fc::time_point_sec head_block_age)
-        {
+        
+        void AlpGntpNotifier::notify_head_block_too_old(const fc::time_point_sec head_block_age) {
             fc::time_point block_age_cutoff = fc::time_point::now() - fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * my->_missed_block_count_threshold);
-            if (head_block_age < block_age_cutoff)
-            {
+            
+            if (head_block_age < block_age_cutoff) {
                 fc::time_point notification_time_cutoff = fc::time_point::now() - my->_head_block_too_old_notification_interval;
-                if (my->_last_head_block_too_old_notification_time < notification_time_cutoff)
-                {
+                
+                if (my->_last_head_block_too_old_notification_time < notification_time_cutoff) {
                     std::ostringstream message;
                     uint32_t age_in_sec = thinkyoung::blockchain::now().sec_since_epoch() - head_block_age.sec_since_epoch();
                     uint32_t missed_block_count = age_in_sec / ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
                     message << my->_alp_instance_identifier << ": the last block on our blockchain is " << fc::get_approximate_relative_time_string(head_block_age, thinkyoung::blockchain::now(), " old") <<
-                        ", meaning we've missed " << missed_block_count << " blocks";
+                            ", meaning we've missed " << missed_block_count << " blocks";
                     my->_notifier.send_notification("head_block_too_old", "Head Block is Too Old", message.str(), my->_alp_icon);
                     my->_last_head_block_too_old_notification_time = fc::time_point::now();
                 }
             }
         }
-
-
-        namespace detail
-        {
+        
+        
+        namespace detail {
             unsigned char alp_icon_png[] = {
                 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
                 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x40,
@@ -662,8 +647,8 @@ namespace thinkyoung {
                 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82
             };
             unsigned alp_icon_png_len = 6153;
-
+            
         }
-
+        
     }
 } // end namespace thinkyoung::client
