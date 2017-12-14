@@ -9,7 +9,7 @@
 #include <memory>
 
 TaskDispatcher* TaskDispatcher::_p_lua_task_dispatcher = nullptr;
-std::map<intptr_t, thinkyoung::blockchain::TransactionEvaluationState*> TaskDispatcher::_map_trx_state;
+std::map<intptr_t, std::map<std::string, StorageDataType>> TaskDispatcher::_map_storages;
 
 TaskDispatcher::TaskDispatcher() {
     _exec_lua_task_ptr = fc::promise<void*>::ptr(new fc::promise<void*>("exec_lua_task_promise"));
@@ -40,7 +40,9 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     result->task_id = plua_request->task_id;
     result->method = plua_request->method;
     int par_size = plua_request->params.size();
-    thinkyoung::blockchain::TransactionEvaluationState* trx_evl_state = get_trx_state(plua_request->statevalue);
+    thinkyoung::blockchain::TransactionEvaluationState* trx_evl_state =
+        reinterpret_cast<thinkyoung::blockchain::TransactionEvaluationState*>(plua_request->statevalue);
+    std::map<std::string, StorageDataType> _mapstorage = get_map_storage(plua_request->statevalue);
 
     if (!trx_evl_state) {
         //std::string str_tmp("empty trx_evel_state");
@@ -50,7 +52,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
         return;
     }
 
-    lvm::api::LvmInterface lvm_req(trx_evl_state);
+    lvm::api::LvmInterface lvm_req(trx_evl_state, _mapstorage);
 
     switch (result->method) {
         case GET_STORED_CONTRACT_INFO_BY_ADDRESS:
@@ -289,28 +291,25 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     p_rpc_mgr->post_message(result.get(), nullptr);
 }
 
-void TaskDispatcher::push_trx_state(const intptr_t statevalue, thinkyoung::blockchain::TransactionEvaluationState* trx_state) {
-    auto iter = _map_trx_state.find(statevalue);
+void TaskDispatcher::push_map_storage(const intptr_t statevalue, std::map<std::string, StorageDataType>&  trx_storage) {
+    auto iter = _map_storages.find(statevalue);
 
-    if (iter== _map_trx_state.end ()) {
-        _map_trx_state.emplace(std::make_pair(statevalue, trx_state));
+    if (iter == _map_storages.end()) {
+        _map_storages.emplace(std::make_pair(statevalue, trx_storage));
     }
 }
-void TaskDispatcher::pop_trx_state(const intptr_t statevalue) {
-    auto iter = _map_trx_state.find(statevalue);
+void TaskDispatcher::pop_map_storage(const intptr_t statevalue) {
+    auto iter = _map_storages.find(statevalue);
 
-    if (iter != _map_trx_state.end()) {
-        _map_trx_state.erase(statevalue);
+    if (iter != _map_storages.end()) {
+        _map_storages.erase(statevalue);
     }
 }
-thinkyoung::blockchain::TransactionEvaluationState* TaskDispatcher::get_trx_state(const intptr_t statevalue) {
-    auto iter = _map_trx_state.find(statevalue);
+std::map<std::string, StorageDataType> TaskDispatcher::get_map_storage(const intptr_t statevalue) {
+    auto iter = _map_storages.find(statevalue);
 
-    if (iter != _map_trx_state.end()) {
+    if (iter != _map_storages.end()) {
         return iter->second;
-
-    } else {
-        return nullptr;
     }
 }
 

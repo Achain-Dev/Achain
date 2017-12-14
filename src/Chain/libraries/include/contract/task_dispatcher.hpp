@@ -8,7 +8,7 @@ contract task dispatcher
 #define _TASK_DISPATCHER_H_
 
 #include <blockchain/ContractOperations.hpp>
-
+#include <blockchain/StorageOperations.hpp>
 #include <fc/thread/future.hpp>
 #include <contract/task.hpp>
 
@@ -21,9 +21,9 @@ class TaskDispatcher {
   public:
     void on_lua_request(TaskBase* task);
     TaskImplResult* exec_lua_task(TaskBase* task);
-    void push_trx_state(const intptr_t statevalue,  thinkyoung::blockchain::TransactionEvaluationState* trx_state);
-    void pop_trx_state(const intptr_t statevalue);
-    thinkyoung::blockchain::TransactionEvaluationState* get_trx_state(const intptr_t statevalue);
+    void push_map_storage(const intptr_t statevalue, std::map<std::string, StorageDataType>& trx_storage);
+    void pop_map_storage(const intptr_t statevalue);
+    std::map<std::string, StorageDataType> get_map_storage(const intptr_t statevalue);
 
   private:
     TaskDispatcher();
@@ -33,7 +33,7 @@ class TaskDispatcher {
     fc::promise<void*>::ptr _exec_lua_task_ptr;
   private:
     static TaskDispatcher*  _p_lua_task_dispatcher;
-    static std::map<intptr_t, thinkyoung::blockchain::TransactionEvaluationState*> _map_trx_state;
+    static std::map<intptr_t, std::map<std::string, StorageDataType>> _map_storages;
 };
 
 #endif
