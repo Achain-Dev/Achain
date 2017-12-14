@@ -229,6 +229,9 @@ namespace thinkyoung {
                             auto contract_entry = eval_state._current_state->get_contract_entry(id);
 
                             if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
+                                //TODO
+                                // this part neeed to tune while debuging
+                                // some code need to be added/del
                                 UpgradeTask _upgradetask;
                                 std::shared_ptr<UpgradeTaskResult> _upgradetaskresult;
                                 _upgradetask.num_limit = limit;
@@ -247,19 +250,10 @@ namespace thinkyoung {
                                     _upgradetask.contract_code = _code;
                                 }
 
-                                std::map<std::string, StorageDataType> contract_storages;
-                                thinkyoung::blockchain::oContractStorage storage_entry
-                                    = cur_state->get_contractstorage_entry(Address(_upgradetask.str_contract_address, AddressType::contract_address));
-
-                                if (!storage_entry.valid()) {
-                                } else {
-                                    contract_storages = storage_entry->contract_storages;
-                                    TaskDispatcher::get_lua_task_dispatcher()->push_map_storage(_upgradetask.statevalue, contract_storages);
-                                }
-
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_upgradetask.statevalue, &eval_state);
                                 _upgradetaskresult.reset((UpgradeTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_upgradetask));
                                 //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                                TaskDispatcher::get_lua_task_dispatcher()->pop_map_storage(_upgradetask.statevalue);
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_upgradetask.statevalue);
 
                                 if (_upgradetaskresult) {
                                     executed_count = _upgradetaskresult->execute_count;
@@ -522,19 +516,10 @@ namespace thinkyoung {
                                     _destroytask.contract_code = _code;
                                 }
 
-                                std::map<std::string, StorageDataType> contract_storages;
-                                thinkyoung::blockchain::oContractStorage storage_entry
-                                    = cur_state->get_contractstorage_entry(Address(_destroytask.str_contract_address, AddressType::contract_address));
-
-                                if (!storage_entry.valid()) {
-                                } else {
-                                    contract_storages = storage_entry->contract_storages;
-                                    TaskDispatcher::get_lua_task_dispatcher()->push_map_storage(_destroytask.statevalue, contract_storages);
-                                }
-
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_destroytask.statevalue, &eval_state);
                                 _destroytaskresult.reset((DestroyTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_destroytask));
                                 //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                                TaskDispatcher::get_lua_task_dispatcher()->pop_map_storage(_destroytask.statevalue);
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_destroytask.statevalue);
 
                                 if (_destroytaskresult) {
                                     executed_count = _destroytaskresult->execute_count;
@@ -814,19 +799,10 @@ namespace thinkyoung {
                             _registertask.str_contract_id = entry->id.AddressToString(AddressType::contract_address).c_str();
                         }
 
-                        std::map<std::string, StorageDataType> contract_storages;
-                        thinkyoung::blockchain::oContractStorage storage_entry
-                            = cur_state->get_contractstorage_entry(Address(_registertask.str_contract_address, AddressType::contract_address));
-
-                        if (!storage_entry.valid()) {
-                        } else {
-                            contract_storages = storage_entry->contract_storages;
-                            TaskDispatcher::get_lua_task_dispatcher()->push_map_storage(_registertask.statevalue, contract_storages);
-                        }
-
+                        TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_registertask.statevalue, &eval_state);
                         pregister_result.reset((RegisterTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_registertask));
                         //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                        TaskDispatcher::get_lua_task_dispatcher()->pop_map_storage(_registertask.statevalue);
+                        TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_registertask.statevalue);
 
                         if (pregister_result) {
                             exception_code = pregister_result->error_code;
@@ -1008,6 +984,9 @@ namespace thinkyoung {
 
                         //add to replace the previous code
                         if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
+                            //TODO
+                            // this part neeed to tune while debuging
+                            // some code need to be added/del
                             CallTask _calltask;
                             std::shared_ptr<CallTaskResult> _calltaskresult;
                             _calltask.num_limit = limit;
@@ -1027,19 +1006,10 @@ namespace thinkyoung {
                                 _calltask.contract_code = _code;
                             }
 
-                            std::map<std::string, StorageDataType> contract_storages;
-                            thinkyoung::blockchain::oContractStorage storage_entry
-                                = cur_state->get_contractstorage_entry(Address(_calltask.str_contract_address, AddressType::contract_address));
-
-                            if (!storage_entry.valid()) {
-                            } else {
-                                contract_storages  = storage_entry->contract_storages;
-                                TaskDispatcher::get_lua_task_dispatcher()->push_map_storage(_calltask.statevalue, contract_storages);
-                            }
-
+                            TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_calltask.statevalue, &eval_state);
                             _calltaskresult.reset( ( CallTaskResult* ) TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_calltask));
                             //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                            TaskDispatcher::get_lua_task_dispatcher()->pop_map_storage(_calltask.statevalue);
+                            TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_calltask.statevalue);
 
                             if (_calltaskresult) {
                                 exception_code = _calltaskresult->error_code;
@@ -1278,6 +1248,9 @@ namespace thinkyoung {
                             DepositContractOperation deposit_contract_op(contract_id, transfer_amount, deposit_contract_normal);
 
                             if (RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled()) {
+                                //TODO
+                                // this part neeed to tune while debuging
+                                // some code need to be added/del
                                 TransferTask _transfertask;
                                 std::shared_ptr<TransferTaskResult> _transfertaskresult;
                                 _transfertask.num_limit = limit;
@@ -1297,19 +1270,10 @@ namespace thinkyoung {
                                     _transfertask.contract_code = _code;
                                 }
 
-                                std::map<std::string, StorageDataType> contract_storages;
-                                thinkyoung::blockchain::oContractStorage storage_entry
-                                    = cur_state->get_contractstorage_entry(Address(_transfertask.str_contract_address, AddressType::contract_address));
-
-                                if (!storage_entry.valid()) {
-                                } else {
-                                    contract_storages = storage_entry->contract_storages;
-                                    TaskDispatcher::get_lua_task_dispatcher()->push_map_storage(_transfertask.statevalue, contract_storages);
-                                }
-
+                                TaskDispatcher::get_lua_task_dispatcher()->push_trx_state(_transfertask.statevalue, &eval_state);
                                 _transfertaskresult.reset((TransferTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&_transfertask));
                                 //lua&lvm is sync process, so we could remove the trx_state stored in task_dispactcher
-                                TaskDispatcher::get_lua_task_dispatcher()->pop_map_storage(_transfertask.statevalue);
+                                TaskDispatcher::get_lua_task_dispatcher()->pop_trx_state(_transfertask.statevalue);
 
                                 if (_transfertaskresult) {
                                     executed_count = _transfertaskresult->execute_count;

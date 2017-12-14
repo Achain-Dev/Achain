@@ -7,17 +7,14 @@ lvm interface in glua runtime
 namespace lvm {
     namespace api {
 
-        LvmInterface::LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr,
-                                   std::map<std::string, StorageDataType> storage ) : _evaluate_state(ptr), _mapstorage(storage), err_num(0) {
-            //set_storage(storage);
+        LvmInterface::LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr = nullptr)
+            :_evaluate_state(ptr), err_num(0) {
         }
+
 
         LvmInterface::~LvmInterface() {
         }
 
-        void LvmInterface::set_storage(const std::map<std::string, StorageDataType>& storage) {
-            _mapstorage = storage;
-        }
         /*
         contract abi
         contract offline_abi
@@ -159,38 +156,25 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                     return;
                 }
+                
+                thinkyoung::blockchain::ChainInterface* cur_state = _evaluate_state->_current_state;
+                thinkyoung::blockchain::oContractStorage entry = cur_state->get_contractstorage_entry(
+                            thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
 
-                if (_mapstorage.empty ()) {
-                    thinkyoung::blockchain::ChainInterface* cur_state = _evaluate_state->_current_state;
-                    thinkyoung::blockchain::oContractStorage entry = cur_state->get_contractstorage_entry(
-                                thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
-
-                    if (!entry.valid()) {
-                        push_result(fc::raw::pack<StorageDataType>(null_storage));
-                        return;
-                    }
-
-                    auto iter = entry->contract_storages.find(std::string(storage_name));
-
-                    if (iter == entry->contract_storages.end()) {
-                        push_result(fc::raw::pack<StorageDataType>(null_storage));
-                        return;
-                    }
-
-                    thinkyoung::blockchain::StorageDataType storage_data = iter->second;
-                    push_result(fc::raw::pack<thinkyoung::blockchain::StorageDataType>(storage_data));
-
-                } else {
-                    auto iter = _mapstorage.find(std::string(storage_name));
-
-                    if (iter == _mapstorage.end()) {
-                        push_result(fc::raw::pack<StorageDataType>(null_storage));
-                        return;
-                    }
-
-                    thinkyoung::blockchain::StorageDataType storage_data = iter->second;
-                    push_result(fc::raw::pack<thinkyoung::blockchain::StorageDataType>(storage_data));
+                if (!entry.valid()) {
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
+                    return;
                 }
+
+                auto iter = entry->contract_storages.find(std::string(storage_name));
+
+                if (iter == entry->contract_storages.end()) {
+                    push_result(fc::raw::pack<StorageDataType>(null_storage));
+                    return;
+                }
+
+                thinkyoung::blockchain::StorageDataType storage_data = iter->second;
+                push_result(fc::raw::pack<thinkyoung::blockchain::StorageDataType>(storage_data));
 
             } catch (const fc::exception& e) {
                 err_num = e.code();
@@ -233,7 +217,6 @@ namespace lvm {
                 err_num = e.code();
             }
         }
-
         void LvmInterface::get_transaction_fee() {
             try {
                 ChainInterface*  db_interface = NULL;
@@ -257,7 +240,6 @@ namespace lvm {
                 err_num = e.code();
             }
         }
-
         void LvmInterface::get_chain_now() {
             try {
                 if (!_evaluate_state || !(_chain_interface = _evaluate_state->_current_state)) {

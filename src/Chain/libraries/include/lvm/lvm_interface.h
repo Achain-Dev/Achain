@@ -32,7 +32,7 @@ namespace lvm {
         typedef std::map<std::string, StorageDataChangeMap> AllStorageDataChange;
         class LvmInterface {
           public:
-            explicit LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr, std::map<std::string, StorageDataType> storage);
+            explicit LvmInterface(thinkyoung::blockchain::TransactionEvaluationState* ptr);
             ~LvmInterface();
 
             uint64_t err_num;
@@ -63,15 +63,12 @@ namespace lvm {
                     const std::string& asset_type, int64_t amount);
             void emit(const std::string& contract_id, const std::string& event_name, const std::string& event_param);
 
-            void set_storage(const std::map<std::string, StorageDataType>& storage);
-
           private:
             void push_result(std::vector<char>& value);
 
             thinkyoung::blockchain::oContractEntry _entry;
             thinkyoung::blockchain::ChainInterface* _chain_interface;
             thinkyoung::blockchain::TransactionEvaluationState* _evaluate_state;
-            std::map<std::string, StorageDataType> _mapstorage;
         };
     }
 }
