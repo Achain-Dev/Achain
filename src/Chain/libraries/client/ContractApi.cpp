@@ -346,8 +346,8 @@ namespace thinkyoung {
                     
                 std::vector<thinkyoung::blockchain::EventOperation> event_op;
                 Address contract_address;
-                contract_address = get_contract_address(caller_name);
-                event_op = _wallet->call_contract_local_emit(contract, contract_address, function_name, params);
+                contract_address = get_contract_address(contract);
+                event_op = _wallet->call_contract_local_emit(caller_name, contract_address, function_name, params);
                 return event_op;
             }
             std::string ClientImpl::call_contract_offline(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) {
