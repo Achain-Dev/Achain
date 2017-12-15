@@ -23,6 +23,7 @@
 #include <glua/thinkyoung_lua_lib.h>
 #include <blockchain/GluaChainApi.hpp>
 #include <contract/rpc_mgr.hpp>
+#include <contract/task_dispatcher.hpp>
 
 namespace thinkyoung {
     namespace client {

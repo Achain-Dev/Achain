@@ -61,7 +61,7 @@ RpcClientMgr* RpcClientMgr::get_rpc_mgr(Client* client) {
     if (!RpcClientMgr::_s_rpc_mgr_ptr) {
         RpcClientMgr::_s_rpc_mgr_ptr = new RpcClientMgr(client);
     }
-
+    
     return RpcClientMgr::_s_rpc_mgr_ptr;
 }
 
@@ -84,11 +84,11 @@ void RpcClientMgr::start() {
     //start socket first
     try {
         connect_to_server();
-
+        
     } catch (...) {
         return;
     }
-
+    
     _socket_thread_ptr->async([&]() {
         this->read_loop();
     });
@@ -98,7 +98,7 @@ void RpcClientMgr::start() {
 void RpcClientMgr::start_loop() {
     uint64_t interval = 0;
     interval = (fc::time_point::now() - _last_hello_message_received_time).to_seconds();
-
+    
     //if the interval bigger than TIME_INTERVAL, the lvm maybe error, then restart the lvm
     if (interval > TIME_INTERVAL) {
         //start lvm
@@ -109,7 +109,7 @@ void RpcClientMgr::start_loop() {
         lvm_mgr->run_lvm();
         start();
     }
-
+    
     fc::schedule([this]() {
         start_loop();
     }, fc::time_point::now() + fc::seconds(START_LOOP_TIME),
@@ -127,7 +127,7 @@ void RpcClientMgr::connect_to_server() {
     if (!_b_valid_flag) {
         return;
     }
-
+    
     _rpc_client_ptr->connect_to(_end_point);
 }
 
@@ -136,7 +136,7 @@ void RpcClientMgr::read_from_lvm(Message& m) {
     uint64_t remaining_bytes_with_padding = 0;
     char buffer[BUFFER_SIZE];
     int leftover = BUFFER_SIZE - sizeof(MessageHeader);
-
+    
     try {
         /*first: read msgHead, get data.size*/
         _rpc_client_ptr->read(buffer, BUFFER_SIZE);
@@ -147,18 +147,18 @@ void RpcClientMgr::read_from_lvm(Message& m) {
         remaining_bytes_with_padding = 16 * ((m.size - leftover + 15) / 16);
         m.data.resize(leftover + remaining_bytes_with_padding);
         std::copy(buffer + sizeof(MessageHeader), buffer + sizeof(buffer), m.data.begin());
-
+        
         if (remaining_bytes_with_padding) {
             _rpc_client_ptr->read(&m.data[leftover], remaining_bytes_with_padding);
         }
-
+        
         m.data.resize(m.size);
-
+        
     } catch (...) {
         FC_THROW_EXCEPTION(thinkyoung::blockchain::socket_read_error, \
                            "socket read error. ");
     }
-
+    
     return;
 }
 
@@ -172,12 +172,12 @@ void RpcClientMgr::send_to_lvm(Message& m) {
     std::unique_ptr<char[]> padded_message(new char[size_with_padding]);
     memcpy(padded_message.get(), (char*)&m, sizeof(MessageHeader));
     memcpy(padded_message.get() + sizeof(MessageHeader), m.data.data(), m.size);
-
+    
     //send
     try {
         _rpc_client_ptr->write(padded_message.get(), size_with_padding);
         _rpc_client_ptr->flush();
-
+        
     } catch (...) {
         elog("send message exception");
         FC_THROW_EXCEPTION(thinkyoung::blockchain::socket_send_error, \
@@ -187,34 +187,38 @@ void RpcClientMgr::send_to_lvm(Message& m) {
 
 //socket receive msg loop
 void RpcClientMgr::read_loop() {
-    TaskBase* result_p = NULL;
+    TaskBase* result_p = nullptr;
+    std::shared_ptr<TaskBase> sp_result;
     static_assert(BUFFER_SIZE >= sizeof(MessageHeader), "insufficient buffer");
-
+    
     try {
         Message m;
-
+        
         while (true) {
             //read msg from async socket
             read_from_lvm(m);
             //receive response from lvm
             result_p = parse_msg(m);
-
+            
             if (result_p == nullptr) {
                 continue;
             }
-
+            
+            if (result_p->task_type != LUA_REQUEST_TASK && result_p->task_type != HELLO_MSG) {
+                set_value(result_p);
+                continue;
+            }
+            
+            sp_result.reset(result_p);
+            
             if (result_p->task_type == LUA_REQUEST_TASK) {
                 TaskDispatcher::get_lua_task_dispatcher()->on_lua_request(result_p);
-                delete (LuaRequestTask*)result_p;
-
-            } else if (result_p->task_type == HELLO_MSG) {
-                ((HelloMsgResult*)result_p)->process_result(this);
-
+                
             } else {
-                set_value(result_p);
+                ((HelloMsgResult*)result_p)->process_result(this);
             }
         }
-
+        
     } catch (thinkyoung::blockchain::socket_read_error& e) {
         elog("socket read message error.");
     }
@@ -231,19 +235,15 @@ void RpcClientMgr::store_request(TaskBase* task, fc::promise<void*>::ptr prom) {
 void RpcClientMgr::set_value(TaskBase* task_result) {
     FC_ASSERT(task_result);
     std::lock_guard<std::mutex>  auto_lock(_task_mutex);
-    std::vector<ProcTaskRequest>::iterator iter = _tasks.begin();
-
-    for (; iter != _tasks.end(); iter++) {
-        if (iter->task->task_id == task_result->task_id) {
-            break;
-        }
-    }
-
+    auto iter = std::find_if(begin(_tasks), end(_tasks), [=](ProcTaskRequest proc_task_request) {
+        return (proc_task_request.task->task_id == task_result->task_id);
+    });
+    
     if (iter != _tasks.end()) {
-        if (!iter->task_promise->canceled()) {
+        if (iter->task_promise && !iter->task_promise->canceled()) {
             iter->task_promise->set_value((TaskImplResult*)task_result);
         }
-
+        
         _tasks.erase(iter);
     }
 }
@@ -254,13 +254,13 @@ void RpcClientMgr::post_message(TaskBase* task_msg, fc::promise<void*>::ptr prom
     fc::sync_call(_socket_thread_ptr.get(), [&]() {
         try {
             send_to_lvm(m);
-
+            
             //if msg from FROM_RPC, store the task and promise;when receive the result,promosi->set_value
             //if msg from FROM_LUA_TO_CHAIN, do not store,just send the msg to LVM
             if (task_msg->task_from == FROM_RPC) {
                 store_request(task_msg, prom);
             }
-
+            
         } catch (thinkyoung::blockchain::socket_send_error& e) {
             elog("async socket send message exception");
             FC_THROW_EXCEPTION(thinkyoung::blockchain::async_socket_error, \
@@ -279,7 +279,7 @@ void RpcClientMgr::set_last_receive_time() {
 
 Message RpcClientMgr::generate_message(TaskBase* task_p) {
     FC_ASSERT(task_p);
-
+    
     switch (task_p->task_type) {
         case COMPILE_TASK: {
             CompileTaskRpc task_rpc(*(CompileTask*)task_p);
@@ -287,70 +287,70 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case REGISTER_TASK: {
             RegisterTaskRpc task_rpc(*(RegisterTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case UPGRADE_TASK: {
             UpgradeTaskRpc task_rpc(*(UpgradeTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case CALL_TASK: {
             CallTaskRpc task_rpc(*(CallTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case TRANSFER_TASK: {
             TransferTaskRpc task_rpc(*(TransferTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case DESTROY_TASK: {
             DestroyTaskRpc task_rpc(*(DestroyTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case COMPILE_SCRIPT_TASK: {
             CompileScriptTaskRpc task_rpc(*(CompileScriptTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case HANDLE_EVENTS_TASK: {
             HandleEventsTaskRpc task_rpc(*(HandleEventsTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case CALL_OFFLINE_TASK: {
             CallContractOfflineTaskRpc task_rpc(*(CallContractOfflineTask*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         case LUA_REQUEST_RESULT_TASK: {
             LuaRequestTaskResultRpc task_rpc(*(LuaRequestTaskResult*)task_p);
             task_rpc.data.task_from = FROM_RPC;
             Message msg(task_rpc);
             return msg;
         }
-
+        
         default: {
             return Message();
         }
@@ -358,7 +358,7 @@ Message RpcClientMgr::generate_message(TaskBase* task_p) {
 }
 TaskBase* RpcClientMgr::parse_msg(Message& msg) {
     TaskBase* result_p = NULL;
-
+    
     switch (msg.msg_type) {
         case HELLO_MESSAGE_TYPE: {
             HelloMsgResultRpc hello_msg(msg.as<HelloMsgResultRpc>());
@@ -366,72 +366,72 @@ TaskBase* RpcClientMgr::parse_msg(Message& msg) {
             result_p->task_type = hello_msg.data.task_type;
             break;
         }
-
+        
         case COMPILE_RESULT_MESSAGE_TYPE: {
             CompileTaskResultRpc compile_task(msg.as<CompileTaskResultRpc>());
             result_p = new CompileTaskResult(&compile_task.data);
             break;
         }
-
+        
         case CALL_RESULT_MESSAGE_TYPE: {
             CallTaskResultRpc call_task(msg.as<CallTaskResultRpc>());
             result_p = new CallTaskResult(&call_task.data);
             break;
         }
-
+        
         case REGTISTER_RESULT_MESSAGE_TYPE: {
             RegisterTaskResultRpc register_task(msg.as<RegisterTaskResultRpc>());
             result_p = new RegisterTaskResult(&register_task.data);
             break;
         }
-
+        
         case UPGRADE_RESULT_MESSAGE_TYPE: {
             UpgradeTaskResultRpc upgrade_task(msg.as<UpgradeTaskResultRpc>());
             result_p = new RegisterTaskResult(&upgrade_task.data);
             break;
         }
-
+        
         case TRANSFER_RESULT_MESSAGE_TYPE: {
             TransferTaskResultRpc transfer_task(msg.as<TransferTaskResultRpc>());
             result_p = new TransferTaskResult(&transfer_task.data);
             break;
         }
-
+        
         case DESTROY_RESULT_MESSAGE_TYPE: {
             DestroyTaskResultRpc destroy_task(msg.as<DestroyTaskResultRpc>());
             result_p = new DestroyTaskResult(&destroy_task.data);
             break;
         }
-
+        
         case COMPILE_SCRIPT_RESULT_MESSAGE_TPYE: {
             CompileScriptTaskResultRpc compile_script_task(msg.as<CompileScriptTaskResultRpc>());
             result_p = new CompileScriptTaskResult(&compile_script_task.data);
             break;
         }
-
+        
         case HANDLE_EVENTS_RESULT_MESSAGE_TYPE: {
             HandleEventsTaskResultRpc handle_events_task(msg.as<HandleEventsTaskResultRpc>());
             result_p = new HandleEventsTaskResult(&handle_events_task.data);
             break;
         }
-
+        
         case CALL_OFFLINE_RESULT_MESSAGE_TYPE: {
             CallContractOfflineTaskResultRpc call_offline_task(msg.as<CallContractOfflineTaskResultRpc>());
             result_p = new CallContractOfflineTaskResult(&call_offline_task.data);
             break;
         }
-
+        
         case LUA_REQUEST_MESSAGE_TYPE: {
             LuaRequestTaskRpc request_task(msg.as<LuaRequestTaskRpc>());
             result_p = new LuaRequestTask(&request_task.data);
             break;
         }
-
+        
         default: {
             //TODO
             result_p = nullptr;
         }
     }
-
+    
     return result_p;
-} 
+}

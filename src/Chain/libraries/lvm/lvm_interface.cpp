@@ -44,7 +44,7 @@ namespace lvm {
 
         void LvmInterface::get_contract_address_by_name(const std::string& contract_name) {
             try {
-                if( (nullptr ==_evaluate_state->_current_state) || (_evaluate_state == nullptr)) {
+                if ((_evaluate_state == nullptr) || (nullptr == _evaluate_state->_current_state)) {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                 }
 
@@ -156,8 +156,9 @@ namespace lvm {
                     FC_CAPTURE_AND_THROW(lua_executor_internal_error, (""));
                     return;
                 }
-
-                thinkyoung::blockchain::oContractStorage entry = _evaluate_state->_current_state->get_contractstorage_entry(
+                
+                thinkyoung::blockchain::ChainInterface* cur_state = _evaluate_state->_current_state;
+                thinkyoung::blockchain::oContractStorage entry = cur_state->get_contractstorage_entry(
                             thinkyoung::blockchain::Address(contract_address, AddressType::contract_address));
 
                 if (!entry.valid()) {

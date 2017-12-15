@@ -123,16 +123,15 @@ namespace thinkyoung {
                         
                         try {
                             if (enable_lvm) {
-                                auto task = std::make_shared<HandleEventsTask>();
-                                task->is_truncated = i.is_truncated;
-                                task->event_type = i.event_type;
-                                task->event_param = i.event_param;
-                                task->contract_id = i.id.AddressToString();
-                                task->script_code = script->code;
-                                TaskImplResult* result = TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
-                                FC_ASSERT(result->task_type == COMPILE_SCRIPT_RESULT);
+                                HandleEventsTask task;
                                 std::shared_ptr<HandleEventsTaskResult> task_result;
-                                task_result.reset((HandleEventsTaskResult*)result);
+                                task.is_truncated = i.is_truncated;
+                                task.event_type = i.event_type;
+                                task.event_param = i.event_param;
+                                task.contract_id = i.id.AddressToString();
+                                task.script_code = script->code;
+                                task_result.reset((HandleEventsTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&task));
+                                FC_ASSERT(task_result->task_type == HANDLE_EVENTS_TASK);
                                 
                                 if (task_result->error_code != 0) {
                                     FC_THROW_EXCEPTION(compile_script_fail, task_result->error_msg);
@@ -3411,26 +3410,23 @@ namespace thinkyoung {
             Address        caller_address = Address(caller_public_key);
             PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(my->_blockchain);
             TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
-            GluaStateValue statevalue;
-            statevalue.pointer_value = trx_eval_state.get();
             std::string result;
             bool enable_lvm = RpcClientMgr::get_rpc_mgr()->get_client()->lvm_enabled();
             
             if (enable_lvm) {
-                auto task = std::make_shared<CallContractOfflineTask>();
-                task->statevalue = (intptr_t)statevalue.pointer_value;
-                task->num_limit = CONTRACT_OFFLINE_LIMIT_MAX;
-                task->str_caller = (string)(caller_public_key);
-                task->str_caller_address = (string)(Address(caller_address));
-                task->str_contract_address = contract.AddressToString(AddressType::contract_address);
-                task->str_contract_id = contract.AddressToString();
-                task->str_method = method;
-                task->str_args = arguments;
-                task->contract_code = entry->code;
-                TaskImplResult* impl_result = TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(task.get());
-                FC_ASSERT(impl_result->task_type == COMPILE_SCRIPT_RESULT);
+                CallContractOfflineTask task;
                 std::shared_ptr<CallContractOfflineTaskResult> task_result;
-                task_result.reset((CallContractOfflineTaskResult*)impl_result);
+                task.statevalue = reinterpret_cast<intptr_t>(trx_eval_state.get());
+                task.num_limit = CONTRACT_OFFLINE_LIMIT_MAX;
+                task.str_caller = (string)(caller_public_key);
+                task.str_caller_address = (string)(Address(caller_address));
+                task.str_contract_address = contract.AddressToString(AddressType::contract_address);
+                task.str_contract_id = contract.AddressToString();
+                task.str_method = method;
+                task.str_args = arguments;
+                task.contract_code = entry->code;
+                task_result.reset((CallContractOfflineTaskResult*)TaskDispatcher::get_lua_task_dispatcher()->exec_lua_task(&task));
+                FC_ASSERT(task_result->task_type == CALL_OFFLINE_TASK);
                 
                 if (task_result->error_code > 0) {
                     thinkyoung::blockchain::contract_error con_err(32000, "exception", task_result->error_msg);
@@ -3441,6 +3437,8 @@ namespace thinkyoung {
                 
             } else {
                 lua::lib::GluaStateScope scope;
+                GluaStateValue statevalue;
+                statevalue.pointer_value = trx_eval_state.get();
                 lua::lib::add_global_string_variable(scope.L(), "caller", (((string)(caller_public_key)).c_str()));
                 lua::lib::add_global_string_variable(scope.L(), "caller_address", ((string)(Address(caller_address))).c_str());
                 lua::lib::set_lua_state_value(scope.L(), "evaluate_state", statevalue, GluaStateValueType::LUA_STATE_VALUE_POINTER);
