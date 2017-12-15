@@ -1634,6 +1634,18 @@ namespace thinkyoung {
              */
             virtual std::vector<thinkyoung::blockchain::Asset> call_contract_testing(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) = 0;
             /**
+             * call contract function by contract name or contract address on local endpoint, and do not spread it on
+             * P2P network.
+             *
+             * @param contract contract name or contract address need to be called (string, required)
+             * @param caller_name caller name (string, required)
+             * @param function_name function in contract (string, required)
+             * @param params parameters which would be passed to function (string, required)
+             *
+             * @return eventoperation_array
+             */
+            virtual std::vector<thinkyoung::blockchain::EventOperation> call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params) = 0;
+            /**
              * call contract offline function by contract name or contract address.
              *
              * @param contract contract name or contract address need to be called (string, required)

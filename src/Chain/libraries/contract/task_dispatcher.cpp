@@ -10,9 +10,6 @@
 TaskDispatcher* TaskDispatcher::_p_lua_task_dispatcher = nullptr;
 
 TaskDispatcher::TaskDispatcher() {
-    if (thinkyoung::lua::api::global_glua_chain_api == nullptr) {
-        thinkyoung::lua::api::global_glua_chain_api = new thinkyoung::lua::api::GluaChainApi;
-    }
 }
 
 TaskDispatcher::~TaskDispatcher() {
@@ -48,7 +45,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     switch (result->method) {
         case GET_STORED_CONTRACT_INFO_BY_ADDRESS:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -62,7 +59,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case GET_CONTRACT_ADDRESS_BY_NAME:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -76,7 +73,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case CHECK_CONTRACT_EXIST_BY_ADDRESS:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -90,7 +87,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case  CHECK_CONTRACT_EXIST:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -104,7 +101,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case OPEN_CONTRACT:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -118,7 +115,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case OPEN_CONTRACT_BY_ADDRESS:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -132,7 +129,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case GET_STORAGE_VALUE_FROM_THINKYOUNG:
             if (par_size < 2) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -148,7 +145,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case GET_CONTRACT_BALANCE_AMOUNT:
             if (par_size < 2) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -184,7 +181,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case WAIT_FOR_FUTURE_RANDOM:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -198,7 +195,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case GET_WAITED:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -212,7 +209,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case COMMIT_STORAGE_CHANGES_TO_THINKYOUNG:
             if (par_size < 1) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -226,7 +223,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case TRANSFER_FROM_CONTRACT_TO_ADDRESS:
             if (par_size < 4) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -244,7 +241,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case TRANSFER_FROM_CONTRACT_TO_PUBLIC_ACCOUNT:
             if (par_size < 4) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -262,7 +259,7 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
             
         case EMIT:
             if (par_size < 3) {
-                result->ret = -1;
+                result->err_num = -1;
                 break;
             }
             
@@ -278,7 +275,11 @@ void TaskDispatcher::on_lua_request(TaskBase* task) {
     }
     
     result->params = lvm_req.result;
-    result->err_num = lvm_req.err_num;
+    
+    if (result->err_num != -1) {
+        result->err_num = lvm_req.err_num;
+    }
+    
     p_rpc_mgr->post_message(result.get(), nullptr);
 }
 

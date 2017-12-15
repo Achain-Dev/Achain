@@ -345,7 +345,6 @@ struct LuaRequestTaskResult : public TaskBase {
     
     LUA_REQUEST_METHOD     method;
     std::vector<std::vector<char>> params;
-    int ret;
     int err_num;
 };
 
@@ -435,7 +434,7 @@ FC_REFLECT_DERIVED(CallContractOfflineTask, (TaskBase), (statevalue)(num_limit)
                    (str_contract_id)(str_method)(str_args)(contract_code))
 
 FC_REFLECT_DERIVED(LuaRequestTask, (TaskBase), (method)(params)(statevalue))
-FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(params)(ret)(err_num))
+FC_REFLECT_DERIVED(LuaRequestTaskResult, (TaskBase), (method)(params)(err_num))
 FC_REFLECT_DERIVED(TaskImplResult, (TaskBase), (error_code)(execute_count)(error_msg)(json_string))
 FC_REFLECT_DERIVED(CompileTaskResult, (TaskImplResult), (gpc_path_file))
 FC_REFLECT_DERIVED(RegisterTaskResult, (TaskImplResult))

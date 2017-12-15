@@ -38,35 +38,31 @@
 #include <glua/glua_decompile.h>
 #include <glua/glua_disassemble.h>
 
-namespace thinkyoung
-{
-    namespace lua
-    {
-      namespace api
-      {
-        IGluaChainApi *global_glua_chain_api = nullptr;
-      }
-
-      using thinkyoung::lua::api::global_glua_chain_api;
-
-		namespace lib
-		{
-
-			std::vector<std::string> contract_special_api_names = { "init", "on_deposit", "on_destroy", "on_upgrade" };
-			std::vector<std::string> contract_int_argument_special_api_names = { "on_deposit" };
-
+namespace thinkyoung {
+    namespace lua {
+        namespace api {
+            IGluaChainApi *global_glua_chain_api = nullptr;
+        }
+        
+        using thinkyoung::lua::api::global_glua_chain_api;
+        
+        namespace lib {
+        
+            std::vector<std::string> contract_special_api_names = { "init", "on_deposit", "on_destroy", "on_upgrade" };
+            std::vector<std::string> contract_int_argument_special_api_names = { "on_deposit" };
+            
 #define LUA_REPL_RUNNING_STATE_KEY "lua_repl_running"
 #define LUA_IN_SANDBOX_STATE_KEY "lua_in_sandbox"
             // 一次操作中可能改动了storage的contract id集合的state key
 #define LUA_MAYBE_CHANGE_STORAGE_CONTRACT_IDS_STATE_KEY "maybe_change_storage_contract_ids_state"
-
+            
             static const char *globalvar_whitelist[] = {
                 "print", "pprint", "table", "string", "time", "math", "json", "type", "require", "Array", "Stream",
                 "import_contract_from_address", "import_contract", "emit",
                 "thinkyoung", "storage", "repl", "exit", "exit_repl", "self", "debugger", "exit_debugger",
                 "caller", "caller_address",
                 "contract_transfer", "contract_transfer_to", "transfer_from_contract_to_address",
-				"transfer_from_contract_to_public_account",
+                "transfer_from_contract_to_public_account",
                 "get_chain_random", "get_transaction_fee",
                 "get_transaction_id", "get_header_block_num", "wait_for_future_random", "get_waited",
                 "get_contract_balance_amount", "get_chain_now", "get_current_contract_address",
@@ -74,70 +70,73 @@ namespace thinkyoung
                 "tostring", "tojsonstring", "tonumber", "tointeger", "todouble", "totable",
                 "next", "rawequal", "rawlen", "rawget", "rawset", "select",
                 "setmetatable"
+                //  , "check_act_address"
             };
-
+            
             // 这里用ordered_map而不是unordered_map是为了保持顺序，比如Stream type要在Stream构造函数前面
-			static const std::map<std::string, std::string> globalvar_type_infos =
-			{
-				// inner types
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(string), "string" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(int), "int" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(number), "number" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(bool), "bool" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(table), "table" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Array), "Array" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Map), "Map" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Nil), "nil" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Function), "function" },
-				{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(object), "object" },
-
-				// bin operations
-			{ "(+)", "(number, number) => number" }, // bin operations functions are '(' + op + ')'
-			{ "(-)", "(number, number) => number" },
-			{ "(*)", "(number, number) => number" },
-
-			// (函数名/操作符名$参数类型$参数类型...)表示具体的重载函数签名，比如(+$int#int)，找不到特化重载函数签名，用非特化版本函数签名
-			// 如果是非中缀函数/操作符，则重载函数签名的名称是函数名/操作符名$参数类型$参数类型...，比如 func$int$int$int
-			{ "(+$int$int)", "(int, int) => int" },
-			{ "(-$int$int)", "(int, int) => int" },
-			{ "(*$int$int)", "(int, int) => int" },
-			{ "(^$int$int)", "(int, int) => int" },
-
-			{ "(/)", "(number, number) => number" },
-			{ "(//)", "(number, number) => int" },
-			{ "(^)", "(number, number) => number" },
-			{ "(%)", "(number, number) => number" },
-			{ "(&)", "(int, int) => int" },
-			{ "(~)", "(int, int) => int" },
-			{ "(|)", "(number, number) => int" },
-			{ "(>>)", "(number, number) => number" },
-			{ "(<<)", "(number, number) => number" },
-			{ "(<)", "(number, number) => bool" },
-			{ "(<=)", "(number, number) => bool" },
-			{ "(>)", "(number, number) => bool" },
-			{ "(>=)", "(number, number) => bool" },
-			{ "(==)", "(object, object) => bool" },
-			{ "(~=)", "(object, object) => bool" },
-			{ "(and)", "(object, object) => object" },
-			{ "(or)", "(object, object) => object" },
-			{ "(..)", "(string, string) => string" },
-			// infix operations
-		{ "-", "(number) => number" },
-		{ "not", "(object) => bool" },
-		{ "#", "(object) => int" },
-		{ "~", "(int) => int" },
-		// global functions
-	{ "print", "(...) => void" },
-	{ "pprint", "(...) => void" },
-	{ "table", R"END(record {
+            static const std::map<std::string, std::string> globalvar_type_infos = {
+                // inner types
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(string), "string" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(int), "int" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(number), "number" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(bool), "bool" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(table), "table" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Array), "Array" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Map), "Map" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Nil), "nil" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Function), "function" },
+                { GLUA_TYPE_NAMESPACE_PREFIX_WRAP(object), "object" },
+                
+                // bin operations
+                { "(+)", "(number, number) => number" }, // bin operations functions are '(' + op + ')'
+                { "(-)", "(number, number) => number" },
+                { "(*)", "(number, number) => number" },
+                
+                // (函数名/操作符名$参数类型$参数类型...)表示具体的重载函数签名，比如(+$int#int)，找不到特化重载函数签名，用非特化版本函数签名
+                // 如果是非中缀函数/操作符，则重载函数签名的名称是函数名/操作符名$参数类型$参数类型...，比如 func$int$int$int
+                { "(+$int$int)", "(int, int) => int" },
+                { "(-$int$int)", "(int, int) => int" },
+                { "(*$int$int)", "(int, int) => int" },
+                { "(^$int$int)", "(int, int) => int" },
+                
+                { "(/)", "(number, number) => number" },
+                { "(//)", "(number, number) => int" },
+                { "(^)", "(number, number) => number" },
+                { "(%)", "(number, number) => number" },
+                { "(&)", "(int, int) => int" },
+                { "(~)", "(int, int) => int" },
+                { "(|)", "(number, number) => int" },
+                { "(>>)", "(number, number) => number" },
+                { "(<<)", "(number, number) => number" },
+                { "(<)", "(number, number) => bool" },
+                { "(<=)", "(number, number) => bool" },
+                { "(>)", "(number, number) => bool" },
+                { "(>=)", "(number, number) => bool" },
+                { "(==)", "(object, object) => bool" },
+                { "(~=)", "(object, object) => bool" },
+                { "(and)", "(object, object) => object" },
+                { "(or)", "(object, object) => object" },
+                { "(..)", "(string, string) => string" },
+                // infix operations
+                { "-", "(number) => number" },
+                { "not", "(object) => bool" },
+                { "#", "(object) => int" },
+                { "~", "(int) => int" },
+                // global functions
+                { "print", "(...) => void" },
+                { "pprint", "(...) => void" },
+                {
+                    "table", R"END(record {
 concat:(table,string, ...)=>string;
 insert:(table, ...)=>void;
 append: (table, object) => void;
 length: (table) => int;
 remove:(table, ...) => object;
 sort:(table, ...) => void
-})END" },
-{ "string", R"END(record {
+})END"
+                },
+                {
+                    "string", R"END(record {
 split: (string, string) => table;
 byte: (string) => int;
 char: (...) => string;
@@ -151,14 +150,18 @@ rep: (string, int, ...) => string;
 reverse: (string) => string;
 sub: (string, int, ...) => string;
 upper: (string) => string
-})END" },
-{ "Array", "(object) => table" },
-{ "time", R"END(record {
+})END"
+                },
+                { "Array", "(object) => table" },
+                {
+                    "time", R"END(record {
 add: (int, string, int) => int;
 tostr: (int) => string;
 difftime: (int, int) => int
-})END" },
-{ "math", R"END(record {
+})END"
+                },
+                {
+                    "math", R"END(record {
 abs$int: (int) => int;
 abs: (number) => number;
 ceil: (number) => int;
@@ -170,20 +173,26 @@ mininteger: int;
 pi: number;
 tointeger: (number) => int;
 type: (number) => string
-})END" },
-{ "json", R"END(record {
+})END"
+                },
+                {
+                    "json", R"END(record {
 dumps: (object) => string;
 loads: (string) => object
-})END" },
-{ "utf8", R"END(record {
+})END"
+                },
+                {
+                    "utf8", R"END(record {
 char: (...) => string;
 charpattern: string;
 codes: (string) => function;
 codepoint: (string, int, int) => int;
 len: (striing, int, int) => int;
 offset: (string, int, int) => int
-})END" },
-{ "os", R"END(record {
+})END"
+                },
+                {
+                    "os", R"END(record {
 clock: () => int;
 date: (string, int) => string;
 difftime: (int, int) => int;
@@ -195,8 +204,10 @@ rename: (string, string) => void;
 setlocale: (string, string) => void;
 time: (...) => int;
 tmpname: () => string
-})END" },
-{ "io", R"END(record {
+})END"
+                },
+                {
+                    "io", R"END(record {
 close: (...) => void;
 flush: () => void;
 input: (...) => void;
@@ -205,8 +216,10 @@ open: (string, string) => void;
 read: (string) => string;
 seek: (...) => int;
 write: (string) => void
-})END" },
-{ "net", R"END(record {
+})END"
+                },
+                {
+                    "net", R"END(record {
 listen: (string, port) => object;
 connect: (string, port) => object;
 accept: (object) => object;
@@ -218,8 +231,10 @@ write: (object, object) => void;
 close_socket: (object) => void;
 close_server: (object) => void;
 shutdown: () => void
-})END" },
-{ "http", R"END(record {
+})END"
+                },
+                {
+                    "http", R"END(record {
 listen: (string, port) => object;
 connect: (string, port) => object;
 request: (string, string, string, table) => object;
@@ -240,9 +255,11 @@ get_status: (object) => int;
 get_status_message: (object) => string;
 get_res_body: (object) => string;
 finish_res: (object) => void
-})END" },
-// FIXME: 下面这个Stream record的成员函数，第一个参数应该是self
-{ GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Stream), R"END(record {
+})END"
+                },
+                // FIXME: 下面这个Stream record的成员函数，第一个参数应该是self
+                {
+                    GLUA_TYPE_NAMESPACE_PREFIX_WRAP(Stream), R"END(record {
 size: (table) => int;
 pos: (table) => int;
 reset_pos: (table) => void;
@@ -251,9 +268,10 @@ eof: (table) => bool;
 push: (table, int) => void;
 push_string: (table, string) => void;
 next: (table) => bool
-})END"},
-{"Stream", "() => Stream"},
-				{ "jsonrpc", R"END(record {})END" },
+})END"
+                },
+                {"Stream", "() => Stream"},
+                { "jsonrpc", R"END(record {})END" },
                 { "type", "(object) => string" },
                 { "require", "(string) => object" },
                 { "import_contract_from_address", "(string) => table" },
@@ -263,21 +281,21 @@ next: (table) => bool
                 { "storage", "table" },
                 { "repl", "() => void" },
                 { "exit", "(object) => object" },
-				{ "exit_repl", "object (object)" },
+                { "exit_repl", "object (object)" },
                 { "debugger", "(...) => void" },
                 { "exit_debugger", "() => void" },
                 { "caller", "string" },
                 { "caller_address", "string" },
-				// 脚本模式下的全局变量
-				{ "param", "string" },
-				{ "truncated", "bool" },
-				{ "contract_id", "string" },
-				{ "event_type", "string" },
-
+                // 脚本模式下的全局变量
+                { "param", "string" },
+                { "truncated", "bool" },
+                { "contract_id", "string" },
+                { "event_type", "string" },
+                
                 { "contract_transfer", "(...) => object" },
                 { "contract_transfer_to", "(...) => object" },
                 { "transfer_from_contract_to_address", "(string, string, int) => int" },
-				{ "transfer_from_contract_to_public_account", "(string, string, int) => int"},
+                { "transfer_from_contract_to_public_account", "(string, string, int) => int"},
                 { "get_chain_random", "() => number" },
                 { "get_transaction_fee", "() => int" },
                 { "get_transaction_id", "() => string" },
@@ -289,201 +307,195 @@ next: (table) => bool
                 { "get_current_contract_address", "() => string" },
                 { "pairs", "(table) => object" },
                 { "ipairs", "(table) => object" },
-				{ "pairsByKeys", "(table) => object" },
+                { "pairsByKeys", "(table) => object" },
                 { "collectgarbage", "object (...)" },
                 { "error", "(...) => object" },
                 { "getmetatable", "(table) => table" },
                 { "_VERSION", "string" },
-				{ "_ENV", "table" },
-				{ "_G", "table" },
+                { "_ENV", "table" },
+                { "_G", "table" },
                 { "tostring", "(object) => string" },
                 { "tojsonstring", "(object) => string" },
                 { "tonumber", "(object) => number" },
                 { "tointeger", "(object) => int" },
                 { "todouble", "(object) => number" },
                 { "totable", "(object) => table" },
-				{ "toboolean", "(object) => bool" },
+                { "toboolean", "(object) => bool" },
                 { "next", "(...) => object" },
                 { "rawequal", "(object, object) => bool" },
                 { "rawlen", "(object) => int" },
                 { "rawget", "(object, object) => object" },
                 { "rawset", "(object, object, object) => void" },
                 { "select", "(...) => object" },
-                { "setmetatable", "(table, table) => void" }
+                { "setmetatable", "(table, table) => void" },
+                //      { "check_act_address", "(string) => bool" }
             };
-
-            const std::map<std::string, std::string> *get_globalvar_type_infos()
-            {
+            
+            const std::map<std::string, std::string> *get_globalvar_type_infos() {
                 return &globalvar_type_infos;
             }
-
+            
             typedef lua_State* L_Key1;
-
+            
             typedef std::unordered_map<std::string, GluaStateValueNode> L_VM1;
-
+            
             typedef std::shared_ptr<L_VM1> L_V1;
-
+            
             typedef std::unordered_map<L_Key1, L_V1> LStatesMap;
-
+            
             static LStatesMap states_map;
-
-            static LStatesMap *get_lua_states_value_hashmap()
-            {
+            
+            static LStatesMap *get_lua_states_value_hashmap() {
                 return &states_map;
             }
-
+            
             static std::mutex states_map_mutex;
-
-            static L_V1 create_value_map_for_lua_state(lua_State *L)
-            {
+            
+            static L_V1 create_value_map_for_lua_state(lua_State *L) {
                 LStatesMap *states_map = get_lua_states_value_hashmap();
                 auto it = states_map->find(L);
-                if (it == states_map->end())
-                {
+                
+                if (it == states_map->end()) {
                     states_map_mutex.lock();
                     L_V1 map = std::make_shared<L_VM1>();
                     states_map->insert(std::make_pair(L, map));
                     states_map_mutex.unlock();
                     return map;
-                }
-                else
+                    
+                } else
                     return it->second;
             }
-
-			// 从当前合约总转账到
-			static int transfer_from_contract_to_public_account(lua_State *L)
-            {
-				if (lua_gettop(L) < 3)
-				{
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "transfer_from_contract_to_public_account need 3 arguments");
-					return 0;
-				}
-				const char *contract_id = get_contract_id_in_api(L);
-				if (nullptr == contract_id)
-				{
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "contract transfer must be called in contract api");
-					return 0;
-				}
-				const char *to_account_name = luaL_checkstring(L, 1);
-				const char *asset_type = luaL_checkstring(L, 2);
-				auto amount_str = luaL_checkinteger(L, 3);
-				if (amount_str <= 0)
-				{
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "amount must be positive");
-					return 0;
-				}
-				lua_Integer transfer_result = thinkyoung::lua::api::global_glua_chain_api->transfer_from_contract_to_public_account(L, contract_id, to_account_name, asset_type, amount_str);
-				lua_pushinteger(L, transfer_result);
-				return 1;
-            }
-
-            /************************************************************************/
-            /* transfer from contract to address                                    */
-            /************************************************************************/
-            static int transfer_from_contract_to_address(lua_State *L)
-            {
-                if (lua_gettop(L) < 3)
-                {
-                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "transfer_from_contract_to_address need 3 arguments");
+            
+            // 从当前合约总转账到
+            static int transfer_from_contract_to_public_account(lua_State *L) {
+                if (lua_gettop(L) < 3) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "transfer_from_contract_to_public_account need 3 arguments");
                     return 0;
                 }
+                
                 const char *contract_id = get_contract_id_in_api(L);
-                if (!contract_id)
-                {
+                
+                if (nullptr == contract_id) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "contract transfer must be called in contract api");
                     return 0;
                 }
-                const char *to_address = luaL_checkstring(L, 1);
+                
+                const char *to_account_name = luaL_checkstring(L, 1);
                 const char *asset_type = luaL_checkstring(L, 2);
                 auto amount_str = luaL_checkinteger(L, 3);
-                if (amount_str <= 0)
-                {
+                
+                if (amount_str <= 0) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "amount must be positive");
                     return 0;
                 }
+                
+                lua_Integer transfer_result = thinkyoung::lua::api::global_glua_chain_api->transfer_from_contract_to_public_account(L, contract_id, to_account_name, asset_type, amount_str);
+                lua_pushinteger(L, transfer_result);
+                return 1;
+            }
+            
+            /************************************************************************/
+            /* transfer from contract to address                                    */
+            /************************************************************************/
+            static int transfer_from_contract_to_address(lua_State *L) {
+                if (lua_gettop(L) < 3) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "transfer_from_contract_to_address need 3 arguments");
+                    return 0;
+                }
+                
+                const char *contract_id = get_contract_id_in_api(L);
+                
+                if (!contract_id) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "contract transfer must be called in contract api");
+                    return 0;
+                }
+                
+                const char *to_address = luaL_checkstring(L, 1);
+                const char *asset_type = luaL_checkstring(L, 2);
+                auto amount_str = luaL_checkinteger(L, 3);
+                
+                if (amount_str <= 0) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "amount must be positive");
+                    return 0;
+                }
+                
                 lua_Integer transfer_result = thinkyoung::lua::api::global_glua_chain_api->transfer_from_contract_to_address(L, contract_id, to_address, asset_type, amount_str);
                 lua_pushinteger(L, transfer_result);
                 return 1;
             }
-
-            static int get_contract_address_lua_api(lua_State *L)
-            {
+            
+            static int get_contract_address_lua_api(lua_State *L) {
                 const char *cur_contract_id = get_contract_id_in_api(L);
-                if (!cur_contract_id)
-                {
+                
+                if (!cur_contract_id) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "can't get current contract address");
                     return 0;
                 }
+                
                 lua_pushstring(L, cur_contract_id);
                 return 1;
             }
-
-            static int get_contract_balance_amount(lua_State *L)
-            {
-                if (lua_gettop(L) > 0 && !lua_isstring(L, 1))
-                {
+            
+            static int get_contract_balance_amount(lua_State *L) {
+                if (lua_gettop(L) > 0 && !lua_isstring(L, 1)) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR,
-                        "get_contract_balance_amount need 1 string argument of contract address");
+                            "get_contract_balance_amount need 1 string argument of contract address");
                     return 0;
                 }
-
-				auto contract_address = luaL_checkstring(L, 1);
-                if (strlen(contract_address) < 1)
-                {
+                
+                auto contract_address = luaL_checkstring(L, 1);
+                
+                if (strlen(contract_address) < 1) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR,
-                        "contract address can't be empty");
+                            "contract address can't be empty");
                     return 0;
                 }
-
-                if (lua_gettop(L) < 2 || !lua_isstring(L, 2))
-                {
+                
+                if (lua_gettop(L) < 2 || !lua_isstring(L, 2)) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "get balance amount need asset symbol");
                     return 0;
                 }
-
-                auto assert_symbol = luaL_checkstring(L, 2);
                 
+                auto assert_symbol = luaL_checkstring(L, 2);
                 auto result = thinkyoung::lua::api::global_glua_chain_api->get_contract_balance_amount(L, contract_address, assert_symbol);
                 lua_pushinteger(L, result);
                 return 1;
             }
-
+            
             // pair: (value_string, is_upvalue)
             typedef std::unordered_map<std::string, std::pair<std::string, bool>> LuaDebuggerInfoList;
-
+            
             static LuaDebuggerInfoList g_debug_infos;
             static bool g_debug_running = false;
-
-            static LuaDebuggerInfoList *get_lua_debugger_info_list_in_state(lua_State *L)
-            {
+            
+            static LuaDebuggerInfoList *get_lua_debugger_info_list_in_state(lua_State *L) {
                 return &g_debug_infos;
             }
-
-            static int enter_lua_debugger(lua_State *L)
-            {
+            
+            static int enter_lua_debugger(lua_State *L) {
                 LuaDebuggerInfoList *debugger_info = get_lua_debugger_info_list_in_state(L);
+                
                 if (!debugger_info)
                     return 0;
-                if (lua_gettop(L) > 0 && lua_isstring(L, 1))
-                {
+                    
+                if (lua_gettop(L) > 0 && lua_isstring(L, 1)) {
                     // if has string parameter, use this function to get the value of the name in running debugger;
                     auto found = debugger_info->find(luaL_checkstring(L, 1));
+                    
                     if (found == debugger_info->end())
                         return 0;
+                        
                     lua_pushstring(L, found->second.first.c_str());
                     lua_pushboolean(L, found->second.second ? 1 : 0);
                     return 2;
                 }
-
+                
                 debugger_info->clear();
                 g_debug_running = true;
-
                 // get all info snapshot in current lua_State stack
                 // and then pause the thread(but other thread can use this lua_State
                 // maybe you want to start a REPL before real enter debugger
-
                 // first need back to caller func frame
-
                 CallInfo *ci = L->ci;
                 CallInfo *oci = ci->previous;
                 Proto *np = getproto(ci->func);
@@ -495,501 +507,482 @@ next: (table) => bool
                 // fprintf(L->out, "debugging into line %d\n", linedefined); // FIXME: logging the debugging code line
                 L->ci = oci;
                 int top = lua_gettop(L);
-
+                
                 // capture locals vars and values(need get localvar name from whereelse)
-                for (int i = 0; i < top; ++i)
-                {
+                for (int i = 0; i < top; ++i) {
                     luaL_tojsonstring(L, i + 1, nullptr);
                     const char *value_str = luaL_checkstring(L, -1);
                     lua_pop(L, 1);
+                    
                     // if the debugger position is before the localvar position, ignore the next localvars
                     if (i >= real_localvars_count) // the localvars is after the debugger() call
                         break;
+                        
                     // get local var name
-                    if (i < p->sizelocvars)
-                    {
+                    if (i < p->sizelocvars) {
                         LocVar localvar = p->locvars[i];
                         const char *varname = getstr(localvar.varname);
-						if(L->out)
-							fprintf(L->out, "[debugger]%s=%s\n", varname, value_str);
+                        
+                        if(L->out)
+                            fprintf(L->out, "[debugger]%s=%s\n", varname, value_str);
+                            
                         debugger_info->insert(std::make_pair(varname, std::make_pair(value_str, false)));
                     }
                 }
+                
                 // capture upvalues vars and values(need get upvalue name from whereelse)
                 L->ci = ci;
-                for (int i = 0; i < p->sizeupvalues; ++i)
-                {
+                
+                for (int i = 0; i < p->sizeupvalues; ++i) {
                     Upvaldesc upval = p->upvalues[i];
                     const char *upval_name = getstr(upval.name);
+                    
                     if (std::string(upval_name) == "_ENV")
                         continue;
+                        
                     UpVal *upv = ocl->upvals[upval.idx];
                     lua_pushinteger(L, 1);
                     setobj2s(L, ci->func + 1, upv->v);
                     auto value_string1 = luaL_tojsonstring(L, -1, nullptr);
                     lua_pop(L, 2);
-					if(L->out)
-						fprintf(L->out, "[debugger-upvalue]%s=%s\n", upval_name, value_string1);
+                    
+                    if(L->out)
+                        fprintf(L->out, "[debugger-upvalue]%s=%s\n", upval_name, value_string1);
+                        
                     debugger_info->insert(std::make_pair(upval_name, std::make_pair(value_string1, true)));
                 }
+                
                 L->ci = ci;
-                if (L->debugger_pausing)
-                {
-                    do
-                    {
+                
+                if (L->debugger_pausing) {
+                    do {
                         std::this_thread::yield();
                     } while (g_debug_running); // while not exit lua debugger
                 }
+                
                 return 0;
             }
-
-            static int exit_lua_debugger(lua_State *L)
-            {
+            
+            static int exit_lua_debugger(lua_State *L) {
                 g_debug_infos.clear();
                 g_debug_running = false;
                 return 0;
             }
-
-            static int panic_message(lua_State *L)
-            {
+            
+            static int panic_message(lua_State *L) {
                 auto msg = luaL_checkstring(L, -1);
+                
                 if (nullptr != msg)
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, msg);
+                    
                 return 0;
             }
-
-            static int get_chain_now(lua_State *L)
-            {
+            
+            static int get_chain_now(lua_State *L) {
                 auto time = thinkyoung::lua::api::global_glua_chain_api->get_chain_now(L);
                 lua_pushinteger(L, time);
                 return 1;
             }
-
-            static int get_chain_random(lua_State *L)
-            {
+            
+            static int get_chain_random(lua_State *L) {
                 auto rand = thinkyoung::lua::api::global_glua_chain_api->get_chain_random(L);
                 lua_pushinteger(L, rand);
                 return 1;
             }
-            static int get_transaction_id(lua_State *L)
-            {
+            static int get_transaction_id(lua_State *L) {
                 std::string tid = thinkyoung::lua::api::global_glua_chain_api->get_transaction_id(L);
                 lua_pushstring(L, tid.c_str());
                 return 1;
             }
-            static int get_transaction_fee(lua_State *L)
-            {
+            static int get_transaction_fee(lua_State *L) {
                 int64_t res = thinkyoung::lua::api::global_glua_chain_api->get_transaction_fee(L);
                 lua_pushinteger(L, res);
                 return 1;
             }
-            static int get_header_block_num(lua_State *L)
-            {
+            static int get_header_block_num(lua_State *L) {
                 auto result = thinkyoung::lua::api::global_glua_chain_api->get_header_block_num(L);
                 lua_pushinteger(L, result);
                 return 1;
             }
-
-            static int wait_for_future_random(lua_State *L)
-            {
-                if (lua_gettop(L) < 1 || !lua_isinteger(L, 1))
-                {
+            
+            static int wait_for_future_random(lua_State *L) {
+                if (lua_gettop(L) < 1 || !lua_isinteger(L, 1)) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "wait_for_future_random need a integer param");
                     return 0;
                 }
+                
                 auto next = luaL_checkinteger(L, 1);
-                if (next <= 0)
-                {
+                
+                if (next <= 0) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "wait_for_future_random first param must be positive number");
                     return 0;
                 }
+                
                 auto result = thinkyoung::lua::api::global_glua_chain_api->wait_for_future_random(L, (int)next);
                 lua_pushinteger(L, result);
                 return 1;
             }
-
+            
             /************************************************************************/
             /* 获取某个块（可以是未来块，也可能是过去块）上某个哈希数据产生的伪随机数               */
             /************************************************************************/
-            static int get_waited_block_random(lua_State *L)
-            {
-                if (lua_gettop(L) < 1 || !lua_isinteger(L, 1))
-                {
+            static int get_waited_block_random(lua_State *L) {
+                if (lua_gettop(L) < 1 || !lua_isinteger(L, 1)) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "get_waited need a integer param");
                     return 0;
                 }
+                
                 auto num = luaL_checkinteger(L, 1);
                 auto result = thinkyoung::lua::api::global_glua_chain_api->get_waited(L, (uint32_t)num);
                 lua_pushinteger(L, result);
                 return 1;
             }
-
-            static int emit_thinkyoung_event(lua_State *L)
-            {
-                if (lua_gettop(L) < 2 && (!lua_isstring(L, 1) || !lua_isstring(L, 2)))
-                {
+            
+            static int emit_thinkyoung_event(lua_State *L) {
+                if (lua_gettop(L) < 2 && (!lua_isstring(L, 1) || !lua_isstring(L, 2))) {
                     thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "emit need 2 string params");
                     return 0;
                 }
+                
                 const char *contract_id = get_contract_id_in_api(L);
                 const char *event_name = luaL_checkstring(L, 1);
                 const char *event_param = luaL_checkstring(L, 2);
-				if (!contract_id || strlen(contract_id) < 1)
-					return 0;
+                
+                if (!contract_id || strlen(contract_id) < 1)
+                    return 0;
+                    
                 thinkyoung::lua::api::global_glua_chain_api->emit(L, contract_id, event_name, event_param);
                 return 0;
             }
-
-			static int glua_core_lib_Stream_size(lua_State *L)
-            {
-				auto stream = (GluaByteStream*) luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if(thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t) stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					auto stream_size = stream->size();
-					lua_pushinteger(L, stream_size);
-					return 1;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
+            static int check_act_address(lua_State *L) {
+                if (lua_gettop(L) > 0 && !lua_isstring(L, 1)) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR,
+                            "get_contract_balance_amount need 1 string argument of contract address");
+                    return 0;
+                }
+                
+                auto act_address = luaL_checkstring(L, 1);
+                auto result = thinkyoung::lua::api::global_glua_chain_api->check_act_address(L, act_address);
+                lua_pushboolean(L, result);
+                return 1;
             }
-
-			static int glua_core_lib_Stream_eof(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					lua_pushboolean(L, stream->eof());
-					return 1;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_current(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					lua_pushinteger(L, stream->current());
-					return 1;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_next(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					lua_pushboolean(L, stream->next());
-					return 1;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_pos(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					lua_pushinteger(L, stream->pos());
-					return 1;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_reset_pos(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					stream->reset_pos();
-					return 0;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_push(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				auto c = luaL_checkinteger(L, 2);
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					stream->push((char)c);
-					return 0;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			static int glua_core_lib_Stream_push_string(lua_State *L)
-			{
-				auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
-				auto argstr = luaL_checkstring(L, 2);
-				if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
-					GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0)
-				{
-					for(size_t i=0;i<strlen(argstr);++i)
-					{
-						stream->push(argstr[i]);
-					}
-					return 0;
-				}
-				else
-				{
-					luaL_argerror(L, 1, "Stream expected");
-					return 0;
-				}
-			}
-
-			// Stream类型的构造函数,为了避免tostring到处出问题，使用lightuserdata
-			// 不用userdata来托管内存到glua gc中是考虑到指针可能是new class出来的
-			// 调用函数的时候
-			static int glua_core_lib_Stream(lua_State *L)
-            {
-				auto stream = new GluaByteStream();
-				thinkyoung::lua::api::global_glua_chain_api->register_object_in_pool(L, (intptr_t) stream, GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE);
-				lua_pushlightuserdata(L, (void*) stream);
-				luaL_getmetatable(L, "GluaByteStream_metatable");
-				lua_setmetatable(L, -2);
-				return 1;
+            static int glua_core_lib_Stream_size(lua_State *L) {
+                auto stream = (GluaByteStream*) luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if(thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t) stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    auto stream_size = stream->size();
+                    lua_pushinteger(L, stream_size);
+                    return 1;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
             }
-
-			// function Array(props) return props or {}; end
-			static int glua_core_lib_Array(lua_State *L)
-            {
-	            if(lua_gettop(L)<1 || lua_isnil(L, 1) || !lua_istable(L, 1))
-	            {
-					lua_createtable(L, 0, 0);
-					return 1;
-	            }
-				else
-				{
-					lua_pushvalue(L, 1);
-					return 1;
-				}
+            
+            static int glua_core_lib_Stream_eof(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    lua_pushboolean(L, stream->eof());
+                    return 1;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
             }
-
-			static int glua_core_lib_Hashmap(lua_State *L)
-            {
-	            if(lua_gettop(L)<1 || !lua_istable(L, 1))
-	            {
-					lua_createtable(L, 0, 0);
-					return 1;
-	            }
-				else
-				{
-					lua_pushvalue(L, 1);
-					return 1;
-				}
+            
+            static int glua_core_lib_Stream_current(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    lua_pushinteger(L, stream->current());
+                    return 1;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
             }
-
-			// contract::__index: function (t, k) return t._data[k]; end
-			static int glua_core_lib_contract_metatable_index(lua_State *L)
-            {
-				// top:2: table, key
-				lua_pushstring(L, "id");
-				lua_rawget(L, 1);
-				auto contract_id_in_contract = lua_tostring(L, 3);
-				lua_pop(L, 1);
-
-				auto key = luaL_checkstring(L, 2);
-				lua_getfield(L, 1, "_data");
-
-				lua_pushstring(L, "id");
-				lua_rawget(L, 3);
-				auto contract_id_in_data_prop = lua_tostring(L, 4);
-				lua_pop(L, 1);
-
-				auto contract_id = contract_id_in_contract ? contract_id_in_contract : contract_id_in_data_prop;
-
-				lua_getfield(L, 3, key);
-				
-				auto tmp_global_key = "_glua_core_lib_contract_metatable_index_tmp_value";
-				lua_setglobal(L, tmp_global_key);
-				lua_pop(L, 1);
-				lua_getglobal(L, tmp_global_key);
-				lua_pushnil(L);
-				lua_setglobal(L, tmp_global_key);
-
-				return 1;
+            
+            static int glua_core_lib_Stream_next(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    lua_pushboolean(L, stream->next());
+                    return 1;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
             }
-
-			/*
-			contract::__newindex:
-			function(t, k, v)
-				if not t._data then
-					print("empty _data\n")
-				end
-				if k == 'id' or k == 'name' or k == 'storage' then
-					if not t._data[k] then
-						t._data[k] = v
-						return
-					end
-					error("attempt to update a read-only table!")
-					return
-				else
-					t._data[k] = v
-				end
-			end
-			*/
-			static int glua_core_lib_contract_metatable_newindex(lua_State *L)
-			{
-				lua_getfield(L, 1, "_data"); // stack: t, k, v, _data
-				if(lua_isnil(L, 4))
-				{
-					if (L->out)
-						fprintf(L->out, "empty _data\n");
-					lua_pop(L, 1);
-					return 0;
-				}
-				auto key = luaL_checkstring(L, 2);
-				std::string key_str(key);
-				if(key == "id" || key == "name" || key == "storage")
-				{
-					lua_getfield(L, 4, key); // stack: t, k, v, _data, _data[k]
-					if(lua_isnil(L, 5))
-					{
-						lua_pop(L, 1); // stack: t, k, v, _data
-						lua_pushvalue(L, 3); // stack: t, k, v, _data, v
-						lua_setfield(L, 4, key); // stack: t, k, v, _data
-						lua_pop(L, 1);
-						return 0;
-					}
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "attempt to update a read-only table!");
-					lua_pop(L, 2); // stack: t, k, v
-					return 0;
-				}
-				else
-				{
-					lua_pushvalue(L, 3); // stack: t, k, v, _data, v
-					lua_setfield(L, 4, key); // stack: t, k, v, _data
-					lua_pop(L, 1); // stack: t, k, v
-					return 0;
-				}
-			}
-
+            
+            static int glua_core_lib_Stream_pos(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    lua_pushinteger(L, stream->pos());
+                    return 1;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
+            }
+            
+            static int glua_core_lib_Stream_reset_pos(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    stream->reset_pos();
+                    return 0;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
+            }
+            
+            static int glua_core_lib_Stream_push(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                auto c = luaL_checkinteger(L, 2);
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    stream->push((char)c);
+                    return 0;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
+            }
+            
+            static int glua_core_lib_Stream_push_string(lua_State *L) {
+                auto stream = (GluaByteStream*)luaL_checkudata(L, 1, "GluaByteStream_metatable");
+                auto argstr = luaL_checkstring(L, 2);
+                
+                if (thinkyoung::lua::api::global_glua_chain_api->is_object_in_pool(L, (intptr_t)stream,
+                        GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE)>0) {
+                    for(size_t i=0; i<strlen(argstr); ++i) {
+                        stream->push(argstr[i]);
+                    }
+                    
+                    return 0;
+                    
+                } else {
+                    luaL_argerror(L, 1, "Stream expected");
+                    return 0;
+                }
+            }
+            
+            // Stream类型的构造函数,为了避免tostring到处出问题，使用lightuserdata
+            // 不用userdata来托管内存到glua gc中是考虑到指针可能是new class出来的
+            // 调用函数的时候
+            static int glua_core_lib_Stream(lua_State *L) {
+                auto stream = new GluaByteStream();
+                thinkyoung::lua::api::global_glua_chain_api->register_object_in_pool(L, (intptr_t) stream, GluaOutsideObjectTypes::OUTSIDE_STREAM_STORAGE_TYPE);
+                lua_pushlightuserdata(L, (void*) stream);
+                luaL_getmetatable(L, "GluaByteStream_metatable");
+                lua_setmetatable(L, -2);
+                return 1;
+            }
+            
+            // function Array(props) return props or {}; end
+            static int glua_core_lib_Array(lua_State *L) {
+                if(lua_gettop(L)<1 || lua_isnil(L, 1) || !lua_istable(L, 1)) {
+                    lua_createtable(L, 0, 0);
+                    return 1;
+                    
+                } else {
+                    lua_pushvalue(L, 1);
+                    return 1;
+                }
+            }
+            
+            static int glua_core_lib_Hashmap(lua_State *L) {
+                if(lua_gettop(L)<1 || !lua_istable(L, 1)) {
+                    lua_createtable(L, 0, 0);
+                    return 1;
+                    
+                } else {
+                    lua_pushvalue(L, 1);
+                    return 1;
+                }
+            }
+            
+            // contract::__index: function (t, k) return t._data[k]; end
+            static int glua_core_lib_contract_metatable_index(lua_State *L) {
+                // top:2: table, key
+                lua_pushstring(L, "id");
+                lua_rawget(L, 1);
+                auto contract_id_in_contract = lua_tostring(L, 3);
+                lua_pop(L, 1);
+                auto key = luaL_checkstring(L, 2);
+                lua_getfield(L, 1, "_data");
+                lua_pushstring(L, "id");
+                lua_rawget(L, 3);
+                auto contract_id_in_data_prop = lua_tostring(L, 4);
+                lua_pop(L, 1);
+                auto contract_id = contract_id_in_contract ? contract_id_in_contract : contract_id_in_data_prop;
+                lua_getfield(L, 3, key);
+                auto tmp_global_key = "_glua_core_lib_contract_metatable_index_tmp_value";
+                lua_setglobal(L, tmp_global_key);
+                lua_pop(L, 1);
+                lua_getglobal(L, tmp_global_key);
+                lua_pushnil(L);
+                lua_setglobal(L, tmp_global_key);
+                return 1;
+            }
+            
+            /*
+            contract::__newindex:
+            function(t, k, v)
+                if not t._data then
+                    print("empty _data\n")
+                end
+                if k == 'id' or k == 'name' or k == 'storage' then
+                    if not t._data[k] then
+                        t._data[k] = v
+                        return
+                    end
+                    error("attempt to update a read-only table!")
+                    return
+                else
+                    t._data[k] = v
+                end
+            end
+            */
+            static int glua_core_lib_contract_metatable_newindex(lua_State *L) {
+                lua_getfield(L, 1, "_data"); // stack: t, k, v, _data
+                
+                if(lua_isnil(L, 4)) {
+                    if (L->out)
+                        fprintf(L->out, "empty _data\n");
+                        
+                    lua_pop(L, 1);
+                    return 0;
+                }
+                
+                auto key = luaL_checkstring(L, 2);
+                std::string key_str(key);
+                
+                if(key == "id" || key == "name" || key == "storage") {
+                    lua_getfield(L, 4, key); // stack: t, k, v, _data, _data[k]
+                    
+                    if(lua_isnil(L, 5)) {
+                        lua_pop(L, 1); // stack: t, k, v, _data
+                        lua_pushvalue(L, 3); // stack: t, k, v, _data, v
+                        lua_setfield(L, 4, key); // stack: t, k, v, _data
+                        lua_pop(L, 1);
+                        return 0;
+                    }
+                    
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "attempt to update a read-only table!");
+                    lua_pop(L, 2); // stack: t, k, v
+                    return 0;
+                    
+                } else {
+                    lua_pushvalue(L, 3); // stack: t, k, v, _data, v
+                    lua_setfield(L, 4, key); // stack: t, k, v, _data
+                    lua_pop(L, 1); // stack: t, k, v
+                    return 0;
+                }
+            }
+            
             // 对storage的访问操作会访问这个方法
-			// storage::__index: function(s, key)
-			//    if type(key) ~= 'string' then
-			//    thinkyoung.error('only string can be storage key')
-			//	  return nil
-			//	  end
-			//	  return thinkyoung.get_storage(s.contract, key)
-			//	  end
-			static int glua_core_lib_storage_metatable_index(lua_State *L)
-            {
-				if(!lua_isstring(L, 2))
-				{
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "only string can be storage key");
-					L->force_stopping = true;
-					lua_pushnil(L);
-					return 1;
-				}
-				auto key = luaL_checkstring(L, 2); // top=2
-				lua_getfield(L, 1, "contract"); // top=3
-				lua_getfield(L, 3, "id");
-				auto contract_id = luaL_checkstring(L, -1);
-				lua_pop(L, 1);
-				lua_pushvalue(L, 2); // top=4
-				auto ret_count = glua::lib::thinkyounglib_get_storage_impl(L, contract_id, key); // top=ret_count + 4
-				if(ret_count>0)
-				{
-					auto tmp_global_key = "_glua_core_lib_thinkyoung_get_storage_tmp_value";
-					lua_setglobal(L, tmp_global_key); // top=ret_count + 3
-					lua_pop(L, ret_count + 1); // top=2
-					lua_getglobal(L, tmp_global_key); // top=3
-					lua_pushnil(L); // top=4
-					lua_setglobal(L, tmp_global_key); // top=3
-					return 1;
-				} else
-				{
-					lua_pop(L, 2);
-					return 0;
-				}
+            // storage::__index: function(s, key)
+            //    if type(key) ~= 'string' then
+            //    thinkyoung.error('only string can be storage key')
+            //    return nil
+            //    end
+            //    return thinkyoung.get_storage(s.contract, key)
+            //    end
+            static int glua_core_lib_storage_metatable_index(lua_State *L) {
+                if(!lua_isstring(L, 2)) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "only string can be storage key");
+                    L->force_stopping = true;
+                    lua_pushnil(L);
+                    return 1;
+                }
+                
+                auto key = luaL_checkstring(L, 2); // top=2
+                lua_getfield(L, 1, "contract"); // top=3
+                lua_getfield(L, 3, "id");
+                auto contract_id = luaL_checkstring(L, -1);
+                lua_pop(L, 1);
+                lua_pushvalue(L, 2); // top=4
+                auto ret_count = glua::lib::thinkyounglib_get_storage_impl(L, contract_id, key); // top=ret_count + 4
+                
+                if(ret_count>0) {
+                    auto tmp_global_key = "_glua_core_lib_thinkyoung_get_storage_tmp_value";
+                    lua_setglobal(L, tmp_global_key); // top=ret_count + 3
+                    lua_pop(L, ret_count + 1); // top=2
+                    lua_getglobal(L, tmp_global_key); // top=3
+                    lua_pushnil(L); // top=4
+                    lua_setglobal(L, tmp_global_key); // top=3
+                    return 1;
+                    
+                } else {
+                    lua_pop(L, 2);
+                    return 0;
+                }
             }
-
+            
             // 对storage的写入操作会调用此API
-			// storage::__newindex: function(s, key, val)
-			// if type(key) ~= 'string' then
-			//	thinkyoung.error('only string can be storage key')
-			//	return nil
-			//	end
-			//	return thinkyoung.set_storage(s.contract, key, val)
-			//	end
-			static int glua_core_lib_storage_metatable_new_index(lua_State *L)
-            {
-				if (!lua_isstring(L, 2))
-				{
-					thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "only string can be storage key");
-					L->force_stopping = true;
-					lua_pushnil(L);
-					return 1;
-				}
-
+            // storage::__newindex: function(s, key, val)
+            // if type(key) ~= 'string' then
+            //  thinkyoung.error('only string can be storage key')
+            //  return nil
+            //  end
+            //  return thinkyoung.set_storage(s.contract, key, val)
+            //  end
+            static int glua_core_lib_storage_metatable_new_index(lua_State *L) {
+                if (!lua_isstring(L, 2)) {
+                    thinkyoung::lua::api::global_glua_chain_api->throw_exception(L, THINKYOUNG_API_SIMPLE_ERROR, "only string can be storage key");
+                    L->force_stopping = true;
+                    lua_pushnil(L);
+                    return 1;
+                }
+                
                 auto key = luaL_checkstring(L, 2); // top=3, self, key, value
                 lua_getfield(L, 1, "contract"); // top=4, self, key, value, contract
                 lua_getfield(L, 4, "id"); // top=5, self, key, value, contract, contract_id
                 auto contract_id = luaL_checkstring(L, -1);
                 lua_pop(L, 2); // top=3, self, key, value
                 return glua::lib::thinkyounglib_set_storage_impl(L, contract_id, key, 3);
-
                 /*
-				int old_top = lua_gettop(L); // 3
-				lua_getfield(L, 1, "contract"); // top=4
-				lua_pushcfunction(L, glua::lib::thinkyounglib_set_storage); // storage, key, val, contract, set_storage
-				lua_pushvalue(L, 4); // storage, key, val, contract, set_storage, contract
-				lua_pushvalue(L, 2);
-				lua_pushvalue(L, 3); // storage, key, val, contract, set_storage, contract, key, val
-				lua_call(L, 3, 0);
-				lua_pop(L, lua_gettop(L) - old_top);
+                int old_top = lua_gettop(L); // 3
+                lua_getfield(L, 1, "contract"); // top=4
+                lua_pushcfunction(L, glua::lib::thinkyounglib_set_storage); // storage, key, val, contract, set_storage
+                lua_pushvalue(L, 4); // storage, key, val, contract, set_storage, contract
+                lua_pushvalue(L, 2);
+                lua_pushvalue(L, 3); // storage, key, val, contract, set_storage, contract, key, val
+                lua_call(L, 3, 0);
+                lua_pop(L, lua_gettop(L) - old_top);
                 */
-
-				// return 0;
+                // return 0;
             }
-
-			static int glua_core_lib_pairs_by_keys_func_loader(lua_State *L)
-            {
-				lua_getglobal(L, "__real_pairs_by_keys_func");
-				bool exist = !lua_isnil(L, -1);
-				lua_pop(L, 1);
-				if (exist)
-					return 0; 
-				// TODO: 修改基础库本身的pairs实现, 或者把内容放入另一个函数，那个函数根据需要dostring产生一个新函数（cached)去执行
-				// pairsByKeys的排序方式是先数字key部分遍历，然后哈希表字符串key部分按key字符串长度和key字符序从小到大遍历
-				const char *code = R"END(
+            
+            static int glua_core_lib_pairs_by_keys_func_loader(lua_State *L) {
+                lua_getglobal(L, "__real_pairs_by_keys_func");
+                bool exist = !lua_isnil(L, -1);
+                lua_pop(L, 1);
+                
+                if (exist)
+                    return 0;
+                    
+                // TODO: 修改基础库本身的pairs实现, 或者把内容放入另一个函数，那个函数根据需要dostring产生一个新函数（cached)去执行
+                // pairsByKeys的排序方式是先数字key部分遍历，然后哈希表字符串key部分按key字符串长度和key字符序从小到大遍历
+                const char *code = R"END(
 function __real_pairs_by_keys_func(t)
 	local hashes = {}  
 	local n = nil
@@ -1134,24 +1127,23 @@ end
 
 				)END";
                 luaL_dostring(L, init_code);
-				*/
-
-				/*
-				lua_pushnil(L);
-				lua_setglobal(L, "glua_core_lib_contract_metatable_index");
-				lua_pushnil(L);
-				lua_setglobal(L, "glua_core_lib_storage_metatable_index");
-				lua_pushnil(L);
-				lua_setglobal(L, "glua_core_lib_storage_metatable_new_index");
-				lua_pushnil(L);
-				lua_setglobal(L, "glua_core_lib_contract_metatable_newindex");
-				*/
-				reset_lvm_instructions_executed_count(L);
+                */
+                /*
+                lua_pushnil(L);
+                lua_setglobal(L, "glua_core_lib_contract_metatable_index");
+                lua_pushnil(L);
+                lua_setglobal(L, "glua_core_lib_storage_metatable_index");
+                lua_pushnil(L);
+                lua_setglobal(L, "glua_core_lib_storage_metatable_new_index");
+                lua_pushnil(L);
+                lua_setglobal(L, "glua_core_lib_contract_metatable_newindex");
+                */
+                reset_lvm_instructions_executed_count(L);
                 lua_atpanic(L, panic_message);
-                if (use_contract)
-                {
+                
+                if (use_contract) {
                     add_global_c_function(L, "transfer_from_contract_to_address", transfer_from_contract_to_address);
-					add_global_c_function(L, "transfer_from_contract_to_public_account", transfer_from_contract_to_public_account);
+                    add_global_c_function(L, "transfer_from_contract_to_public_account", transfer_from_contract_to_public_account);
                     add_global_c_function(L, "get_contract_balance_amount", get_contract_balance_amount);
                     add_global_c_function(L, "get_chain_now", get_chain_now);
                     add_global_c_function(L, "get_chain_random", get_chain_random);
@@ -1163,273 +1155,275 @@ end
                     add_global_c_function(L, "get_transaction_fee", get_transaction_fee);
                     add_global_c_function(L, "emit", emit_thinkyoung_event);
                 }
+                
+                //       add_global_c_function(L, "check_act_address", check_act_address);
                 return L;
             }
-
-            bool commit_storage_changes(lua_State *L)
-            {
-                if (!thinkyoung::lua::api::global_glua_chain_api->has_exception(L))
-                {
+            
+            bool commit_storage_changes(lua_State *L) {
+                if (!thinkyoung::lua::api::global_glua_chain_api->has_exception(L)) {
                     return luaL_commit_storage_changes(L);
                 }
+                
                 return false;
             }
-
-            void close_lua_state(lua_State *L)
-            {
+            
+            void close_lua_state(lua_State *L) {
                 luaL_commit_storage_changes(L);
-				thinkyoung::lua::api::global_glua_chain_api->release_objects_in_pool(L);
+                thinkyoung::lua::api::global_glua_chain_api->release_objects_in_pool(L);
                 LStatesMap *states_map = get_lua_states_value_hashmap();
-                if (nullptr != states_map)
-                {
+                
+                if (nullptr != states_map) {
                     auto lua_table_map_list_p = get_lua_state_value(L, LUA_TABLE_MAP_LIST_STATE_MAP_KEY).pointer_value;
-                    if (nullptr != lua_table_map_list_p)
-                    {
+                    
+                    if (nullptr != lua_table_map_list_p) {
                         auto list_p = (std::list<GluaTableMapP>*) lua_table_map_list_p;
-                        for (auto it = list_p->begin(); it != list_p->end(); ++it)
-                        {
+                        
+                        for (auto it = list_p->begin(); it != list_p->end(); ++it) {
                             GluaTableMapP lua_table_map = *it;
                             // lua_table_map->~GluaTableMap();
                             // lua_free(L, lua_table_map);
                             delete lua_table_map;
                         }
+                        
                         delete list_p;
                     }
-
+                    
                     L_V1 map = create_value_map_for_lua_state(L);
-                    for (auto it = map->begin(); it != map->end(); ++it)
-                    {
-                        if (it->second.type == LUA_STATE_VALUE_INT_POINTER)
-                        {
+                    
+                    for (auto it = map->begin(); it != map->end(); ++it) {
+                        if (it->second.type == LUA_STATE_VALUE_INT_POINTER) {
                             lua_free(L, it->second.value.int_pointer_value);
                             it->second.value.int_pointer_value = nullptr;
                         }
                     }
+                    
                     // close values in state values(some pointers need free), eg. storage infos, contract infos
                     GluaStateValueNode storage_changelist_node = get_lua_state_value_node(L, LUA_STORAGE_CHANGELIST_KEY);
-                    if (storage_changelist_node.type == LUA_STATE_VALUE_POINTER && nullptr != storage_changelist_node.value.pointer_value)
-                    {
+                    
+                    if (storage_changelist_node.type == LUA_STATE_VALUE_POINTER && nullptr != storage_changelist_node.value.pointer_value) {
                         GluaStorageChangeList *list = (GluaStorageChangeList*)storage_changelist_node.value.pointer_value;
-                        for (auto it = list->begin(); it != list->end(); ++it)
-                        {
+                        
+                        for (auto it = list->begin(); it != list->end(); ++it) {
                             GluaStorageValue before = it->before;
                             GluaStorageValue after = it->after;
-                            if (lua_storage_is_table(before.type))
-                            {
+                            
+                            if (lua_storage_is_table(before.type)) {
                                 // free_lua_table_map(L, before.value.table_value);
                             }
-                            if (lua_storage_is_table(after.type))
-                            {
+                            
+                            if (lua_storage_is_table(after.type)) {
                                 // free_lua_table_map(L, after.value.table_value);
                             }
                         }
+                        
                         list->~GluaStorageChangeList();
                         lua_free(L, list);
                     }
-
+                    
                     GluaStateValueNode storage_table_read_list_node = get_lua_state_value_node(L, LUA_STORAGE_READ_TABLES_KEY);
-                    if (storage_table_read_list_node.type == LUA_STATE_VALUE_POINTER && nullptr != storage_table_read_list_node.value.pointer_value)
-                    {
+                    
+                    if (storage_table_read_list_node.type == LUA_STATE_VALUE_POINTER && nullptr != storage_table_read_list_node.value.pointer_value) {
                         GluaStorageTableReadList *list = (GluaStorageTableReadList*)storage_table_read_list_node.value.pointer_value;
                         list->~GluaStorageTableReadList();
                         lua_free(L, list);
                     }
-
+                    
                     GluaStateValueNode repl_state_node = get_lua_state_value_node(L, LUA_REPL_RUNNING_STATE_KEY);
-                    if (repl_state_node.type == LUA_STATE_VALUE_INT_POINTER)
-                    {
+                    
+                    if (repl_state_node.type == LUA_STATE_VALUE_INT_POINTER) {
                         lua_free(L, repl_state_node.value.int_pointer_value);
                     }
+                    
                     int *insts_executed_count = get_lua_state_value(L, INSTRUCTIONS_EXECUTED_COUNT_LUA_STATE_MAP_KEY).int_pointer_value;
-                    if (nullptr != insts_executed_count)
-                    {
+                    
+                    if (nullptr != insts_executed_count) {
                         lua_free(L, insts_executed_count);
                     }
+                    
                     int *stopped_pointer = thinkyoung::lua::lib::get_lua_state_value(L, LUA_STATE_STOP_TO_RUN_IN_LVM_STATE_MAP_KEY).int_pointer_value;
-                    if (nullptr != stopped_pointer)
-                    {
+                    
+                    if (nullptr != stopped_pointer) {
                         lua_free(L, stopped_pointer);
                     }
+                    
                     auto repl_running_node = get_lua_state_value_node(L, LUA_REPL_RUNNING_STATE_KEY);
-                    if (repl_running_node.type == LUA_STATE_VALUE_INT_POINTER && nullptr != repl_running_node.value.int_pointer_value)
-                    {
+                    
+                    if (repl_running_node.type == LUA_STATE_VALUE_INT_POINTER && nullptr != repl_running_node.value.int_pointer_value) {
                         lua_free(L, repl_running_node.value.int_pointer_value);
                     }
-
+                    
                     states_map->erase(L);
                 }
-
+                
                 lua_close(L);
             }
-
+            
             /**
             * share some values in L
             */
-            void close_all_lua_state_values()
-            {
+            void close_all_lua_state_values() {
                 LStatesMap *states_map = get_lua_states_value_hashmap();
                 states_map->clear();
             }
-            void close_lua_state_values(lua_State *L)
-            {
+            void close_lua_state_values(lua_State *L) {
                 LStatesMap *states_map = get_lua_states_value_hashmap();
                 states_map->erase(L);
             }
-
-            GluaStateValueNode get_lua_state_value_node(lua_State *L, const char *key)
-            {
+            
+            GluaStateValueNode get_lua_state_value_node(lua_State *L, const char *key) {
                 GluaStateValue nil_value = { 0 };
                 GluaStateValueNode nil_value_node;
                 nil_value_node.type = LUA_STATE_VALUE_nullptr;
                 nil_value_node.value = nil_value;
-                if (nullptr == L || nullptr == key || strlen(key) < 1)
-                {
+                
+                if (nullptr == L || nullptr == key || strlen(key) < 1) {
                     return nil_value_node;
                 }
-
+                
                 LStatesMap *states_map = get_lua_states_value_hashmap();
                 L_V1 map = create_value_map_for_lua_state(L);
                 std::string key_str(key);
                 auto it = map->find(key_str);
+                
                 if (it == map->end())
                     return nil_value_node;
+                    
                 else
                     return map->at(key_str);
             }
-
-            GluaStateValue get_lua_state_value(lua_State *L, const char *key)
-            {
+            
+            GluaStateValue get_lua_state_value(lua_State *L, const char *key) {
                 return get_lua_state_value_node(L, key).value;
             }
-            void set_lua_state_instructions_limit(lua_State *L, int limit)
-            {
+            void set_lua_state_instructions_limit(lua_State *L, int limit) {
                 GluaStateValue value = { limit };
                 set_lua_state_value(L, INSTRUCTIONS_LIMIT_LUA_STATE_MAP_KEY, value, LUA_STATE_VALUE_INT);
             }
-
-            int get_lua_state_instructions_limit(lua_State *L)
-            {
+            
+            int get_lua_state_instructions_limit(lua_State *L) {
                 return get_lua_state_value(L, INSTRUCTIONS_LIMIT_LUA_STATE_MAP_KEY).int_value;
             }
-
-            int get_lua_state_instructions_executed_count(lua_State *L)
-            {
+            
+            int get_lua_state_instructions_executed_count(lua_State *L) {
                 int *insts_executed_count = get_lua_state_value(L, INSTRUCTIONS_EXECUTED_COUNT_LUA_STATE_MAP_KEY).int_pointer_value;
-                if (nullptr == insts_executed_count)
-                {
+                
+                if (nullptr == insts_executed_count) {
                     return 0;
                 }
+                
                 if (*insts_executed_count < 0)
                     return 0;
+                    
                 else
                     return *insts_executed_count;
             }
-
-            void enter_lua_sandbox(lua_State *L)
-            {
+            
+            void enter_lua_sandbox(lua_State *L) {
                 GluaStateValue value;
                 value.int_value = 1;
                 set_lua_state_value(L, LUA_IN_SANDBOX_STATE_KEY, value, LUA_STATE_VALUE_INT);
             }
-
-            void exit_lua_sandbox(lua_State *L)
-            {
+            
+            void exit_lua_sandbox(lua_State *L) {
                 GluaStateValue value;
                 value.int_value = 0;
                 set_lua_state_value(L, LUA_IN_SANDBOX_STATE_KEY, value, LUA_STATE_VALUE_INT);
             }
-
-            bool check_in_lua_sandbox(lua_State *L)
-            {
+            
+            bool check_in_lua_sandbox(lua_State *L) {
                 return get_lua_state_value_node(L, LUA_IN_SANDBOX_STATE_KEY).value.int_value > 0;
             }
-
+            
             /**
             * notify lvm to stop running the lua stack
             */
-            void notify_lua_state_stop(lua_State *L)
-            {
+            void notify_lua_state_stop(lua_State *L) {
                 int *pointer = get_lua_state_value(L, LUA_STATE_STOP_TO_RUN_IN_LVM_STATE_MAP_KEY).int_pointer_value;
-                if (nullptr == pointer)
-                {
+                
+                if (nullptr == pointer) {
                     pointer = (int*)lua_malloc(L, sizeof(int));
                     *pointer = 1;
                     GluaStateValue value;
                     value.int_pointer_value = pointer;
                     set_lua_state_value(L, LUA_STATE_STOP_TO_RUN_IN_LVM_STATE_MAP_KEY, value, LUA_STATE_VALUE_INT_POINTER);
-                }
-                else
-                {
+                    
+                } else {
                     *pointer = 1;
                 }
             }
-
+            
             /**
             * check whether the lua state notified stop before
             */
-            bool check_lua_state_notified_stop(lua_State *L)
-            {
+            bool check_lua_state_notified_stop(lua_State *L) {
                 int *pointer = get_lua_state_value(L, LUA_STATE_STOP_TO_RUN_IN_LVM_STATE_MAP_KEY).int_pointer_value;
+                
                 if (nullptr == pointer)
                     return false;
+                    
                 return (*pointer) > 0;
             }
-
+            
             /**
             * resume lua_State to be available running again
             */
-            void resume_lua_state_running(lua_State *L)
-            {
+            void resume_lua_state_running(lua_State *L) {
                 int *pointer = get_lua_state_value(L, LUA_STATE_STOP_TO_RUN_IN_LVM_STATE_MAP_KEY).int_pointer_value;
-                if (nullptr != pointer)
-                {
+                
+                if (nullptr != pointer) {
                     *pointer = 0;
                 }
             }
-
-            void set_lua_state_value(lua_State *L, const char *key, GluaStateValue value, enum GluaStateValueType type)
-            {
-                if (nullptr == L || nullptr == key || strlen(key) < 1)
-                {
+            
+            void set_lua_state_value(lua_State *L, const char *key, GluaStateValue value, enum GluaStateValueType type) {
+                if (nullptr == L || nullptr == key || strlen(key) < 1) {
                     return;
                 }
-
+                
                 L_V1 map = create_value_map_for_lua_state(L);
                 GluaStateValueNode node_v;
                 node_v.type = type;
                 node_v.value = value;
+                
                 if (node_v.type == LUA_STATE_VALUE_STRING)
                     node_v.value.string_value = thinkyoung::lua::lib::malloc_and_copy_string(L, value.string_value);
+                    
                 std::string key_str(key);
                 map->erase(key_str);
                 map->insert(std::make_pair(key_str, node_v));
             }
-
-            static const char* reader_of_stream(lua_State *L, void *ud, size_t *size)
-            {
+            
+            static const char* reader_of_stream(lua_State *L, void *ud, size_t *size) {
                 UNUSED(L);
                 GluaModuleByteStream *stream = static_cast<GluaModuleByteStream*>(ud);
+                
                 if (!stream)
                     return nullptr;
-				if (size)
-					*size = stream->buff.size();
+                    
+                if (size)
+                    *size = stream->buff.size();
+                    
                 return stream->buff.data();
             }
-
-            LClosure* luaU_undump_from_file(lua_State *L, const char *binary_filename, const char* name)
-            {
+            
+            LClosure* luaU_undump_from_file(lua_State *L, const char *binary_filename, const char* name) {
                 ZIO z;
                 FILE *f = fopen(binary_filename, "rb");
+                
                 if (nullptr == f)
                     return nullptr;
-				auto stream = std::make_shared<GluaModuleByteStream>();
+                    
+                auto stream = std::make_shared<GluaModuleByteStream>();
+                
                 if (nullptr == stream)
                     return nullptr;
-				auto f_cur = ftell(f);
-				fseek(f, 0, SEEK_END);
-				auto f_size = ftell(f);
-				fseek(f, f_cur, 0);
-				stream->buff.resize(stream->buff.size() + f_size);
+                    
+                auto f_cur = ftell(f);
+                fseek(f, 0, SEEK_END);
+                auto f_size = ftell(f);
+                fseek(f, f_cur, 0);
+                stream->buff.resize(stream->buff.size() + f_size);
                 fread(stream->buff.data(), f_size, 1, f);
                 fseek(f, 0, SEEK_END); // seek to end of file
                 stream->is_bytes = true;
@@ -1439,58 +1433,58 @@ end
                 fclose(f);
                 return closure;
             }
-
-            void free_bytecode_stream(GluaModuleByteStreamP stream)
-            {
-				/*
+            
+            void free_bytecode_stream(GluaModuleByteStreamP stream) {
+                /*
                 if (nullptr != stream)
                 {
-					stream->contract_apis.clear();
-					stream->contract_apis_count = 0;
-					stream->offline_apis.clear();
-					stream->offline_apis_count = 0;
-					stream->contract_emit_events.clear();
-					stream->contract_emit_events_count = 0;
+                    stream->contract_apis.clear();
+                    stream->contract_apis_count = 0;
+                    stream->offline_apis.clear();
+                    stream->offline_apis_count = 0;
+                    stream->contract_emit_events.clear();
+                    stream->contract_emit_events_count = 0;
                     free(stream);
                 }
-				*/
-				delete stream;
+                */
+                delete stream;
             }
-
-            LClosure *luaU_undump_from_stream(lua_State *L, GluaModuleByteStream *stream, const char *name)
-            {
+            
+            LClosure *luaU_undump_from_stream(lua_State *L, GluaModuleByteStream *stream, const char *name) {
                 ZIO z;
                 luaZ_init(L, &z, reader_of_stream, (void*) stream);
                 luaZ_fill(&z);
                 auto cl = luaU_undump(L, &z, name);
-				return cl;
+                return cl;
             }
-
-			bool undump_from_bytecode_stream_to_file(lua_State *L, GluaModuleByteStream *stream, FILE *out)
-            {
-				LClosure *closure = luaU_undump_from_stream(L, stream, "undump_tmp");
-				if (!closure)
-					return false;
-				luaL_PrintFunctionToFile(out, closure->p, 1);
-				return true;
+            
+            bool undump_from_bytecode_stream_to_file(lua_State *L, GluaModuleByteStream *stream, FILE *out) {
+                LClosure *closure = luaU_undump_from_stream(L, stream, "undump_tmp");
+                
+                if (!closure)
+                    return false;
+                    
+                luaL_PrintFunctionToFile(out, closure->p, 1);
+                return true;
             }
-
-			bool undump_from_bytecode_file_to_file(lua_State *L, const char *bytecode_filename, FILE *out)
-            {
-				LClosure *closure = luaU_undump_from_file(L, bytecode_filename, "undump_tmp");
-				if (!closure)
-					return false;
-				luaL_PrintFunctionToFile(out, closure->p, 1);
-				return true;
+            
+            bool undump_from_bytecode_file_to_file(lua_State *L, const char *bytecode_filename, FILE *out) {
+                LClosure *closure = luaU_undump_from_file(L, bytecode_filename, "undump_tmp");
+                
+                if (!closure)
+                    return false;
+                    
+                luaL_PrintFunctionToFile(out, closure->p, 1);
+                return true;
             }
-
-
+            
+            
 #define UPVALNAME_OF_PROTO(proto, x) (((proto)->upvalues[x].name) ? getstr((proto)->upvalues[x].name) : "-")
-#define MYK(x)		(-1-(x))
-
+#define MYK(x)      (-1-(x))
+            
             static const size_t globalvar_whitelist_count = sizeof(globalvar_whitelist) / sizeof(globalvar_whitelist[0]);
-
-
+            
+            
             static const std::string TYPED_LUA_LIB_CODE = R"END(type Contract<S> = {
 	id: string,
 	name: string,
@@ -2075,119 +2069,119 @@ end
                     switch (o)
                     {
                     case OP_GETUPVAL:
-                    {
-                        // break; // FIXME: this has BUG
-                        // FIXME: when instack=1, find in parent localvars, when instack=0, find in parent upval pool
-                        if (a == 0)
-                            break;
-                        // const char *upvalue_name = UPVALNAME_OF_PROTO(proto, a);
-                        const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
-                        int cidx = MYK(INDEXK(b));
-                        if (nullptr == proto->k)
-                            break;
-                        // const char *cname = getstr(tsvalue(&proto->k[-cidx-1]));
-                        const char *cname = upvalue_name;
-                        bool in_whitelist = false;
-                        for (size_t i = 0; i < globalvar_whitelist_count; ++i)
-                        {
-                            if (strcmp(cname, globalvar_whitelist[i]) == 0)
-                            {
-                                in_whitelist = true;
-                                break;
-                            }
-                        }
-                        if (strcmp(upvalue_name, "_ENV") == 0)
-                        {
-                            in_whitelist = true; // TODO: whether this can do? maybe need to get what property are fetching
-                        }
-                        if (!in_whitelist)
-                        {
-                            Upvaldesc upvaldesc = proto->upvalues[c];
-                            // check in parent proto, whether defined in parent proto
-                            bool upval_defined = (parents && parents->size() > 0) ? upval_defined_in_parent(L, *parents->rbegin(), parents, upvaldesc) : false;
-                            if (!upval_defined)
-                            {
-                                lcompile_error_set(L, error, "use global variable %s not in whitelist", cname);
-                                return false;
-                            }
-                        }
-                    }	 break;
+{
+// break; // FIXME: this has BUG
+// FIXME: when instack=1, find in parent localvars, when instack=0, find in parent upval pool
+if (a == 0)
+break;
+// const char *upvalue_name = UPVALNAME_OF_PROTO(proto, a);
+const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
+int cidx = MYK(INDEXK(b));
+if (nullptr == proto->k)
+break;
+// const char *cname = getstr(tsvalue(&proto->k[-cidx-1]));
+const char *cname = upvalue_name;
+bool in_whitelist = false;
+for (size_t i = 0; i < globalvar_whitelist_count; ++i)
+{
+if (strcmp(cname, globalvar_whitelist[i]) == 0)
+{
+in_whitelist = true;
+break;
+}
+}
+if (strcmp(upvalue_name, "_ENV") == 0)
+{
+in_whitelist = true; // TODO: whether this can do? maybe need to get what property are fetching
+}
+if (!in_whitelist)
+{
+Upvaldesc upvaldesc = proto->upvalues[c];
+// check in parent proto, whether defined in parent proto
+bool upval_defined = (parents && parents->size() > 0) ? upval_defined_in_parent(L, *parents->rbegin(), parents, upvaldesc) : false;
+if (!upval_defined)
+{
+lcompile_error_set(L, error, "use global variable %s not in whitelist", cname);
+return false;
+}
+}
+}	 break;
                     case OP_SETUPVAL:
-                    {
-                        const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
-                        // not support change _ENV or _G
-                        if (strcmp("_ENV", upvalue_name) == 0
-                            || strcmp("_G", upvalue_name) == 0)
-                        {
-                            lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
-                            return false;
-                        }
-                        break;
-                    }
+{
+const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
+// not support change _ENV or _G
+if (strcmp("_ENV", upvalue_name) == 0
+|| strcmp("_G", upvalue_name) == 0)
+{
+lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
+return false;
+}
+break;
+}
                     case OP_GETTABUP:
-                    {
-                        // FIXME
-                        const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
-                        if (ISK(c)){
-                            int cidx = MYK(INDEXK(c));
-                            const char *cname = getstr(tsvalue(&proto->k[-cidx - 1]));
-                            bool in_whitelist = false;
-                            for (size_t i = 0; i < globalvar_whitelist_count; ++i)
-                            {
-                                if (strcmp(cname, globalvar_whitelist[i]) == 0)
-                                {
-                                    in_whitelist = true;
-                                    break;
-                                }
-                            }
-                            if (!in_whitelist && (strcmp(upvalue_name, "_ENV") == 0 || strcmp(upvalue_name, "_G") == 0))
-                            {
-                                lcompile_error_set(L, error, "use global variable %s not in whitelist", cname);
-                                return false;
-                            }
-							// TODO: 把字节码反编译再检查
-							if(strcmp(cname, "import_contract")==0)
-								is_importing_contract = true;
-							else if (strcmp(cname, "import_contract_address") == 0)
-								is_importing_contract_address = true;
-                        }
-                        else
-                        {
+{
+// FIXME
+const char *upvalue_name = UPVALNAME_OF_PROTO(proto, b);
+if (ISK(c)){
+int cidx = MYK(INDEXK(c));
+const char *cname = getstr(tsvalue(&proto->k[-cidx - 1]));
+bool in_whitelist = false;
+for (size_t i = 0; i < globalvar_whitelist_count; ++i)
+{
+if (strcmp(cname, globalvar_whitelist[i]) == 0)
+{
+in_whitelist = true;
+break;
+}
+}
+if (!in_whitelist && (strcmp(upvalue_name, "_ENV") == 0 || strcmp(upvalue_name, "_G") == 0))
+{
+lcompile_error_set(L, error, "use global variable %s not in whitelist", cname);
+return false;
+}
+			// TODO: 把字节码反编译再检查
+			if(strcmp(cname, "import_contract")==0)
+is_importing_contract = true;
+			else if (strcmp(cname, "import_contract_address") == 0)
+is_importing_contract_address = true;
+}
+else
+{
 
-                        }
-                    }
-                    break;
+}
+}
+break;
                     case OP_SETTABUP:
-                    {
-                        const char *upvalue_name = UPVALNAME_OF_PROTO(proto, a);
-                        // not support change _ENV or _G
-                        if (strcmp("_ENV", upvalue_name) == 0
-                            || strcmp("_G", upvalue_name) == 0)
-                        {
-                            if (ISK(b)){
-                                int bidx = MYK(INDEXK(b));
-                                const char *bname = getstr(tsvalue(&proto->k[-bidx - 1]));
-                                lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", bname);
-                                return false;
+{
+const char *upvalue_name = UPVALNAME_OF_PROTO(proto, a);
+// not support change _ENV or _G
+if (strcmp("_ENV", upvalue_name) == 0
+|| strcmp("_G", upvalue_name) == 0)
+{
+if (ISK(b)){
+int bidx = MYK(INDEXK(b));
+const char *bname = getstr(tsvalue(&proto->k[-bidx - 1]));
+lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", bname);
+return false;
 
-                            }
-                            else
-                            {
-                                lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
-                                return false;
-                            }
-                        }
-                        // not support change _ENV or _G
-                        /*
-                        if (strcmp("_ENV", upvalue_name) == 0
-                        || strcmp("_G", upvalue_name) == 0)
-                        {
-                        lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
-                        return false;
-                        }
-                        */
-                    }
-                    break;
+}
+else
+{
+lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
+return false;
+}
+}
+// not support change _ENV or _G
+/*
+if (strcmp("_ENV", upvalue_name) == 0
+|| strcmp("_G", upvalue_name) == 0)
+{
+lcompile_error_set(L, error, "_ENV or _G set %s is forbidden", upvalue_name);
+return false;
+}
+*/
+}
+break;
                     default:
                         break;
                     }
@@ -2688,6 +2682,9 @@ end
                 return nullptr;
 				*/
             }
+
+
+
 
         }
     }

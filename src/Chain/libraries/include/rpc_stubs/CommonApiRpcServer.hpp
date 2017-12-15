@@ -421,6 +421,8 @@ namespace thinkyoung {
             fc::variant get_contract_balance_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant call_contract_testing_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant call_contract_testing_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant call_contract_local_emit_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant call_contract_local_emit_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant call_contract_offline_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant call_contract_offline_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant load_contract_to_file_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
