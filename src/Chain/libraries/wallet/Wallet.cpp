@@ -3109,9 +3109,17 @@ namespace thinkyoung {
                                              ALP_BLOCKCHAIN_SYMBOL,
                                              (double)asset_for_exec.amount / ALP_BLOCKCHAIN_PRECISION,
                                              true);
+            SignedTransaction trx;
+            trx = trans_entry.trx;
+            ChainInterfacePtr state_ptr = get_correct_state_ptr();
+            PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(state_ptr);
+            TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
+            trx_eval_state->skipexec = false;
+            trx_eval_state->evaluate_contract_testing = true;
+            trx_eval_state->evaluate(trx);
             vector<EventOperation> ops;
             
-            for (const auto& op : trans_entry.trx.operations) {
+            for (const auto& op : trx_eval_state->p_result_trx.operations) {
                 if (op.type == OperationTypeEnum::event_op_type) {
                     ops.push_back(op.as<EventOperation>());
                 }
