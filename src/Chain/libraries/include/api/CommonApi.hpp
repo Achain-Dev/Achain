@@ -421,6 +421,15 @@ namespace thinkyoung {
              */
             virtual std::vector<thinkyoung::blockchain::EventOperation> blockchain_get_events(uint32_t block_number, const thinkyoung::blockchain::TransactionIdType& trx_id) const = 0;
             /**
+             * Get a transaction id.
+             *
+             * @param transaction_to_broadcast The transaction to broadcast to the network (signed_transaction,
+             *                                 required)
+             *
+             * @return transaction_id
+             */
+            virtual thinkyoung::blockchain::TransactionIdType blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast) = 0;
+            /**
              * Attempts add or remove <node> from the peer list or try a connection to <node> once.
              *
              * @param node The node (see network_get_peer_info for nodes) (string, required)

@@ -74,6 +74,7 @@ namespace thinkyoung {
             unordered_map<string, string> blockchain_get_forever_contracts() const override;
             std::vector<std::string> blockchain_list_pub_all_address(const std::string& pub_key) const override;
             std::vector<thinkyoung::blockchain::EventOperation> blockchain_get_events(uint32_t block_number, const thinkyoung::blockchain::TransactionIdType& trx_id) const override;
+            thinkyoung::blockchain::TransactionIdType blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast) override;
             void network_add_node(const std::string& node, const std::string& command = fc::json::from_string("\"add\"").as<std::string>()) override;
             uint32_t network_get_connection_count() const override;
             std::vector<fc::variant_object> network_get_peer_info(bool not_firewalled = fc::json::from_string("false").as<bool>()) const override;
