@@ -1248,6 +1248,36 @@ namespace thinkyoung {
             return fc::variant(result);
         }
 
+        fc::variant CommonApiRpcServer::blockchain_get_transaction_id_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_connected_to_network();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (transaction_to_broadcast)");
+            thinkyoung::blockchain::SignedTransaction transaction_to_broadcast = parameters[0].as<thinkyoung::blockchain::SignedTransaction>();
+
+            thinkyoung::blockchain::TransactionIdType result = get_client()->blockchain_get_transaction_id(transaction_to_broadcast);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::blockchain_get_transaction_id_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_connected_to_network();
+            // done checking prerequisites
+
+            if (!parameters.contains("transaction_to_broadcast"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'transaction_to_broadcast'");
+            thinkyoung::blockchain::SignedTransaction transaction_to_broadcast = parameters["transaction_to_broadcast"].as<thinkyoung::blockchain::SignedTransaction>();
+
+            thinkyoung::blockchain::TransactionIdType result = get_client()->blockchain_get_transaction_id(transaction_to_broadcast);
+            return fc::variant(result);
+        }
+
         fc::variant CommonApiRpcServer::network_add_node_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
         {
             // check all of this method's prerequisites
@@ -8025,6 +8055,14 @@ namespace thinkyoung {
                 this, capture_con, _1);
             json_connection->add_named_param_method("blockchain_get_events", bound_named_method);
 
+           // register method blockchain_get_transaction_id
+            bound_positional_method = boost::bind(&CommonApiRpcServer::blockchain_get_transaction_id_positional,
+                this, capture_con, _1);
+            json_connection->add_method("blockchain_get_transaction_id", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::blockchain_get_transaction_id_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("blockchain_get_transaction_id", bound_named_method);
+
            // register method network_add_node
             bound_positional_method = boost::bind(&CommonApiRpcServer::network_add_node_positional,
                 this, capture_con, _1);
@@ -10326,6 +10364,20 @@ namespace thinkyoung {
                     /* detailed description */ "get event operation of the trx_id\n\nParameters:\n  block_number (uint32_t, required): The block to examine\n  trx_id (transaction_id, required): specific contract id\n\nReturns:\n  eventoperation_array\n",
                     /* aliases */ {}, true};
                 store_method_metadata(blockchain_get_events_method_metadata);
+            }
+
+            {
+                // register method blockchain_get_transaction_id
+                thinkyoung::api::MethodData blockchain_get_transaction_id_method_metadata{ "blockchain_get_transaction_id", nullptr,
+                    /* description */ "Get a transaction id",
+                    /* returns */ "transaction_id",
+                    /* params: */{
+                        {"transaction_to_broadcast", "signed_transaction", thinkyoung::api::required_positional, fc::ovariant()}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 9,
+                    /* detailed description */ "Get a transaction id\n\nParameters:\n  transaction_to_broadcast (signed_transaction, required): The transaction to broadcast to the network\n\nReturns:\n  transaction_id\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(blockchain_get_transaction_id_method_metadata);
             }
 
             {
@@ -13115,6 +13167,8 @@ namespace thinkyoung {
                 return blockchain_list_pub_all_address_positional(nullptr, parameters);
             if (method_name == "blockchain_get_events")
                 return blockchain_get_events_positional(nullptr, parameters);
+            if (method_name == "blockchain_get_transaction_id")
+                return blockchain_get_transaction_id_positional(nullptr, parameters);
             if (method_name == "network_add_node")
                 return network_add_node_positional(nullptr, parameters);
             if (method_name == "network_get_connection_count")

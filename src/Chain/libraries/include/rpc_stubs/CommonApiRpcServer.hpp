@@ -133,6 +133,8 @@ namespace thinkyoung {
             fc::variant blockchain_list_pub_all_address_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant blockchain_get_events_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant blockchain_get_events_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant blockchain_get_transaction_id_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant blockchain_get_transaction_id_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant network_add_node_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant network_add_node_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant network_get_connection_count_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);

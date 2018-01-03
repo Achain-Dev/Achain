@@ -255,6 +255,11 @@ namespace thinkyoung {
             fc::variant result = get_json_connection()->async_call("blockchain_get_events", std::vector<fc::variant>{fc::variant(block_number), fc::variant(trx_id)}).wait();
             return result.as<std::vector<thinkyoung::blockchain::EventOperation>>();
         }
+        thinkyoung::blockchain::TransactionIdType CommonApiRpcClient::blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast)
+        {
+            fc::variant result = get_json_connection()->async_call("blockchain_get_transaction_id", std::vector<fc::variant>{fc::variant(transaction_to_broadcast)}).wait();
+            return result.as<thinkyoung::blockchain::TransactionIdType>();
+        }
         void CommonApiRpcClient::network_add_node(const std::string& node, const std::string& command /* = fc::json::from_string("\"add\"").as<std::string>() */)
         {
             fc::variant result = get_json_connection()->async_call("network_add_node", std::vector<fc::variant>{fc::variant(node), fc::variant(command)}).wait();

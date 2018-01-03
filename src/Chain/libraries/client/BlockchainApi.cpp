@@ -949,6 +949,9 @@ namespace thinkyoung {
                 
                 return ops;
             }
+            thinkyoung::blockchain::TransactionIdType ClientImpl::blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast) {
+                return transaction_to_broadcast.id();
+            }
         }
     }
 } // namespace thinkyoung::client::detail

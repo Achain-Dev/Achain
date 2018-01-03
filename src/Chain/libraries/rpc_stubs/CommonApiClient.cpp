@@ -1411,6 +1411,35 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        thinkyoung::blockchain::TransactionIdType CommonApiClient::blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast)
+        {
+            ilog("received RPC call: blockchain_get_transaction_id(${transaction_to_broadcast})", ("transaction_to_broadcast", transaction_to_broadcast));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(transaction_to_broadcast) );
+                call_id = glog->log_call_started( this, "blockchain_get_transaction_id", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call blockchain_get_transaction_id finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::blockchain::TransactionIdType result =             get_impl()->blockchain_get_transaction_id(transaction_to_broadcast);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "blockchain_get_transaction_id", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         void CommonApiClient::network_add_node(const std::string& node, const std::string& command /* = fc::json::from_string("\"add\"").as<std::string>() */)
         {
             ilog("received RPC call: network_add_node(${node}, ${command})", ("node", node)("command", command));
