@@ -213,7 +213,8 @@ namespace thinkyoung {
                 const Asset& amount_to_withdraw,
                 const string& from_account_name,
                 SignedTransaction& trx,
-                unordered_set<Address>& required_signatures
+                unordered_set<Address>& required_signatures,
+                uint32_t from_type
             ) {
                 try {
                     FC_ASSERT(!from_account_name.empty());
@@ -235,12 +236,12 @@ namespace thinkyoung {
                             continue;
                             
                         if (amount_remaining.amount > balance.amount) {
-                            trx.withdraw(entry.id(), balance.amount);
+                            trx.withdraw(entry.id(), balance.amount, from_type);
                             required_signatures.insert(*owner);
                             amount_remaining -= balance;
                             
                         } else {
-                            trx.withdraw(entry.id(), amount_remaining.amount);
+                            trx.withdraw(entry.id(), amount_remaining.amount, from_type);
                             required_signatures.insert(*owner);
                             return;
                         }

@@ -16,15 +16,19 @@ namespace thinkyoung {
 
             WithdrawOperation() :amount(0){}
 
-            WithdrawOperation(const BalanceIdType& id, ShareType amount_arg)
+            WithdrawOperation(const BalanceIdType& id, ShareType amount_arg, uint32_t from_type = 0)
                 :balance_id(id), amount(amount_arg){
                 FC_ASSERT(amount_arg > 0);
+
+                from = from_type;
             }
 
             /** the account to withdraw from */
             BalanceIdType    balance_id;
             /** that amount to withdraw from the account*/
             ShareType         amount;
+            /*add from element to discriminate asset transfer*/
+            uint32_t          from;
             /** any data required by the claim_condition */
             std::vector<char>  claim_input_data;
 
@@ -160,7 +164,7 @@ namespace thinkyoung {
 
 FC_REFLECT_ENUM(thinkyoung::blockchain::DepositContractType, (deposit_contract_normal)(deposit_contract_margin))
 FC_REFLECT(thinkyoung::blockchain::DepositContractOperation, (amount)(condition))
-FC_REFLECT(thinkyoung::blockchain::WithdrawOperation, (balance_id)(amount)(claim_input_data))
+FC_REFLECT(thinkyoung::blockchain::WithdrawOperation, (balance_id)(amount)(from)(claim_input_data))
 FC_REFLECT(thinkyoung::blockchain::DepositOperation, (amount)(condition))
 FC_REFLECT(thinkyoung::blockchain::WithdrawContractOperation, (balance_id)(amount)(contract))
 FC_REFLECT(thinkyoung::blockchain::BalancesWithdrawOperation, (balances))

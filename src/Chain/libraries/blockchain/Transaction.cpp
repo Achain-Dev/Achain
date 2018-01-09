@@ -132,11 +132,11 @@ namespace thinkyoung {
 
 
         void Transaction::withdraw(const BalanceIdType& account,
-            ShareType amount)
+            ShareType amount, uint32_t from_type)
         {
             try {
                 FC_ASSERT(amount > 0, "amount: ${amount}", ("amount", amount));
-                operations.emplace_back(WithdrawOperation(account, amount));
+                operations.emplace_back(WithdrawOperation(account, amount, from_type));
             } FC_RETHROW_EXCEPTIONS(warn, "", ("account", account)("amount", amount))
         }
 

@@ -36,7 +36,6 @@ namespace thinkyoung {
         void CreateAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
-                FC_ASSERT(false, "Disable CreateAssetOperation!");
                 if (NOT eval_state._current_state->is_valid_symbol_name(this->symbol))
                     FC_CAPTURE_AND_THROW(invalid_asset_symbol, (symbol));
 
@@ -103,8 +102,6 @@ namespace thinkyoung {
         void UpdateAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
-                FC_ASSERT(false, "Disable UpdateAssetOperation!");
-
                 oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->asset_id);
                 if (NOT current_asset_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_asset_id, (asset_id));
@@ -163,8 +160,6 @@ namespace thinkyoung {
 
         void UpdateAssetExtOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
-            FC_ASSERT(false, "Disable UpdateAssetExtOperation!");
-
             oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->asset_id);
             if (NOT current_asset_entry.valid())
                 FC_CAPTURE_AND_THROW(unknown_asset_id, (asset_id));
@@ -259,7 +254,6 @@ namespace thinkyoung {
         void IssueAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
-                FC_ASSERT(false, "Disable IssueAssetOperation!");
                 oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->amount.asset_id);
                 if (NOT current_asset_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_asset_id, (amount.asset_id));
