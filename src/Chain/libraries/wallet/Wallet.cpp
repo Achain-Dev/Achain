@@ -3610,7 +3610,7 @@ namespace thinkyoung {
                     my->withdraw_to_transaction(required_fees + required_imessage_fee,
                                                 from_account_name,
                                                 trx,
-                                                required_signatures);
+                                                required_signatures, 1);
                 }
                 
                 trx.deposit(to_address, asset_to_transfer);
