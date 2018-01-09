@@ -9,13 +9,17 @@ Replicas of the state machine are kept consistent using the Result Delegated Pro
 For more information about Achain, please read following document:
 * [Achain White Paper](https://www.achain.com/Achain%20Whitepaper%202.0_EN.pdf).
 
-Building
+Build Achain
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain)
 * [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
 
-Using the RPC server
+Integration instructions for exchanges
+-------------------------------------
+https://github.com/Achain-Dev/Achain-Exchange
+
+How to use RPC API
 --------------------
 https://www.achain.com/help-en/rpc.html
  
