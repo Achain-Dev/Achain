@@ -44,8 +44,6 @@ int main(int argc, char** argv) {
 #ifdef WIN32
     SetUnhandledExceptionFilter(TopLevelExceptionFilter);
 #endif
-    int l = 0;
-    int i = 3 / l;
     
     try {
         thinkyoung::client::ClientPtr client = std::make_shared<thinkyoung::client::Client>("act_client");
