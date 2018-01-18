@@ -52,7 +52,7 @@ namespace thinkyoung {
             
             void define_slate(const set<AccountIdType>& slate);
             
-            void withdraw(const BalanceIdType& account, ShareType amount, uint32_t from_type = 0);
+            void withdraw(const BalanceIdType& account, const Asset& amount, uint32_t from_type = 0);
             
             void withdraw_from_contract(const BalanceIdType& account, ShareType amount, const ContractIdType& contract_id);
             

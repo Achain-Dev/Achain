@@ -163,15 +163,20 @@ namespace thinkyoung {
         }
         ShareType ChainInterface::get_asset_registration_fee(uint8_t symbol_length)const
         {
-            // if( get_head_block_num() < ALP_V0_4_24_FORK_BLOCK_NUM )
-            //return get_asset_registration_fee_v1();
+            //simple and clear 
+#if 1
+            static const ShareType symbol_price[] = { 50000000000, 48000000000, 46000000000, 44000000000, 42000000000,
+                40000000000, 38000000000, 36000000000, 34000000000, 32000000000, 30000000000 };
+            return symbol_price[symbol_length - 3];
+#else
 
-            // TODO: Add #define's for these fixed prices
             static const ShareType long_symbol_price = 500 * ALP_BLOCKCHAIN_PRECISION; // $10 at $0.02/XTS
             static const ShareType short_symbol_price = 1000 * long_symbol_price;
             FC_ASSERT(long_symbol_price > 0, "Price of long symbol must bigger than 0");
             FC_ASSERT(short_symbol_price > long_symbol_price, "Price of short symbol must bigger than the price of long symbol");
             return symbol_length <= 5 ? short_symbol_price : long_symbol_price;
+#endif
+
         }
 
         AssetIdType ChainInterface::last_asset_id()const

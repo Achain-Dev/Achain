@@ -236,12 +236,12 @@ namespace thinkyoung {
                             continue;
                             
                         if (amount_remaining.amount > balance.amount) {
-                            trx.withdraw(entry.id(), balance.amount, from_type);
+                            trx.withdraw(entry.id(), balance, from_type);
                             required_signatures.insert(*owner);
                             amount_remaining -= balance;
                             
                         } else {
-                            trx.withdraw(entry.id(), amount_remaining.amount, from_type);
+                            trx.withdraw(entry.id(), amount_remaining, from_type);
                             required_signatures.insert(*owner);
                             return;
                         }
@@ -2286,7 +2286,7 @@ namespace thinkyoung {
                 
                 for (const BalanceEntry& entry : balance_entrys.at(account_name)) {
                     const Asset balance = entry.get_spendable_balance(my->_blockchain->get_pending_state()->now());
-                    trx.withdraw(entry.id(), balance.amount);
+                    trx.withdraw(entry.id(), balance);
                     const auto owner = entry.owner();
                     
                     if (!owner.valid()) continue;
@@ -2697,7 +2697,7 @@ namespace thinkyoung {
                         mutable_variant_object info;
                         info["from"] = variant();
                         info["to"] = account_name;
-                        info["amount"] = Asset(deposit_op.amount, deposit_op.condition.asset_id);
+                        info["amount"] = Asset(deposit_op.amount.amount, deposit_op.condition.asset_id);
                         info["memo"] = variant();
                         
                         if (status->has_valid_signature) {

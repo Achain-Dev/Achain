@@ -16,9 +16,9 @@ namespace thinkyoung {
 
             WithdrawOperation() :amount(0){}
 
-            WithdrawOperation(const BalanceIdType& id, ShareType amount_arg, uint32_t from_type = 0)
+            WithdrawOperation(const BalanceIdType& id, const Asset& amount_arg, uint32_t from_type = 0)
                 :balance_id(id), amount(amount_arg){
-                FC_ASSERT(amount_arg > 0);
+                FC_ASSERT(amount_arg.amount > 0);
 
                 from = from_type;
             }
@@ -26,7 +26,7 @@ namespace thinkyoung {
             /** the account to withdraw from */
             BalanceIdType    balance_id;
             /** that amount to withdraw from the account*/
-            ShareType         amount;
+            Asset         amount;
             /*add from element to discriminate asset transfer*/
             uint32_t          from;
             /** any data required by the claim_condition */
@@ -47,13 +47,13 @@ namespace thinkyoung {
             /** owner is just the hash of the condition */
             BalanceIdType                balance_id()const;
 
-            DepositOperation() :amount(0){}
+            DepositOperation() :amount(Asset(0,0)){}
             DepositOperation(const Address& owner, const Asset& amnt, SlateIdType slate_id = 0);
 
             /** the condition that the funds may be withdrawn,
              *  this is only necessary if the address is new.
              */
-            ShareType                       amount;
+            Asset                       amount;
             WithdrawCondition               condition;
 
             void evaluate(TransactionEvaluationState& eval_state)const;

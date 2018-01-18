@@ -16,6 +16,8 @@ namespace thinkyoung {
         struct Asset
         {
             Asset() :amount(0), asset_id(0){}
+            Asset(const Asset& a)
+                :amount(a.amount), asset_id(a.asset_id){}
             explicit Asset(ShareType a, AssetIdType u = 0)
                 :amount(a), asset_id(u){}
 

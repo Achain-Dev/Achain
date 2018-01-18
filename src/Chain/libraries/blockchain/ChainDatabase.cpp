@@ -300,16 +300,16 @@ namespace thinkyoung {
                     
                     for (const auto& genesis_balance : config.initial_balances) {
                         const auto addr = convert_raw_address(genesis_balance.raw_address);
-                        BalanceEntry initial_balance(addr, Asset(genesis_balance.balance, 0), 0);
+                        BalanceEntry initial_balance(addr, Asset(genesis_balance.balances[0].balance, 0), 0);
                         /* In case of redundant balances */
                         const auto cur = self->get_balance_entry(initial_balance.id());
                         
                         if (cur.valid()) initial_balance.balance += cur->balance;
                         
-                        initial_balance.snapshot_info = SnapshotEntry(genesis_balance.raw_address, genesis_balance.balance);
+                        initial_balance.snapshot_info = SnapshotEntry(genesis_balance.raw_address, genesis_balance.balances[0].balance);
                         initial_balance.last_update = config.timestamp;
                         self->store_balance_entry(initial_balance);
-                        total_base_supply += genesis_balance.balance;
+                        total_base_supply += genesis_balance.balances[0].balance;
                     }
                     
                     // Initialize base asset
@@ -2878,10 +2878,10 @@ namespace thinkyoung {
                                 auto raw_addr = string(*deposit.condition.owner());
                                 
                                 if (issuance_map.find(raw_addr) != issuance_map.end())
-                                    issuance_map[raw_addr] += deposit.amount;
+                                    issuance_map[raw_addr] += deposit.amount.amount;
                                     
                                 else
-                                    issuance_map[raw_addr] = deposit.amount;
+                                    issuance_map[raw_addr] = deposit.amount.amount;
                             }
                         }
                     }
@@ -2896,6 +2896,10 @@ namespace thinkyoung {
         // NOTE: Only base asset 0 is snapshotted and addresses can have multiple entries
         void ChainDatabase::generate_snapshot(const fc::path& filename)const {
             try {
+                std::map<std::string, std::vector<balance_muilti>> balance_map;
+                std::map<std::string, std::vector<balance_muilti>>::iterator map_iter;
+                std::string raw_addr;
+
                 GenesisState snapshot = get_builtin_genesis_block_config();
                 snapshot.timestamp = now();
                 snapshot.initial_balances.clear();
@@ -2904,7 +2908,44 @@ namespace thinkyoung {
                 for (auto iter = my->_balance_id_to_entry.unordered_begin();
                         iter != my->_balance_id_to_entry.unordered_end(); ++iter) {
                     const BalanceEntry& entry = iter->second;
-                    
+
+                    if (entry.condition.type != withdraw_signature_type) continue;
+
+                    balance_muilti balance;
+
+                    if (entry.snapshot_info.valid()) {
+                        raw_addr = entry.snapshot_info->original_address;
+
+                    } else {
+                        const auto owner = entry.owner();
+
+                        if (!owner.valid()) continue;
+
+                        raw_addr = string(*owner);
+                    }
+
+                    balance.balance = entry.balance;
+
+                    auto balance_entry = get_asset_entry(entry.asset_id());
+
+                    if (!balance_entry.valid()) continue;
+
+                    balance.symbol = balance_entry->symbol;
+
+                    /*find and insert*/
+                    map_iter = balance_map.find(raw_addr);
+
+                    if (map_iter == balance_map.end())
+                    {
+                        std::vector<balance_muilti> ba;
+                        ba.emplace_back(balance);
+                        balance_map.insert(std::map<std::string, std::vector<balance_muilti>>::value_type(raw_addr, ba));
+                    }
+                    else
+                    {
+                        map_iter->second.emplace_back(balance);
+                    }
+#if 0
                     if (entry.asset_id() != 0) continue;
                     
                     GenesisBalance balance;
@@ -2924,6 +2965,15 @@ namespace thinkyoung {
                     
                     if (entry.condition.type == withdraw_signature_type)
                         snapshot.initial_balances.push_back(balance);
+#endif
+                }
+
+                GenesisBalance_muilti muiti_balance;
+                for (map_iter = balance_map.begin(); map_iter != balance_map.end(); map_iter++)
+                {
+                    muiti_balance.raw_address = map_iter->first;
+                    muiti_balance.balances = map_iter->second;
+                    snapshot.initial_balances.push_back(muiti_balance);
                 }
                 
                 // Add outstanding delegate pay balances
@@ -2934,10 +2984,14 @@ namespace thinkyoung {
                     if (!entry.is_delegate()) continue;
                     
                     if (entry.is_retracted()) continue;
+
+                    balance_muilti ba;
+                    ba.symbol = ALP_BLOCKCHAIN_SYMBOL;
+                    ba.balance = entry.delegate_pay_balance();;
                     
-                    GenesisBalance balance;
+                    GenesisBalance_muilti balance;
                     balance.raw_address = string(entry.owner_address());
-                    balance.balance = entry.delegate_pay_balance();
+                    balance.balances.emplace_back(ba);
                     snapshot.initial_balances.push_back(balance);
                 }
                 

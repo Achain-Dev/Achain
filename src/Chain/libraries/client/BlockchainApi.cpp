@@ -865,8 +865,8 @@ namespace thinkyoung {
                             ilog("Checking if deposit ${d} is to ${c}", ("d", deposit)("c", collector->owner_address()));
                             
                             if (deposit.condition.owner() && *deposit.condition.owner() == collector->owner_address() &&
-                                    ((deposit.condition.asset_id == 0 && deposit.amount >= _config.light_relay_fee) ||
-                                     accept_fee(Asset(deposit.amount, deposit.condition.asset_id)))) {
+                                    ((deposit.condition.asset_id == 0 && deposit.amount.amount >= _config.light_relay_fee) ||
+                                     accept_fee(Asset(deposit.amount.amount, deposit.condition.asset_id)))) {
                                 network_broadcast_transaction(trx);
                                 return;
                             }

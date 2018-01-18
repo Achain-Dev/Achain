@@ -132,12 +132,12 @@ namespace thinkyoung {
 
 
         void Transaction::withdraw(const BalanceIdType& account,
-            ShareType amount, uint32_t from_type)
+            const Asset& amount, uint32_t from_type)
         {
             try {
-                FC_ASSERT(amount > 0, "amount: ${amount}", ("amount", amount));
+                FC_ASSERT(amount.amount > 0, "amount: ${amount}", ("amount", amount.amount));
                 operations.emplace_back(WithdrawOperation(account, amount, from_type));
-            } FC_RETHROW_EXCEPTIONS(warn, "", ("account", account)("amount", amount))
+            } FC_RETHROW_EXCEPTIONS(warn, "", ("account", account)("amount", amount.amount))
         }
 
         void Transaction::withdraw_from_contract(const BalanceIdType& account,
@@ -168,7 +168,7 @@ namespace thinkyoung {
         {
             FC_ASSERT(amount.amount > 0, "amount: ${amount}", ("amount", amount));
             DepositOperation op;
-            op.amount = amount.amount;
+            op.amount.amount = amount.amount;
             op.condition = WithdrawCondition(WithdrawWithMultisig{ multsig_info.required, multsig_info.owners }, amount.asset_id);
             operations.emplace_back(std::move(op));
         }
@@ -193,7 +193,8 @@ namespace thinkyoung {
                 use_stealth_address);
 
             DepositOperation op;
-            op.amount = amount.amount;
+            op.amount.amount = amount.amount;
+            op.amount.asset_id = amount.asset_id;
             op.condition = WithdrawCondition(by_account, amount.asset_id);
             operations.emplace_back(std::move(op));
             return receiver_address_key;
@@ -234,7 +235,7 @@ namespace thinkyoung {
             by_escrow.agreement_digest = agreement;
 
             DepositOperation op;
-            op.amount = amount.amount;
+            op.amount.amount = amount.amount;
             op.condition = WithdrawCondition(by_escrow, amount.asset_id);
 
             operations.emplace_back(std::move(op));

@@ -580,7 +580,7 @@ TransactionBuilder& TransactionBuilder::withdraw_from_balance(const BalanceIdTyp
         auto obalance = _wimpl->_blockchain->get_balance_entry(from);
         if (obalance.valid())
         {
-            trx.withdraw(from, amount);
+            trx.withdraw(from, Asset(amount, obalance->asset_id()));
             for (const auto& owner : obalance->owners())
                 required_signatures.insert(owner);
         }
@@ -589,7 +589,7 @@ TransactionBuilder& TransactionBuilder::withdraw_from_balance(const BalanceIdTyp
             auto balances = _wimpl->_blockchain->get_balances_for_address(Address(from));
             FC_ASSERT(balances.size() > 0, "No balance with that ID or owner address!");
             auto balance = balances.begin()->second;
-            trx.withdraw(balance.id(), amount);
+            trx.withdraw(balance.id(), Asset(amount, balance.asset_id()));
             for (const auto& owner : balance.owners())
                 required_signatures.insert(owner);
         }
