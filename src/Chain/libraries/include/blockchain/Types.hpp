@@ -39,12 +39,13 @@ namespace thinkyoung {
         typedef uint64_t                           ObjectIdType;
         typedef int64_t                            ImessageIdType;
         typedef int64_t                          ImessageLengthIdType;
-
+        
         //type define for contract
-        typedef std::string						  ContractName;
-        typedef Address							  ContractIdType;
+        typedef std::string                       ContractName;
+        typedef Address                           ContractIdType;
+        typedef std::string                       ContractValueIdType;
         typedef unsigned char                      ContractChar;
-
+        
         using std::string;
         using std::function;
         using fc::variant;
@@ -67,18 +68,16 @@ namespace thinkyoung {
         using fc::microseconds;
         using fc::unsigned_int;
         using fc::signed_int;
-
-        struct PublicKeyType
-        {
-            struct BinaryKey
-            {
-                BinaryKey() :check(0){}
+        
+        struct PublicKeyType {
+            struct BinaryKey {
+                BinaryKey() :check(0) {}
                 uint32_t                 check;
                 fc::ecc::public_key_data data;
             };
-
+            
             fc::ecc::public_key_data key_data;
-
+            
             PublicKeyType();
             PublicKeyType(const fc::ecc::public_key_data& data);
             PublicKeyType(const fc::ecc::public_key& pubkey);
@@ -89,10 +88,10 @@ namespace thinkyoung {
             friend bool operator == (const PublicKeyType& p1, const fc::ecc::public_key& p2);
             friend bool operator == (const PublicKeyType& p1, const PublicKeyType& p2);
             friend bool operator != (const PublicKeyType& p1, const PublicKeyType& p2);
-
+            
             bool is_valid_v1(const std::string& base58str);
         };
-
+        
         struct BlockchainSecurityState {
             enum alert_level_enum {
                 green = 0,
@@ -104,12 +103,11 @@ namespace thinkyoung {
             uint32_t            estimated_confirmation_seconds;
             double              participation_rate;
         };
-
+        
     }
 } // thinkyoung::blockchain
 
-namespace fc
-{
+namespace fc {
     void to_variant(const thinkyoung::blockchain::PublicKeyType& var, fc::variant& vo);
     void from_variant(const fc::variant& var, thinkyoung::blockchain::PublicKeyType& vo);
 }

@@ -152,6 +152,7 @@ namespace thinkyoung {
                     //contract db
                     _contract_id_to_entry.open(data_dir / "index/contract_id_to_entry");
                     _contract_id_to_storage.open(data_dir / "index/contract_id_to_storage");
+                    _value_id_to_storage.open(data_dir / "index/value_id_to_storage");
                     _contract_name_to_id.open(data_dir / "index/contract_name_to_id");
                     _result_to_request_iddb.open(data_dir / "index/_result_to_request_id");
                     _asset_id_to_entry.open(data_dir / "index/asset_id_to_entry");
@@ -1378,6 +1379,7 @@ namespace thinkyoung {
                             //contract db related
                             my->_contract_id_to_entry.toggle_leveldb(enabled);
                             my->_contract_id_to_storage.toggle_leveldb(enabled);
+                            my->_value_id_to_storage.toggle_leveldb(enabled);
                             my->_contract_name_to_id.toggle_leveldb(enabled);
                             my->_result_to_request_iddb.toggle_leveldb(enabled);
                             my->_asset_id_to_entry.toggle_leveldb(enabled);
@@ -1532,6 +1534,7 @@ namespace thinkyoung {
                 my->_result_to_request_iddb.close();
                 my->_contract_name_to_id.close();
                 my->_contract_id_to_storage.close();
+                my->_value_id_to_storage.close();
                 my->_asset_id_to_entry.close();
                 my->_asset_symbol_to_id.close();
                 my->_slate_id_to_entry.close();
@@ -3530,6 +3533,8 @@ namespace thinkyoung {
                 my->_contract_id_to_entry.export_to_json(next_path);
                 next_path = dir / "_contract_id_to_storage_db.json";
                 my->_contract_id_to_storage.export_to_json(next_path);
+                next_path = dir / "_value_id_to_storage_db.json";
+                my->_value_id_to_storage.export_to_json(next_path);
                 next_path = dir / "_contract_name_to_id_db.json";
                 my->_contract_name_to_id.export_to_json(next_path);
                 next_path = dir / "_result_to_request_iddb.json";
@@ -3591,6 +3596,22 @@ namespace thinkyoung {
         
         void ChainDatabase::contract_erase_from_name_map(const ContractName& name) {
             my->_contract_name_to_id.remove(name);
+        }
+        
+        oContractValue ChainDatabase::contract_lookup_value_by_valueid(const ContractValueIdType& id) const {
+            const auto iter = my->_value_id_to_storage.unordered_find(id);
+            
+            if (iter != my->_value_id_to_storage.unordered_end()) return iter->second;
+            
+            return oContractValue();
+        }
+        
+        void ChainDatabase::contract_store_value_by_valueid(const ContractValueIdType& id, const ContractValueEntry & value) {
+            my->_value_id_to_storage.store(id, value);
+        }
+        
+        void ChainDatabase::contract_erase_value_by_valueid(const ContractValueIdType& id) {
+            my->_value_id_to_storage.remove(id);
         }
         
         oResultTIdEntry thinkyoung::blockchain::ChainDatabase::contract_lookup_resultid_by_reqestid(const TransactionIdType & id) const {

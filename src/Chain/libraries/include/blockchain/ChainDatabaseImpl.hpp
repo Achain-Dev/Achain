@@ -8,37 +8,31 @@
 
 namespace thinkyoung {
     namespace blockchain {
-
-        struct fee_index
-        {
+    
+        struct fee_index {
             ShareType            _fees = 0;
             TransactionIdType   _trx;
-
+            
             fee_index(ShareType fees = 0, TransactionIdType trx = TransactionIdType())
-                :_fees(fees), _trx(trx){}
-
-            friend bool operator == (const fee_index& a, const fee_index& b)
-            {
+                :_fees(fees), _trx(trx) {}
+                
+            friend bool operator == (const fee_index& a, const fee_index& b) {
                 return std::tie(a._fees, a._trx) == std::tie(b._fees, b._trx);
             }
-
-            friend bool operator < (const fee_index& a, const fee_index& b)
-            {
+            
+            friend bool operator < (const fee_index& a, const fee_index& b) {
                 // Reverse so that highest fee is placed first in sorted maps
                 return std::tie(a._fees, a._trx) > std::tie(b._fees, b._trx);
             }
         };
-
-        struct data_version
-        {
+        
+        struct data_version {
             BlockIdType id;
             int version;
         };
-        namespace detail
-        {
-            class ChainDatabaseImpl
-            {
-            public:
+        namespace detail {
+            class ChainDatabaseImpl {
+              public:
                 /**
                 * load checkpoints from file
                 * @param  data_dir  directory  that stores checkpoints
@@ -75,7 +69,7 @@ namespace thinkyoung {
                 * @return DigestType
                 */
                 DigestType                                 initialize_genesis(const optional<path>& genesis_file,
-                    const bool statistics_enabled);
+                        const bool statistics_enabled);
                 /**  populate_indexes
                 *
                 * Sorts delegates according votes and puts transaction into unique set
@@ -83,7 +77,7 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        populate_indexes();
-
+                
                 /**  store_and_index
                 * Store a block into database and  organize related data
                 * @param  block_id  id of the block
@@ -92,7 +86,7 @@ namespace thinkyoung {
                 * @return std::pair<BlockIdType,
                 */
                 std::pair<BlockIdType, BlockForkData>   store_and_index(const BlockIdType& id, const FullBlock& blk);
-
+                
                 /**  clear_pending
                 * Remove transactions which are contained in specified block and start a revalidating procedure
                 * @param  block_data  FullBlock
@@ -106,7 +100,7 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        revalidate_pending();
-
+                
                 /**  switch_to_fork
                 * Marks the fork which the specified block are in it to be the current chain
                 * @param  block_id  id of the specified block
@@ -114,23 +108,23 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        switch_to_fork(const BlockIdType& block_id);
-
-				/**  get_events
-				* Query the emit's result of event from the contract.
-				* @param  uint32_t  block_index
-				* @param  string  trx_id
-				*
-				* @return vector<EventOperation>
-				*/
-				vector<EventOperation>                      get_events(uint32_t block_index, const thinkyoung::blockchain::TransactionIdType& trx_id_type);
-				
-				/**  extend_chain
+                
+                /**  get_events
+                * Query the emit's result of event from the contract.
+                * @param  uint32_t  block_index
+                * @param  string  trx_id
+                *
+                * @return vector<EventOperation>
+                */
+                vector<EventOperation>                      get_events(uint32_t block_index, const thinkyoung::blockchain::TransactionIdType& trx_id_type);
+                
+                /**  extend_chain
                 * Performs all of the block validation steps and throws if error.
                 * @param  block_data  FullBlock
                 *
                 * @return void
                 */
-
+                
                 void                                        extend_chain(const FullBlock& blk);
                 /**  get_fork_history
                 * Traverse the previous links of all blocks in fork until we find one that is_included
@@ -150,7 +144,7 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        pop_block();
-
+                
                 void                                        repair_block(BlockIdType block_id);
                 /**  mark_invalid
                 * fetch the fork data for block_id, mark it as invalid and
@@ -176,7 +170,7 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        mark_included(const BlockIdType& id, bool state);
-
+                
                 /**  fetch_blocks_at_number
                 * fetch ids of block at specified number
                 * @param  block_num  uint32_t
@@ -184,7 +178,7 @@ namespace thinkyoung {
                 * @return std::vector<BlockIdType>
                 */
                 std::vector<BlockIdType>                  fetch_blocks_at_number(uint32_t block_num);
-
+                
                 /**  recursive_mark_as_linked
                 * fetch the fork data for block_id, mark it as linked and
                 * then mark every item after it as linked as well.
@@ -202,8 +196,8 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        recursive_mark_as_invalid(const std::unordered_set<BlockIdType>& ids,
-                    const fc::exception& reason);
-
+                        const fc::exception& reason);
+                        
                 /**  verify_header
                 * Verify signee of the block
                 * @param  block_digest  DigestBlock
@@ -212,8 +206,8 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        verify_header(const DigestBlock& block_digest,
-                    const PublicKeyType& block_signee)const;
-
+                        const PublicKeyType& block_signee)const;
+                        
                 /**  update_delegate_production_info
                 * Update production info for signing delegate
                 * @param  block_header  BlockHeader
@@ -224,10 +218,10 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        update_delegate_production_info(const BlockHeader& BlockHeader,
-                    const BlockIdType& block_id,
-                    const PublicKeyType& block_signee,
-                    const PendingChainStatePtr& pending_state)const;
-
+                        const BlockIdType& block_id,
+                        const PublicKeyType& block_signee,
+                        const PendingChainStatePtr& pending_state)const;
+                        
                 /**  pay_delegate
                 * Pay salaries to specified delegates
                 * @param  block_id  BlockIdType
@@ -238,13 +232,13 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        pay_delegate(const BlockIdType& block_id,
-                    const PublicKeyType& block_signee,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
-
+                        const PublicKeyType& block_signee,
+                        const PendingChainStatePtr& pending_state,
+                        oBlockEntry& block_entry)const;
+                        
                 // void                                        execute_markets( const time_point_sec timestamp,
                 //                                                              const pending_chain_state_ptr& pending_state )const;
-
+                
                 /**  apply_transactions
                 * Apply transactions contained in the block
                 * @param  block_data   the block that contains transactions
@@ -253,8 +247,8 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        apply_transactions(const FullBlock& block_data,
-                    const PendingChainStatePtr& pending_state);
-
+                        const PendingChainStatePtr& pending_state);
+                        
                 /**  update_active_delegate_list
                 * Get a list of active delegate that would participate in generating blocks in next round
                 * @param  block_num  uint32_t
@@ -263,8 +257,8 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        update_active_delegate_list(const uint32_t block_num,
-                    const PendingChainStatePtr& pending_state)const;
-
+                        const PendingChainStatePtr& pending_state)const;
+                        
                 /**  update_random_seed
                 * Caculate the random seed based on a secret and the random seed
                 * @param  new_secret
@@ -274,9 +268,9 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        update_random_seed(const SecretHashType& new_secret,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
-
+                        const PendingChainStatePtr& pending_state,
+                        oBlockEntry& block_entry)const;
+                        
                 /**  save_undo_state
                 * Save current state and block_id into undo_state map
                 * @param  block_num   number of the block
@@ -286,9 +280,9 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        save_undo_state(const uint32_t block_num,
-                    const BlockIdType& block_id,
-                    const PendingChainStatePtr& pending_state);
-
+                        const BlockIdType& block_id,
+                        const PendingChainStatePtr& pending_state);
+                        
                 /**  update_head_block
                 * Update information about head block
                 * @param  block_header  SignedBlockHeader
@@ -297,29 +291,29 @@ namespace thinkyoung {
                 * @return void
                 */
                 void                                        update_head_block(const SignedBlockHeader& block_header,
-                    const BlockIdType& block_id);
-
+                        const BlockIdType& block_id);
+                        
                 void                                        pay_delegate_v2(const BlockIdType& block_id,
-                    const PublicKeyType& block_signee,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
-
+                        const PublicKeyType& block_signee,
+                        const PendingChainStatePtr& pending_state,
+                        oBlockEntry& block_entry)const;
+                        
                 void                                        pay_delegate_v1(const BlockIdType& block_id,
-                    const PublicKeyType& block_signee,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
-
-
+                        const PublicKeyType& block_signee,
+                        const PendingChainStatePtr& pending_state,
+                        oBlockEntry& block_entry)const;
+                        
+                        
                 //void                                        update_active_delegate_list_v1( const uint32_t block_num,
                 //                                                                          const pending_chain_state_ptr& pending_state )const;
-
+                
                 ChainDatabase*                                                             self = nullptr;
                 unordered_set<ChainObserver*>                                              _observers;
-
+                
                 /* Transaction propagation */
                 /**  revalidate_pending
                 *
-
+                
                 *
                 * @return void
                 */
@@ -329,72 +323,73 @@ namespace thinkyoung {
                 thinkyoung::db::LevelMap<TransactionIdType, SignedTransaction>                 _pending_transaction_db;
                 map<fee_index, TransactionEvaluationStatePtr>                            _pending_fee_index;
                 ShareType                                                                  _relay_fee = ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE;
-
+                
                 /* Block processing */
                 uint32_t /* Only used to skip undo states when possible during replay */    _min_undo_block = 0;
-
+                
                 fc::mutex                                                                   _push_block_mutex;
-                ShareType															_block_per_account_reword_amount = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
+                ShareType                                                           _block_per_account_reword_amount = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
                 thinkyoung::db::LevelMap<BlockIdType, FullBlock>                               _block_id_to_full_block;
                 thinkyoung::db::fast_level_map<BlockIdType, PendingChainState>                 _block_id_to_undo_state;
-
+                
                 thinkyoung::db::LevelMap<uint32_t, vector<BlockIdType>>                         _fork_number_db; // All siblings
                 thinkyoung::db::LevelMap<BlockIdType, BlockForkData>                          _fork_db;
-
+                
                 thinkyoung::db::LevelMap<BlockIdType, int32_t>                                  _revalidatable_future_blocks_db; //int32_t is unused, this is a set
-
+                
                 thinkyoung::db::LevelMap<uint32_t, BlockIdType>                                 _block_num_to_id_db; // Current chain
-
+                
                 thinkyoung::db::LevelMap<BlockIdType, BlockEntry>                             _block_id_to_block_entry_db; // Statistics
-
+                
                 /* Current primary state */
                 BlockIdType                                                               _head_block_id;
                 SignedBlockHeader                                                         _head_block_header;
-
+                
                 thinkyoung::db::fast_level_map<uint8_t, PropertyEntry>                           _property_id_to_entry;
-
+                
                 thinkyoung::db::fast_level_map<AccountIdType, AccountEntry>                    _account_id_to_entry;
                 thinkyoung::db::fast_level_map<string, AccountIdType>                            _account_name_to_id;
                 thinkyoung::db::fast_level_map<Address, AccountIdType>                           _account_address_to_id;
                 set<VoteDel>                                                               _delegate_votes;
-
+                
                 thinkyoung::db::fast_level_map<AssetIdType, AssetEntry>                        _asset_id_to_entry;
                 thinkyoung::db::fast_level_map<string, AssetIdType>                              _asset_symbol_to_id;
-
+                
                 thinkyoung::db::fast_level_map<SlateIdType, SlateEntry>                        _slate_id_to_entry;
-
+                
                 thinkyoung::db::fast_level_map<BalanceIdType, BalanceEntry>                    _balance_id_to_entry;
-                thinkyoung::db::fast_level_map<string, set<AlpTrxidBalance>>							_alp_input_balance_entry;
-                thinkyoung::db::fast_level_map<string, AlpBalanceEntry>						_alp_full_entry;
+                thinkyoung::db::fast_level_map<string, set<AlpTrxidBalance>>                            _alp_input_balance_entry;
+                thinkyoung::db::fast_level_map<string, AlpBalanceEntry>                     _alp_full_entry;
                 thinkyoung::db::LevelMap<TransactionIdType, TransactionEntry>                 _transaction_id_to_entry;
                 set<UniqueTransactionKey>                                                 _unique_transactions;
                 thinkyoung::db::LevelMap<Address, unordered_set<TransactionIdType>>             _address_to_transaction_ids;
-
-
-
-
+                
+                
+                
+                
                 thinkyoung::db::LevelMap<SlotIndex, SlotEntry>                                 _slot_index_to_entry;
                 thinkyoung::db::LevelMap<time_point_sec, AccountIdType>                         _slot_timestamp_to_delegate;
-
+                
                 thinkyoung::db::LevelMap<int, data_version>                      _block_extend_status;
                 // TODO: Just store whitelist in asset_entry
                 //thinkyoung::db::level_map<pair<asset_id_type,address>, object_id_type>             _auth_db;
-
+                
                 map<OperationTypeEnum, std::deque<Operation>>                             _recent_operations;
-
+                
                 // contract related db
                 thinkyoung::db::fast_level_map<ContractIdType, ContractEntry>                  _contract_id_to_entry;
                 thinkyoung::db::fast_level_map<ContractIdType, ContractStorageEntry>               _contract_id_to_storage;
+                thinkyoung::db::fast_level_map<ContractValueIdType, ContractValueEntry>            _value_id_to_storage;
                 thinkyoung::db::fast_level_map<ContractName, ContractIdType>                  _contract_name_to_id;
-				thinkyoung::db::fast_level_map<TransactionIdType, ResultTIdEntry>		  _request_to_result_iddb;
-				thinkyoung::db::fast_level_map<TransactionIdType, RequestIdEntry>		  _result_to_request_iddb;
-				thinkyoung::db::fast_level_map<TransactionIdType, ContractinTrxEntry>		  _trx_to_contract_iddb;
-				thinkyoung::db::fast_level_map<ContractIdType,ContractTrxEntry>		  _contract_to_trx_iddb;
+                thinkyoung::db::fast_level_map<TransactionIdType, ResultTIdEntry>         _request_to_result_iddb;
+                thinkyoung::db::fast_level_map<TransactionIdType, RequestIdEntry>         _result_to_request_iddb;
+                thinkyoung::db::fast_level_map<TransactionIdType, ContractinTrxEntry>         _trx_to_contract_iddb;
+                thinkyoung::db::fast_level_map<ContractIdType, ContractTrxEntry>       _contract_to_trx_iddb;
                 // sandbox contract related
-                PendingChainStatePtr	_sandbox_pending_state = nullptr;
+                PendingChainStatePtr    _sandbox_pending_state = nullptr;
                 bool                    _is_in_sandbox = false;
             };
-
+            
         } // detail
     }
 } // thinkyoung::blockchain
