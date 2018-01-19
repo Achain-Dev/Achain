@@ -1921,6 +1921,21 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
                 op_memo = message_op.imessage;
                 break;
             }
+            case withdraw_pay_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::withdraw_pay_transaction;
+                break;
+            }
+            case create_asset_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::create_asset;
+                break;
+            }
+            case issue_asset_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::issue_asset;
+                break;
+            }
             default:
                 break;
             }
@@ -2078,7 +2093,19 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
 			total_fee += Asset(withdraw_pay_op.amount);
 
             pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::withdraw_pay_transaction;
+
+            break;
 		}
+        case create_asset_op_type:
+        {
+            pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::create_asset;
+            break;
+        }
+        case issue_asset_op_type:
+        {
+            pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::issue_asset;
+            break;
+        }
 		default:
 			break;
 		}

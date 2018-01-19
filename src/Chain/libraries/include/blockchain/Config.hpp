@@ -73,6 +73,9 @@
 #define ALP_BLOCKCHAIN_MIN_SYMBOL_SIZE                      3 // characters
 #define ALP_BLOCKCHAIN_MAX_SYMBOL_SIZE                      12 // characters
 
+#define ALP_BLOCKCHAIN_MAX_SYMBOL_NAME_SIZE                 20 //characters
+#define ALP_BLOCKCHAIN_MAX_SYMBOL_DES_SIZE                 45 //characters
+
 #define ALP_BLOCKCHAIN_MIN_BURN_FEE                         ALP_BLOCKCHAIN_PRECISION * 1 // 1 XTS
 
 #ifdef ALP_TEST_NETWORK

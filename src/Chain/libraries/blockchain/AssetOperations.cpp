@@ -20,6 +20,7 @@ namespace thinkyoung {
             case 1000000ll:
             case 10000000ll:
             case 100000000ll:
+#if 0
             case 1000000000ll:
             case 10000000000ll:
             case 100000000000ll:
@@ -27,6 +28,7 @@ namespace thinkyoung {
             case 10000000000000ll:
             case 100000000000000ll:
             case 1000000000000000ll:
+#endif
                 return true;
             default:
                 return false;
