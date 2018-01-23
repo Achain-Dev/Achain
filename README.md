@@ -12,8 +12,12 @@ For more information about Achain, please read following document:
 Build Achain
 --------
 Different platforms have different build instructions:
-* [Windows](https://github.com/Achain-Dev/Achain)
+* [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
 * [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
+
+How to deploy a test chain
+-------------------------------------
+https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md
 
 Integration instructions for exchanges
 -------------------------------------
