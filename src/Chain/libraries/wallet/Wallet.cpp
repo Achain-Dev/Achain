@@ -213,8 +213,7 @@ namespace thinkyoung {
                 const Asset& amount_to_withdraw,
                 const string& from_account_name,
                 SignedTransaction& trx,
-                unordered_set<Address>& required_signatures,
-                uint32_t from_type
+                unordered_set<Address>& required_signatures
             ) {
                 try {
                     FC_ASSERT(!from_account_name.empty());
@@ -236,12 +235,12 @@ namespace thinkyoung {
                             continue;
                             
                         if (amount_remaining.amount > balance.amount) {
-                            trx.withdraw(entry.id(), balance, from_type);
+                            trx.withdraw(entry.id(), balance.amount);
                             required_signatures.insert(*owner);
                             amount_remaining -= balance;
                             
                         } else {
-                            trx.withdraw(entry.id(), amount_remaining, from_type);
+                            trx.withdraw(entry.id(), amount_remaining.amount);
                             required_signatures.insert(*owner);
                             return;
                         }
@@ -2286,7 +2285,7 @@ namespace thinkyoung {
                 
                 for (const BalanceEntry& entry : balance_entrys.at(account_name)) {
                     const Asset balance = entry.get_spendable_balance(my->_blockchain->get_pending_state()->now());
-                    trx.withdraw(entry.id(), balance);
+                    trx.withdraw(entry.id(), balance.amount);
                     const auto owner = entry.owner();
                     
                     if (!owner.valid()) continue;
@@ -2697,7 +2696,7 @@ namespace thinkyoung {
                         mutable_variant_object info;
                         info["from"] = variant();
                         info["to"] = account_name;
-                        info["amount"] = Asset(deposit_op.amount.amount, deposit_op.condition.asset_id);
+                        info["amount"] = Asset(deposit_op.amount, deposit_op.condition.asset_id);
                         info["memo"] = variant();
                         
                         if (status->has_valid_signature) {
@@ -3610,7 +3609,7 @@ namespace thinkyoung {
                     my->withdraw_to_transaction(required_fees + required_imessage_fee,
                                                 from_account_name,
                                                 trx,
-                                                required_signatures, 1);
+                                                required_signatures);
                 }
                 
                 trx.deposit(to_address, asset_to_transfer);

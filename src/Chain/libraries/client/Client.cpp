@@ -403,7 +403,7 @@ namespace thinkyoung {
                         return dir_name;
                     };
 
-                    datadir = fc::app_path() / get_os_specific_dir_name(ALP_BLOCKCHAIN_NAME);
+                    datadir = fc::app_path() / get_os_specific_dir_name("rrrr");
                 }
                 return datadir;
 

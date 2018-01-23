@@ -129,16 +129,16 @@ namespace thinkyoung {
         {
             //simple and clear 
 #if 1
-            static const ShareType symbol_price[] = { 50000000000, 48000000000, 46000000000, 44000000000, 42000000000,
-                40000000000, 38000000000, 36000000000, 34000000000, 32000000000, 30000000000 };
+            /*
+            static const ShareType symbol_price[] = { 500000000000, 480000000000, 460000000000, 440000000000, 420000000000,
+                400000000000, 380000000000, 360000000000, 340000000000, 320000000000, 300000000000 };
+                */
+            static const ShareType symbol_price[] = { 5000000, 4800000, 4600000, 4400000, 4200000,
+                4000000, 3800000, 360000000000, 340000000000, 320000000000, 300000000000 };
             return symbol_price[symbol_length - 3];
 #else
 
-            static const ShareType long_symbol_price = 500 * ALP_BLOCKCHAIN_PRECISION; // $10 at $0.02/XTS
-            static const ShareType short_symbol_price = 1000 * long_symbol_price;
-            FC_ASSERT(long_symbol_price > 0, "Price of long symbol must bigger than 0");
-            FC_ASSERT(short_symbol_price > long_symbol_price, "Price of short symbol must bigger than the price of long symbol");
-            return symbol_length <= 5 ? short_symbol_price : long_symbol_price;
+
 #endif
 
         }

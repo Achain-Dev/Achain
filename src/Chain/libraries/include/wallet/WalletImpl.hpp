@@ -210,8 +210,7 @@ namespace thinkyoung {
                 void withdraw_to_transaction(const Asset& amount_to_withdraw,
                     const string& from_account_name,
                     SignedTransaction& trx,
-                    unordered_set<Address>& required_signatures,
-                    uint32_t from_type = 0);
+                    unordered_set<Address>& required_signatures);
 
                 /**  authorize_update
                 *

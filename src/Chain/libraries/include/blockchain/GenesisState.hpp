@@ -26,19 +26,6 @@ namespace thinkyoung {
             ShareType   balance = 0;
         };
 
-        /*add for muilti-asset*/
-        struct balance_muilti
-        {
-            string symbol;
-            ShareType   balance = 0;
-        };
-
-        struct GenesisBalance_muilti
-        {
-            string       raw_address;
-            vector<balance_muilti>  balances;
-        };
-
         struct GenesisReserveBalances
         {
             fc::time_point_sec       start_time;
@@ -51,8 +38,7 @@ namespace thinkyoung {
             fc::time_point_sec       timestamp;
             vector<GenesisAsset>    market_assets;
             vector<GenesisDelegate> delegates;
-            //vector<GenesisBalance>  initial_balances;
-            vector<GenesisBalance_muilti>  initial_balances;
+            vector<GenesisBalance>  initial_balances;
             GenesisReserveBalances sharedrop_balances;
         };
 
@@ -64,6 +50,3 @@ FC_REFLECT(thinkyoung::blockchain::GenesisDelegate, (name)(owner))
 FC_REFLECT(thinkyoung::blockchain::GenesisBalance, (raw_address)(balance))
 FC_REFLECT(thinkyoung::blockchain::GenesisReserveBalances, (start_time)(duration_days)(reserve_balances))
 FC_REFLECT(thinkyoung::blockchain::GenesisState, (timestamp)(market_assets)(delegates)(initial_balances)(sharedrop_balances))
-
-FC_REFLECT(thinkyoung::blockchain::balance_muilti, (symbol)(balance))
-FC_REFLECT(thinkyoung::blockchain::GenesisBalance_muilti, (raw_address)(balances))

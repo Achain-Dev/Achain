@@ -19,7 +19,7 @@ namespace thinkyoung {
             SlateIdType slate_id)
         {
             FC_ASSERT(amnt.amount > 0, "Amount should be bigger than 0");
-            amount = amnt;
+            amount = amnt.amount;
             condition = WithdrawCondition(WithdrawWithSignature(owner),
                 amnt.asset_id, slate_id);
         }
@@ -30,8 +30,8 @@ namespace thinkyoung {
 				if (eval_state.deposit_count > ALP_BLOCKCHAIN_TRANSACTION_MAX_DEPOSIT_NUM)
 					FC_CAPTURE_AND_THROW(too_much_deposit,(eval_state.deposit_count));
 				++eval_state.deposit_count;
-                if (this->amount.amount <= 0)
-                    FC_CAPTURE_AND_THROW(negative_deposit, (amount.amount));
+                if (this->amount <= 0)
+                    FC_CAPTURE_AND_THROW(negative_deposit, (amount));
 
                 switch (WithdrawConditionTypes(this->condition.type))
                 {
@@ -70,18 +70,18 @@ namespace thinkyoung {
                     fc::uint128 old_sec_since_epoch(cur_entry->deposit_date.sec_since_epoch());
                     fc::uint128 new_sec_since_epoch(eval_state._current_state->now().sec_since_epoch());
 
-                    fc::uint128 avg = (old_sec_since_epoch * cur_entry->balance) + (new_sec_since_epoch * this->amount.amount);
-                    avg /= (fc::uint128(cur_entry->balance) + fc::uint128(this->amount.amount));
+                    fc::uint128 avg = (old_sec_since_epoch * cur_entry->balance) + (new_sec_since_epoch * this->amount);
+                    avg /= (fc::uint128(cur_entry->balance) + fc::uint128(this->amount));
 
                     cur_entry->deposit_date = time_point_sec(avg.to_integer());
                 }
                 fc::safe<ShareType> temp = cur_entry->balance;
-                temp += this->amount.amount;
+                temp += this->amount;
                 cur_entry->balance = temp.value;
-                eval_state.sub_balance(deposit_balance_id, Asset(this->amount.amount, cur_entry->condition.asset_id));
+                eval_state.sub_balance(deposit_balance_id, Asset(this->amount, cur_entry->condition.asset_id));
 
                 if (cur_entry->condition.asset_id == 0 && cur_entry->condition.slate_id)
-                    eval_state.adjust_vote(cur_entry->condition.slate_id, this->amount.amount);
+                    eval_state.adjust_vote(cur_entry->condition.slate_id, this->amount);
 
                 cur_entry->last_update = eval_state._current_state->now();
 
@@ -109,14 +109,14 @@ namespace thinkyoung {
         {
             try {
 
-                if (this->amount.amount <= 0)
+                if (this->amount <= 0)
                     FC_CAPTURE_AND_THROW(negative_withdraw, (amount));
 
                 oBalanceEntry current_balance_entry = eval_state._current_state->get_balance_entry(this->balance_id);
                 if (!current_balance_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_balance_entry, (balance_id));
 
-                if (this->amount.amount > current_balance_entry->get_spendable_balance(eval_state._current_state->now()).amount)
+                if (this->amount > current_balance_entry->get_spendable_balance(eval_state._current_state->now()).amount)
                     FC_CAPTURE_AND_THROW(insufficient_funds, (current_balance_entry)(amount));
 
                 auto asset_rec = eval_state._current_state->get_asset_entry(current_balance_entry->condition.asset_id);
@@ -164,22 +164,21 @@ namespace thinkyoung {
 
                 // update delegate vote on withdrawn account..
                 if (current_balance_entry->condition.asset_id == 0 && current_balance_entry->condition.slate_id)
-                    eval_state.adjust_vote(current_balance_entry->condition.slate_id, -this->amount.amount);
+                    eval_state.adjust_vote(current_balance_entry->condition.slate_id, -this->amount);
                 fc::safe<ShareType> temp = current_balance_entry->balance;
-                temp -= this->amount.amount;
+                temp -= this->amount;
                 current_balance_entry->balance = temp.value;
-                eval_state.add_balance(Asset(this->amount.amount, current_balance_entry->condition.asset_id));
+                eval_state.add_balance(Asset(this->amount, current_balance_entry->condition.asset_id));
 				auto owner = current_balance_entry->owner();
 				if (temp > 0 && owner.valid())
 				{
 					auto res=eval_state.owner_balance_not_usedup.insert(*owner);
+#if 0
                     if (!res.second)
                     {
-                        if (this->from == 0)
-                        {
-                            FC_CAPTURE_AND_THROW(too_much_balances_withdraw_not_used_up, (*owner));
-                        }
+                        FC_CAPTURE_AND_THROW(too_much_balances_withdraw_not_used_up, (*owner));
                     }
+#endif
 				}
                 current_balance_entry->last_update = eval_state._current_state->now();
 				

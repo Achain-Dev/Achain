@@ -365,13 +365,13 @@ WalletTransactionEntry WalletImpl::scan_transaction(
                             if (0 == iLoop)
                             {
                                 preowner = string(*(deop.condition.owner()));
-                                alp_amount += deop.amount.amount;
+                                alp_amount += deop.amount;
                             }
                             else
                             {
                                 if (preowner == string(*(deop.condition.owner())))
                                 {
-                                    alp_amount += deop.amount.amount;
+                                    alp_amount += deop.amount;
                                 }
                                 else
                                 {
@@ -429,7 +429,7 @@ bool WalletImpl::scan_withdraw(const WithdrawOperation& op,
     try {
         const auto bal_rec = _blockchain->get_balance_entry(op.balance_id);
         FC_ASSERT(bal_rec.valid());
-        const auto amount = Asset(op.amount.amount, bal_rec->condition.asset_id);
+        const auto amount = Asset(op.amount, bal_rec->condition.asset_id);
 
         if (amount.asset_id == total_fee.asset_id)
             total_fee += amount;
@@ -902,7 +902,7 @@ bool WalletImpl::scan_issue_asset(const IssueAssetOperation& op, WalletTransacti
 bool WalletImpl::scan_deposit(const DepositOperation& op, WalletTransactionEntry& trx_rec, Asset& total_fee, bool bHaswithdraw)
 {
     try {
-        auto amount = Asset(op.amount.amount, op.condition.asset_id);
+        auto amount = Asset(op.amount, op.condition.asset_id);
         if (amount.asset_id == total_fee.asset_id)
             total_fee -= amount;
 
@@ -1738,8 +1738,7 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
             for (; iter != entrys.ledger_entries.end();)
             {
                 /*  fixed:muiti-asset  */
-                //if (iter->amount == Asset(0, 0) && entrys.ledger_entries.size() != 1)
-                if (iter->amount.amount == 0 && entrys.ledger_entries.size() != 1)
+                if (iter->amount == Asset(0, 0) && entrys.ledger_entries.size() != 1)
                 {
                     if (iter->memo != "")
                     {
@@ -2038,33 +2037,19 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
             {
                 pretty_entry.from_account = (string)(*(bal_entry->condition.owner()));
                 
-                if (withdraw_op.from == 0)
-                {
-                    /* fixed:muiti-asset */
-                    /*此种情况为多资产的转账金额对应的OP*/
-                    if (withdraw_op.amount.asset_id == 0)
-                    {
-                        /*
-                        total_fee.amount = withdraw_op.amount.amount;
-                        total_fee.asset_id = withdraw_op.amount.asset_id;
-                        */
 
-                        total_fee += Asset(withdraw_op.amount);
 
-                    }
-#if 0
-                    else
-                    {
-                        total_fee += Asset(withdraw_op.amount);
-                    }
-#endif
-                }
-                /*多资产转账时的手续费*/
-                else
+
+                /*fee or transfer_amount*/
+                if (bal_entry->asset_id() == 0)
                 {
                     total_fee += Asset(withdraw_op.amount);
                 }
-                
+                /*muilti-asset withdraw*/
+                else
+                {
+                    /*do nothing*/
+                }
 
 				{
 					auto account_entry = my->_blockchain->get_account_by_address(pretty_entry.from_account);
@@ -2134,8 +2119,8 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
 				{
 					pretty_entry.to_account_name = account_entry->name;
 				}
-				pretty_entry.amount = Asset(deposit_op.amount);
-                if (deposit_op.amount.asset_id == 0)
+                pretty_entry.amount = Asset(deposit_op.amount, deposit_op.condition.asset_id);
+                if (deposit_op.condition.asset_id == 0)
                 {
                     total_fee -= Asset(deposit_op.amount);
                 }
@@ -2144,7 +2129,7 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
 			case withdraw_escrow_type:
 			{
 				auto deposit_es_op = deposit_op.condition.as<withdraw_with_escrow>();
-				auto amount = Asset(deposit_op.amount.amount, deposit_op.condition.asset_id);
+				auto amount = Asset(deposit_op.amount, deposit_op.condition.asset_id);
 				pretty_entry.to_account = (string)deposit_es_op.receiver;
 				auto account_entry = my->_blockchain->get_account_by_address(pretty_entry.to_account);
 				if (account_entry.valid())
@@ -2152,7 +2137,7 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
 					pretty_entry.to_account_name = account_entry->name;
 				}
 				pretty_entry.amount = amount;
-                if (deposit_op.amount.asset_id == 0)
+                if (deposit_op.condition.asset_id == 0)
                 {
                     total_fee -= amount;
                 }
@@ -2476,7 +2461,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
             if (op.type == fc::enum_type<uint8_t, thinkyoung::blockchain::OperationTypeEnum>(deposit_op_type))
             {
                 DepositOperation deposit_op = op.as<DepositOperation>();
-                deposit_to_account = deposit_to_account + deposit_op.amount.amount;
+                deposit_to_account = deposit_to_account + deposit_op.amount;
 
                 // 向用户转账结果交易
                 PrettyContractLedgerEntry from_contract_ledger_entry;
@@ -2488,7 +2473,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
                 if (account_entry.valid())
                     from_contract_ledger_entry.to_account_name = account_entry->name;
 
-                from_contract_ledger_entry.amount = Asset(deposit_op.amount);
+                from_contract_ledger_entry.amount = Asset(deposit_op.amount, 0);
                 from_contract_ledger_entry.fee = Asset(0, 0);
 
                 from_contract_ledger_entries.push_back(from_contract_ledger_entry);
@@ -2607,7 +2592,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
                 if (account_entry.valid())
                     from_contract_ledger_entry.to_account_name = account_entry->name;
 
-                from_contract_ledger_entry.amount = Asset(deposit_op.amount);
+                from_contract_ledger_entry.amount = Asset(deposit_op.amount, 0);
                 from_contract_ledger_entry.fee = Asset(0, 0);
 
                 from_contract_ledger_entries.push_back(from_contract_ledger_entry);
@@ -2691,7 +2676,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
                 if (account_entry.valid())
                     from_contract_ledger_entry.to_account_name = account_entry->name;
 
-                from_contract_ledger_entry.amount = Asset(deposit_op.amount);
+                from_contract_ledger_entry.amount = Asset(deposit_op.amount, 0);
                 from_contract_ledger_entry.fee = Asset(0, 0);
 
                 from_contract_ledger_entries.push_back(from_contract_ledger_entry);
@@ -2773,7 +2758,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
                 if (account_entry.valid())
                     from_contract_ledger_entry.to_account_name = account_entry->name;
 
-                from_contract_ledger_entry.amount = Asset(deposit_op.amount);
+                from_contract_ledger_entry.amount = Asset(deposit_op.amount, 0);
                 from_contract_ledger_entry.fee = Asset(0, 0);
 
                 from_contract_ledger_entries.push_back(from_contract_ledger_entry);

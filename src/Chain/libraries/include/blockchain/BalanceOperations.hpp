@@ -16,19 +16,15 @@ namespace thinkyoung {
 
             WithdrawOperation() :amount(0){}
 
-            WithdrawOperation(const BalanceIdType& id, const Asset& amount_arg, uint32_t from_type = 0)
+            WithdrawOperation(const BalanceIdType& id, ShareType amount_arg)
                 :balance_id(id), amount(amount_arg){
-                FC_ASSERT(amount_arg.amount > 0);
-
-                from = from_type;
+                FC_ASSERT(amount_arg > 0);
             }
 
             /** the account to withdraw from */
             BalanceIdType    balance_id;
             /** that amount to withdraw from the account*/
-            Asset         amount;
-            /*add from element to discriminate asset transfer*/
-            uint32_t          from;
+            ShareType         amount;
             /** any data required by the claim_condition */
             std::vector<char>  claim_input_data;
 
@@ -47,13 +43,13 @@ namespace thinkyoung {
             /** owner is just the hash of the condition */
             BalanceIdType                balance_id()const;
 
-            DepositOperation() :amount(Asset(0,0)){}
+            DepositOperation() :amount(0){}
             DepositOperation(const Address& owner, const Asset& amnt, SlateIdType slate_id = 0);
 
             /** the condition that the funds may be withdrawn,
              *  this is only necessary if the address is new.
              */
-            Asset                       amount;
+            ShareType                       amount;
             WithdrawCondition               condition;
 
             void evaluate(TransactionEvaluationState& eval_state)const;
@@ -164,7 +160,7 @@ namespace thinkyoung {
 
 FC_REFLECT_ENUM(thinkyoung::blockchain::DepositContractType, (deposit_contract_normal)(deposit_contract_margin))
 FC_REFLECT(thinkyoung::blockchain::DepositContractOperation, (amount)(condition))
-FC_REFLECT(thinkyoung::blockchain::WithdrawOperation, (balance_id)(amount)(from)(claim_input_data))
+FC_REFLECT(thinkyoung::blockchain::WithdrawOperation, (balance_id)(amount)(claim_input_data))
 FC_REFLECT(thinkyoung::blockchain::DepositOperation, (amount)(condition))
 FC_REFLECT(thinkyoung::blockchain::WithdrawContractOperation, (balance_id)(amount)(contract))
 FC_REFLECT(thinkyoung::blockchain::BalancesWithdrawOperation, (balances))

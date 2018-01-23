@@ -26,7 +26,7 @@ namespace thinkyoung {
                         auto withdraw_from_balance = std::min<ShareType>(item.second.balance, left_to_withdraw);
                         left_to_withdraw -= withdraw_from_balance;
 
-                        trx.withdraw(item.first, Asset(withdraw_from_balance, amount_to_withdraw.asset_id));
+                        trx.withdraw(item.first, withdraw_from_balance);
 
                         eval_state.evaluate_operation(trx.operations.back());
 
@@ -76,7 +76,7 @@ namespace thinkyoung {
                     stealth);
 
                 DepositOperation op;
-                op.amount.amount = amount.amount;
+                op.amount = amount.amount;
                 op.condition = WithdrawCondition(by_account, amount.asset_id, slate);
                 trx.operations.emplace_back(op);
 
