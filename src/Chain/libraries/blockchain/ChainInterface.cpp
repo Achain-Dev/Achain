@@ -127,20 +127,9 @@ namespace thinkyoung {
         }
         ShareType ChainInterface::get_asset_registration_fee(uint8_t symbol_length)const
         {
-            //simple and clear 
-#if 1
-            /*
             static const ShareType symbol_price[] = { 500000000000, 480000000000, 460000000000, 440000000000, 420000000000,
                 400000000000, 380000000000, 360000000000, 340000000000, 320000000000, 300000000000 };
-                */
-            static const ShareType symbol_price[] = { 5000000, 4800000, 4600000, 4400000, 4200000,
-                4000000, 3800000, 360000000000, 340000000000, 320000000000, 300000000000 };
             return symbol_price[symbol_length - 3];
-#else
-
-
-#endif
-
         }
 
         AssetIdType ChainInterface::last_asset_id()const
