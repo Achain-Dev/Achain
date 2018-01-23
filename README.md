@@ -17,15 +17,15 @@ Different platforms have different build instructions:
 
 How to deploy a test chain
 -------------------------------------
-https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md
+* [deploy test chain](https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md)
 
 Integration instructions for exchanges
 -------------------------------------
-https://github.com/Achain-Dev/Achain-Exchange
+* [Achain-Exchange](https://github.com/Achain-Dev/Achain-Exchange)
 
 How to use RPC API
 --------------------
-https://www.achain.com/help-en/rpc.html
+* [RPC API](https://www.achain.com/help-en/rpc.html)
  
 Contributing
 ------------
