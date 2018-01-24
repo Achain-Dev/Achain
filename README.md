@@ -15,9 +15,9 @@ Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
 * [Linux](https://github.com/Achain-Dev/Achain_linux)
 
-How to deploy a test chain
+How to deploy a private chain
 -------------------------------------
-* [deploy test chain](https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md)
+* [deploy private chain](https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md)
 
 Integration instructions for exchanges
 -------------------------------------
