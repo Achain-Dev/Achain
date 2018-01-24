@@ -13,7 +13,7 @@ Build Achain
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
-* [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
+* [Linux](https://github.com/Achain-Dev/Achain_linux)
 
 How to deploy a test chain
 -------------------------------------
