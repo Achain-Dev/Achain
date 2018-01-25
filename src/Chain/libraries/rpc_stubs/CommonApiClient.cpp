@@ -1411,6 +1411,35 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        thinkyoung::blockchain::TransactionIdType CommonApiClient::blockchain_get_transaction_id(const thinkyoung::blockchain::SignedTransaction& transaction_to_broadcast)
+        {
+            ilog("received RPC call: blockchain_get_transaction_id(${transaction_to_broadcast})", ("transaction_to_broadcast", transaction_to_broadcast));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(transaction_to_broadcast) );
+                call_id = glog->log_call_started( this, "blockchain_get_transaction_id", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call blockchain_get_transaction_id finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::blockchain::TransactionIdType result =             get_impl()->blockchain_get_transaction_id(transaction_to_broadcast);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "blockchain_get_transaction_id", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         void CommonApiClient::network_add_node(const std::string& node, const std::string& command /* = fc::json::from_string("\"add\"").as<std::string>() */)
         {
             ilog("received RPC call: network_add_node(${node}, ${command})", ("node", node)("command", command));
@@ -4879,6 +4908,40 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        thinkyoung::blockchain::SignedTransaction CommonApiClient::create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>() */)
+        {
+            ilog("received RPC call: create_transfer_transaction(${amount_to_transfer}, ${asset_symbol}, ${from_account_name}, ${to_address}, ${memo_message}, ${strategy})", ("amount_to_transfer", amount_to_transfer)("asset_symbol", asset_symbol)("from_account_name", from_account_name)("to_address", to_address)("memo_message", memo_message)("strategy", strategy));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(amount_to_transfer) );
+                args.push_back( fc::variant(asset_symbol) );
+                args.push_back( fc::variant(from_account_name) );
+                args.push_back( fc::variant(to_address) );
+                args.push_back( fc::variant(memo_message) );
+                args.push_back( fc::variant(strategy) );
+                call_id = glog->log_call_started( this, "create_transfer_transaction", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call create_transfer_transaction finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::blockchain::SignedTransaction result =             get_impl()->create_transfer_transaction(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "create_transfer_transaction", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         void CommonApiClient::wallet_scan_contracts()
         {
             ilog("received RPC call: wallet_scan_contracts()", );
@@ -5747,6 +5810,38 @@ namespace thinkyoung {
                 std::vector<thinkyoung::blockchain::Asset> result =             get_impl()->call_contract_testing(contract, caller_name, function_name, params);
                 if( call_id != 0 )
                     glog->log_call_finished( call_id, this, "call_contract_testing", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
+        std::vector<thinkyoung::blockchain::EventOperation> CommonApiClient::call_contract_local_emit(const std::string& contract, const std::string& caller_name, const std::string& function_name, const std::string& params)
+        {
+            ilog("received RPC call: call_contract_local_emit(${contract}, ${caller_name}, ${function_name}, ${params})", ("contract", contract)("caller_name", caller_name)("function_name", function_name)("params", params));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(contract) );
+                args.push_back( fc::variant(caller_name) );
+                args.push_back( fc::variant(function_name) );
+                args.push_back( fc::variant(params) );
+                call_id = glog->log_call_started( this, "call_contract_local_emit", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call call_contract_local_emit finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                std::vector<thinkyoung::blockchain::EventOperation> result =             get_impl()->call_contract_local_emit(contract, caller_name, function_name, params);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "call_contract_local_emit", args, fc::variant(result) );
 
                 return result;
             }

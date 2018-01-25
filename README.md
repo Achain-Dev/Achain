@@ -7,18 +7,25 @@ Achain is making efforts to build up a high performance discentralized enterpris
 Replicas of the state machine are kept consistent using the Result Delegated Proof-of-Stake distributed consensus protocol.
 
 For more information about Achain, please read following document:
-* [Technique White Paper](https://www.achain.com/Achain_tech_white_paper.pdf).
-* [Business White Paper](https://www.achain.com/Achain_business_white_paper.pdf).
+* [Achain White Paper](https://www.achain.com/Achain%20Whitepaper%202.0_EN.pdf).
 
-Building
+Build Achain
 --------
 Different platforms have different build instructions:
-* [Windows](https://github.com/Achain-Dev/Achain)
-* [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
+* [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
+* [Linux](https://github.com/Achain-Dev/Achain_linux)
 
-Using the RPC server
+How to deploy a private chain
+-------------------------------------
+* [deploy private chain](https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md)
+
+Integration instructions for exchanges
+-------------------------------------
+* [Achain-Exchange](https://github.com/Achain-Dev/Achain-Exchange)
+
+How to use RPC API
 --------------------
-https://www.achain.com/help-en/rpc.html
+* [RPC API](https://www.achain.com/help-en/rpc.html)
  
 Contributing
 ------------
