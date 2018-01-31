@@ -1631,7 +1631,52 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
         }
         vector<PrettyTransaction> pretties;
         pretties.reserve(history.size());
-        for (const auto& item : history) pretties.push_back(to_pretty_trx(item));
+        for (const auto& item : history)
+        {
+            PrettyTransaction pretty_trx = to_pretty_trx(item);
+            if (pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::create_asset)
+            {
+                if (trx_splite == trx_type_desipate)
+                    continue;
+            }
+
+            if (pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::issue_asset)
+            {
+                if (asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
+                {
+                    if (pretty_trx.ledger_entries[0].from_account != account_name)
+                    {
+                        if (trx_splite == trx_type_desipate)
+                        {
+                            continue;
+                        }
+                        if (pretty_trx.ledger_entries[0].to_account == account_name ||
+                            pretty_trx.ledger_entries[0].to_account_name == account_name)
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            if (pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction)
+            {
+                if (asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
+                {
+                    vector<PrettyLedgerEntry>::reverse_iterator iter = pretty_trx.ledger_entries.rbegin();
+                    vector<PrettyLedgerEntry>::iterator iter_2 = pretty_trx.ledger_entries.begin();
+                    if (iter_2->from_account != account_name)
+                    {
+                        if ((iter->to_account == account_name || iter->to_account_name == account_name) 
+                            && iter->amount.asset_id != 0)
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+            pretties.push_back(to_pretty_trx(item));
+        }
 
         const auto sorter = [](const PrettyTransaction& a, const PrettyTransaction& b) -> bool
         {
@@ -1686,39 +1731,90 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                     running_balances[fee_asset_id] = Asset(0, fee_asset_id);
 
                 auto any_from_me = false;
-                for (auto& entry : trx.ledger_entries)
+                vector<PrettyLedgerEntry>::iterator entry = trx.ledger_entries.begin();
+                for (; entry != trx.ledger_entries.end();)
                 {
-                    const auto amount_asset_id = entry.amount.asset_id;
+                    const auto amount_asset_id = entry->amount.asset_id;
                     if (running_balances.count(amount_asset_id) <= 0)
                         running_balances[amount_asset_id] = Asset(0, amount_asset_id);
 
                     auto from_me = false;
-                    from_me |= name == entry.from_account;
-                    from_me |= (entry.from_account.find(name + " ") == 0); /* If payer != sender */
+                    from_me |= name == entry->from_account;
+                    from_me |= (entry->from_account.find(name + " ") == 0); /* If payer != sender */
+
+                    any_from_me |= from_me;
+
                     if (from_me)
                     {
                         /* Special check to ignore asset issuing */
-                        if ((running_balances[amount_asset_id] - entry.amount) >= Asset(0, amount_asset_id))
-                            running_balances[amount_asset_id] -= entry.amount;
+                        //if ((running_balances[amount_asset_id] - entry.amount) >= Asset(0, amount_asset_id))
+                            running_balances[amount_asset_id] -= entry->amount;
 
                         /* Subtract fee once on the first entry */
   /*                      if (!trx.is_virtual && !any_from_me)
                             running_balances[fee_asset_id] -= trx.fee;
 							*/
                     }
-                    any_from_me |= from_me;
+                    
 
                     /* Special case to subtract fee if we canceled a bid */
                     if (!trx.is_virtual && trx.is_market_cancel && amount_asset_id != fee_asset_id)
                         running_balances[fee_asset_id] -= trx.fee;
 
                     auto to_me = false;
-                    to_me |= name == entry.to_account;
-                    to_me |= (entry.to_account.find(name + " ") == 0); /* If payer != sender */
-                    if (to_me) running_balances[amount_asset_id] += entry.amount;
+                    to_me |= name == entry->to_account;
+                    to_me |= (entry->to_account.find(name + " ") == 0); /* If payer != sender */
+                    if (to_me) running_balances[amount_asset_id] += entry->amount;
 
-                    entry.running_balances[name][amount_asset_id] = running_balances[amount_asset_id];
-                    entry.running_balances[name][fee_asset_id] = running_balances[fee_asset_id];
+                    //auto from_to_me = from_me && to_me;
+
+                    /*if create_asset   balance -= fee*/
+                    if (any_from_me)
+                    {
+                        if (trx.trx_type == thinkyoung::blockchain::TransactionType::create_asset)
+                        {
+                            running_balances[fee_asset_id] -= trx.fee;
+                        }
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::issue_asset)
+                        {
+                            running_balances[amount_asset_id] += entry->amount;
+
+                            if (amount_asset_id != 0 && asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
+                            {
+                                entry->amount = Asset(0, 0);
+                            }
+
+                            running_balances[fee_asset_id] -= trx.fee;
+                        }
+                        //if transfer multi-asset
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction)
+                        {
+                            if (amount_asset_id != 0 && asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
+                            {
+                                //multi-asset transfer OP
+                                entry = trx.ledger_entries.erase(entry);
+
+                                if (entry != trx.ledger_entries.end())
+                                {
+                                    entry->amount = Asset(0, 0);
+
+                                    running_balances[entry->amount.asset_id] -= trx.fee;
+                                }
+
+                                continue;
+                            }
+                        }
+                        /*BUG:9146*/
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::register_account_transaction)
+                        {
+                            running_balances[fee_asset_id] -= trx.fee;
+                        }
+                    }
+
+                    entry->running_balances[name][amount_asset_id] = running_balances[amount_asset_id];
+                    entry->running_balances[name][fee_asset_id] = running_balances[fee_asset_id];
+
+                    entry++;
                 }
 
                 if (account_specified)
@@ -1737,8 +1833,8 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
             string memoTemp;
             for (; iter != entrys.ledger_entries.end();)
             {
-                /*  fixed:muiti-asset  */
-                if (iter->amount == Asset(0, 0) && entrys.ledger_entries.size() != 1)
+                /*multi-asset*/
+                if (iter->amount == Asset(0, iter->amount.asset_id) && entrys.ledger_entries.size() != 1)
                 {
                     if (iter->memo != "")
                     {
@@ -1933,6 +2029,11 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
             case issue_asset_op_type:
             {
                 pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::issue_asset;
+                break;
+            }
+            case register_account_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::register_account_transaction;
                 break;
             }
             default:
