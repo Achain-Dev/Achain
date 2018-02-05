@@ -11,6 +11,7 @@
 #include <boost/uuid/sha1.hpp>
 
 #include <utilities/CommonApi.hpp>
+#include <blockchain/PendingChainState.hpp>
 
 using namespace thinkyoung::blockchain;
 
@@ -464,6 +465,32 @@ namespace thinkyoung {
             return value_id;
         }
         
+        
+        oContractStorageChange ContractStorageChangeEntry::lookup(const PendingChainState& db, const ContractIdType& id) {
+            try {
+                return db.contract_storage_change_lookup(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        void ContractStorageChangeEntry::store(PendingChainState&db, const ContractIdType& id, const ContractStorageChangeEntry& entry) {
+            try {
+                db.contract_storage_change_store(id, entry);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        void ContractStorageChangeEntry::remove(PendingChainState& db, const ContractIdType& id) {
+            try {
+                db.contract_storage_change_remove(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
         
     }
 }

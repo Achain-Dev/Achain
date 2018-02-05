@@ -579,16 +579,18 @@ namespace thinkyoung {
             _value_id_remove.insert(id);
         }
         
-        thinkyoung::blockchain::oContractStorageChange PendingChainState::contract_storage_change_lookup(const ContractIdType& id) const {
+        oContractStorageChange PendingChainState::contract_storage_change_lookup(const ContractIdType& id) const {
             const auto iter = _contract_to_storage_change.find(id);
             
             if (iter != _contract_to_storage_change.end()) return iter->second;
             
+            //no need to get prev_state
+            /*
             const ChainInterfacePtr prev_state = _prev_state.lock();
-            
-            if (!prev_state) return oContractValue();
+            if (!prev_state) return oContractStorageChange();
             
             const oContractStorageChange entry = prev_state->lookup<ContractStorageChangeEntry>(id);
+            */
             return oContractStorageChange();
         }
         

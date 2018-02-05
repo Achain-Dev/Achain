@@ -400,6 +400,7 @@ namespace thinkyoung {
         }
         
         StorageDataType ContractStorageChangeItem::apply_entry_change(const StorageDataType& before, ContractStorageChangeItem& item) {
+            return StorageDataType();
         }
         
     }
