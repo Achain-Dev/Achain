@@ -17,7 +17,7 @@ namespace thinkyoung {
     namespace blockchain {
     
         extern std::map <StorageValueTypes, std::string> storage_type_map;
-        
+        struct StorageDataBase;
         struct StorageDataType {
             fc::enum_type<uint8_t, StorageValueTypes>  storage_type;
             std::vector<char>                           storage_data;
@@ -46,27 +46,44 @@ namespace thinkyoung {
             inline static bool is_array_type(StorageValueTypes type) {
                 return (type >= StorageValueTypes::storage_value_unknown_array && type <= StorageValueTypes::storage_value_string_array);
             }
+            
+            //   static std::shared_ptr<StorageDataBase> create_storage_value(const StorageDataType& storage);
+            
+            bool equals(const StorageDataType& other) const {
+                return (other.storage_type == storage_type && storage_data == other.storage_data);
+            }
         };
         
+        struct ContractStorageChangeItem {
+            std::string contract_id;
+            std::string key;
+            struct StorageDataType before;
+            struct StorageDataType after;
+            static ContractStorageChangeItem get_storage_data_change(const StorageDataType& before, const StorageDataType& after);
+        };
         
-        struct StorageNullType {
+        struct StorageDataBase {
+            virtual ~StorageDataBase() {}
+        };
+        
+        struct StorageNullType : public StorageDataBase {
             StorageNullType() : raw_storage(0) {}
-            
             static const uint8_t    type;
+            
             LUA_INTEGER raw_storage;
         };
         
         
-        struct StorageIntType {
+        struct StorageIntType :public StorageDataBase {
             StorageIntType() {}
             StorageIntType(LUA_INTEGER value) :raw_storage(value) {}
-            
             static const uint8_t    type;
+            
             LUA_INTEGER raw_storage;
         };
         
         
-        struct StorageNumberType {
+        struct StorageNumberType :public StorageDataBase {
             StorageNumberType() {}
             StorageNumberType(double value) :raw_storage(value) {}
             
@@ -75,7 +92,7 @@ namespace thinkyoung {
         };
         
         
-        struct StorageBoolType {
+        struct StorageBoolType :public StorageDataBase {
             StorageBoolType() {}
             StorageBoolType(bool value) :raw_storage(value) {}
             
@@ -84,16 +101,16 @@ namespace thinkyoung {
         };
         
         
-        struct StorageStringType {
+        struct StorageStringType :public StorageDataBase {
             StorageStringType() {}
-            StorageStringType(string value) :raw_storage(value) {}
+            StorageStringType(std::string value) :raw_storage(value) {}
             
             static const uint8_t    type;
-            string raw_storage;
+            std::string raw_storage;
         };
         
         //table
-        struct StorageIntTableType {
+        struct StorageIntTableType :public StorageDataBase {
             StorageIntTableType() {}
             StorageIntTableType(const std::map<std::string, LUA_INTEGER>& value_map) :raw_storage_map(value_map) {}
             
@@ -102,16 +119,16 @@ namespace thinkyoung {
         };
         
         
-        struct StorageNumberTableType {
+        struct StorageNumberTableType :public StorageDataBase {
             StorageNumberTableType() {}
             StorageNumberTableType(const std::map<std::string, double>& value_map) :raw_storage_map(value_map) {}
-            
             static const uint8_t    type;
+            
             std::map<std::string, double> raw_storage_map;
         };
         
         
-        struct StorageBoolTableType {
+        struct StorageBoolTableType :public StorageDataBase {
             StorageBoolTableType() {}
             StorageBoolTableType(const std::map<std::string, bool>& value_map) :raw_storage_map(value_map) {}
             
@@ -119,7 +136,7 @@ namespace thinkyoung {
             std::map<std::string, bool> raw_storage_map;
         };
         
-        struct StorageStringTableType {
+        struct StorageStringTableType :public StorageDataBase {
             StorageStringTableType() {}
             StorageStringTableType(const std::map<std::string, string>& value_map) :raw_storage_map(value_map) {}
             
@@ -128,25 +145,25 @@ namespace thinkyoung {
         };
         
         //array
-        struct StorageIntArrayType {
+        struct StorageIntArrayType :public StorageDataBase {
             StorageIntArrayType() {}
             StorageIntArrayType(const std::map<std::string, LUA_INTEGER>& value_map) :raw_storage_map(value_map) {}
-            
             static const uint8_t    type;
+            
             std::map<std::string, LUA_INTEGER> raw_storage_map;
         };
         
         
-        struct StorageNumberArrayType {
+        struct StorageNumberArrayType :public StorageDataBase {
             StorageNumberArrayType() {}
             StorageNumberArrayType(const std::map<std::string, double>& value_map) :raw_storage_map(value_map) {}
-            
             static const uint8_t    type;
+            
             std::map<std::string, double> raw_storage_map;
         };
         
         
-        struct StorageBoolArrayType {
+        struct StorageBoolArrayType :public StorageDataBase {
             StorageBoolArrayType() {}
             StorageBoolArrayType(const std::map<std::string, bool>& value_map) :raw_storage_map(value_map) {}
             
@@ -154,7 +171,7 @@ namespace thinkyoung {
             std::map<std::string, bool> raw_storage_map;
         };
         
-        struct StorageStringArrayType {
+        struct StorageStringArrayType :public StorageDataBase {
             StorageStringArrayType() {}
             StorageStringArrayType(const std::map<std::string, string>& value_map) :raw_storage_map(value_map) {}
             

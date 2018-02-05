@@ -241,7 +241,162 @@ namespace thinkyoung {
             
             return lua_storage;
         }
+        /*
+        std::shared_ptr<StorageDataBase> StorageDataType::create_storage_value(const StorageDataType& storage) {
+            std::shared_ptr<StorageDataBase> ret_data = nullptr;
         
+            if (storage.storage_type == StorageValueTypes::storage_value_null) {
+                ret_data = std::make_shared<StorageNullType>(new StorageNullType());
         
+            } else if (storage.storage_type == StorageValueTypes::storage_value_int) {
+                ret_data = std::make_shared<StorageIntType>(new StorageIntType(storage.as<StorageIntType>()));
+        
+            } else if (storage.storage_type == StorageValueTypes::storage_value_number) {
+                ret_data = std::make_shared<StorageNumberType>(new StorageNumberType(storage.as<StorageNumberType>()));
+        
+            } else if (storage.storage_type == StorageValueTypes::storage_value_bool) {
+                ret_data = std::make_shared<StorageBoolType>(new StorageBoolType(storage.as<StorageBoolType>()));
+        
+            } else if (storage.storage_type == StorageValueTypes::storage_value_string) {
+                ret_data = std::make_shared<StorageStringType>(new StorageStringType(storage.as<StorageStringType>()));
+        
+            } else if (
+                thinkyoung::blockchain::is_any_array_storage_value_type(storage.storage_type)
+                || thinkyoung::blockchain::is_any_table_storage_value_type(storage.storage_type)
+            ) {
+                if (storage.storage_type == StorageValueTypes::storage_value_int_table ||
+                        storage.storage_type == StorageValueTypes::storage_value_int_array) {
+                    if (storage.storage_type == StorageValueTypes::storage_value_int_table) {
+                        ret_data = std::make_shared<StorageIntTableType>(new StorageIntTableType(storage.as<StorageIntTableType>()));
+        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_int_array) {
+                        ret_data = std::make_shared<StorageIntArrayType>(new StorageIntArrayType(storage.as<StorageIntArrayType>()));
+                    }
+        
+                } else if (storage.storage_type == StorageValueTypes::storage_value_number_table ||
+                           storage.storage_type == StorageValueTypes::storage_value_number_array) {
+                    if (storage.storage_type == StorageValueTypes::storage_value_number_table) {
+                        ret_data = std::make_shared<StorageNumberTableType>(new StorageNumberTableType(storage.as<StorageNumberTableType>()));
+        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_number_array) {
+                        ret_data = std::make_shared<StorageNumberArrayType>(new StorageNumberArrayType(storage.as<StorageNumberArrayType>()));
+                    }
+        
+                } else if (storage.storage_type == StorageValueTypes::storage_value_bool_table ||
+                           storage.storage_type == StorageValueTypes::storage_value_bool_array) {
+                    if (storage.storage_type == StorageValueTypes::storage_value_bool_table) {
+                        ret_data = std::make_shared<StorageBoolTableType>(new StorageBoolTableType(storage.as<StorageBoolTableType>()));
+        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_bool_array) {
+                        ret_data = std::make_shared<StorageBoolArrayType>(new StorageBoolArrayType(storage.as<StorageBoolArrayType>()));
+                    }
+        
+                } else if (storage.storage_type == StorageValueTypes::storage_value_string_table ||
+                           storage.storage_type == StorageValueTypes::storage_value_string_array) {
+                    if (storage.storage_type == StorageValueTypes::storage_value_string_table) {
+                        ret_data = std::make_shared<StorageStringTableType>(new StorageStringTableType(storage.as<StorageStringTableType>()));
+        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_string_array) {
+                        ret_data = std::make_shared<StorageStringArrayType>(new StorageStringArrayType(storage.as<StorageStringArrayType>()));
+                    }
+                }
+            }
+        
+            return ret_data;
+        }
+        */
+        template<typename StorageType>
+        void get_storage_map_change(
+            const StorageDataType& before, const StorageDataType& after,
+            StorageDataType& new_before, StorageDataType& new_after
+        ) {
+            StorageType before_value = before.as<StorageType>();
+            StorageType after_value = after.as<StorageType>();
+            StorageType new_before_value;
+            StorageType new_after_value;
+            
+            for (auto it1 = before_value.raw_storage_map.begin(); it1 != before_value.raw_storage_map.end(); ++it1) {
+                auto found = after_value.raw_storage_map.find(it1->first);
+                
+                if (found == after_value.raw_storage_map.end()) {
+                    new_before_value.raw_storage_map.insert(new_before_value.raw_storage_map.end(), std::make_pair(it1->first, it1->second));
+                    continue;
+                }
+                
+                if (found->second==it1->second) {
+                    continue;
+                }
+                
+                new_before_value.raw_storage_map.insert(new_before_value.raw_storage_map.end(), std::make_pair(it1->first, it1->second));
+                new_after_value.raw_storage_map.insert(new_after_value.raw_storage_map.end(), std::make_pair(found->first, found->second));
+            }
+            
+            for (auto it1 = after_value.raw_storage_map.begin(); it1 !=after_value.raw_storage_map.end(); ++it1) {
+                auto found = before_value.raw_storage_map.find(it1->first);
+                
+                if (found == before_value.raw_storage_map.end()) {
+                    new_after_value.raw_storage_map.insert(new_after_value.raw_storage_map.end(), std::make_pair(it1->first, it1->second));
+                }
+            }
+            
+            new_before = StorageDataType(new_before_value);
+            new_after = StorageDataType(new_after_value);
+        }
+        
+        ContractStorageChangeItem ContractStorageChangeItem::get_storage_data_change(const StorageDataType& before, const StorageDataType& after) {
+            ContractStorageChangeItem stor_change;
+            FC_ASSERT((before.storage_type == after.storage_type) || (before.storage_type == thinkyoung::blockchain::StorageValueTypes::storage_value_null));
+            FC_ASSERT(after.storage_type != StorageValueTypes::storage_value_null);
+            
+            if (
+                thinkyoung::blockchain::is_any_array_storage_value_type(after.storage_type)
+                || thinkyoung::blockchain::is_any_table_storage_value_type(after.storage_type)
+            ) {
+                if (after.storage_type == StorageValueTypes::storage_value_int_table ||
+                        after.storage_type == StorageValueTypes::storage_value_int_array) {
+                    if (after.storage_type == StorageValueTypes::storage_value_int_table) {
+                        get_storage_map_change<StorageIntTableType>(before, after, stor_change.before, stor_change.after);
+                        
+                    } else if (after.storage_type == StorageValueTypes::storage_value_int_array) {
+                        get_storage_map_change<StorageIntArrayType>(before, after, stor_change.before, stor_change.after);
+                    }
+                    
+                } else if (after.storage_type == StorageValueTypes::storage_value_number_table ||
+                           after.storage_type == StorageValueTypes::storage_value_number_array) {
+                    if (after.storage_type == StorageValueTypes::storage_value_number_table) {
+                        get_storage_map_change<StorageNumberTableType>(before, after, stor_change.before, stor_change.after);
+                        
+                    } else if (after.storage_type == StorageValueTypes::storage_value_number_array) {
+                        get_storage_map_change<StorageNumberArrayType>(before, after, stor_change.before, stor_change.after);
+                    }
+                    
+                } else if (after.storage_type == StorageValueTypes::storage_value_bool_table ||
+                           after.storage_type == StorageValueTypes::storage_value_bool_array) {
+                    if (after.storage_type == StorageValueTypes::storage_value_bool_table) {
+                        get_storage_map_change<StorageBoolTableType>(before, after, stor_change.before, stor_change.after);
+                        
+                    } else if (after.storage_type == StorageValueTypes::storage_value_bool_array) {
+                        get_storage_map_change<StorageBoolArrayType>(before, after, stor_change.before, stor_change.after);
+                    }
+                    
+                } else if (after.storage_type == StorageValueTypes::storage_value_string_table ||
+                           after.storage_type == StorageValueTypes::storage_value_string_array) {
+                    if (after.storage_type == StorageValueTypes::storage_value_string_table) {
+                        get_storage_map_change<StorageStringTableType>(before, after, stor_change.before, stor_change.after);
+                        
+                    } else if (after.storage_type == StorageValueTypes::storage_value_string_array) {
+                        get_storage_map_change<StorageStringArrayType>(before, after, stor_change.before, stor_change.after);
+                    }
+                }
+                
+            } else {
+                if (!before.equals(after)) {
+                    stor_change.before = before;
+                    stor_change.after = after;
+                }
+            }
+            
+            return stor_change;
+        }
     }
 }
