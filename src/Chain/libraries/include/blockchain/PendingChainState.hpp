@@ -19,9 +19,11 @@ namespace thinkyoung {
         
         class PendingChainState : public ChainInterface, public std::enable_shared_from_this < PendingChainState > {
           public:
+          
             PendingChainState(ChainInterfacePtr prev_state = ChainInterfacePtr());
             PendingChainState&           operator = (const PendingChainState&) = default;
             
+            friend struct ContractStorageChangeEntry;
             /**
             * Set on a layer of data sources
             *
@@ -185,6 +187,8 @@ namespace thinkyoung {
             unordered_map<ContractName, ContractIdType>                       _contract_name_to_id;
             unordered_map<ContractIdType, ContractStorageEntry>                    _contract_id_to_storage;
             unordered_map<ContractValueIdType, ContractValueEntry>                    _value_id_to_storage;
+            unordered_map<ContractIdType, ContractStorageChangeEntry>                    _contract_to_storage_change;
+            
             unordered_map<TransactionIdType, ResultTIdEntry>                    _request_id_to_result_id;
             unordered_set<TransactionIdType>                                  _req_to_res_to_remove;
             unordered_map<TransactionIdType, RequestIdEntry>                    _result_id_to_request_id;
@@ -624,12 +628,14 @@ namespace thinkyoung {
             virtual oContractValue  contract_lookup_value_by_valueid(const ContractValueIdType&) const;
             virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &);
             virtual void contract_erase_value_by_valueid(const ContractValueIdType&);
+            oContractStorageChange contract_storage_change_lookup(const ContractIdType&) const;
+            void contract_storage_change_remove(const ContractIdType&);
+            void contract_storage_change_store(const ContractIdType&, const ContractStorageChangeEntry&);
         };
         typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         
     }
 } // thinkyoung::blockchain
-
 
 FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_property_id_to_entry)
@@ -653,13 +659,12 @@ FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_slot_timestamp_to_delegate)
            (_contract_id_to_entry)
            (_contract_id_remove)
+           (_contract_to_storage_change)
            (_contract_name_to_id)
-           (_contract_id_to_storage)
            (_request_id_to_result_id)
            (_req_to_res_to_remove)
            (_result_id_to_request_id)
            (_res_to_req_to_remove)
            (_vec_wallet_accounts)
           )
-
 FC_REFLECT(thinkyoung::blockchain::SandboxAccountInfo, (id)(name)(delegate_info)(owner_address)(registration_date)(last_update)(owner_key))

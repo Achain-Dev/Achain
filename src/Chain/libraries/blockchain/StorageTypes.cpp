@@ -343,7 +343,7 @@ namespace thinkyoung {
             new_after = StorageDataType(new_after_value);
         }
         
-        ContractStorageChangeItem ContractStorageChangeItem::get_storage_data_change(const StorageDataType& before, const StorageDataType& after) {
+        ContractStorageChangeItem ContractStorageChangeItem::get_entry_change(const StorageDataType& before, const StorageDataType& after) {
             ContractStorageChangeItem stor_change;
             FC_ASSERT((before.storage_type == after.storage_type) || (before.storage_type == thinkyoung::blockchain::StorageValueTypes::storage_value_null));
             FC_ASSERT(after.storage_type != StorageValueTypes::storage_value_null);
@@ -398,5 +398,9 @@ namespace thinkyoung {
             
             return stor_change;
         }
+        
+        StorageDataType ContractStorageChangeItem::apply_entry_change(const StorageDataType& before, ContractStorageChangeItem& item) {
+        }
+        
     }
 }

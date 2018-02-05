@@ -59,7 +59,8 @@ namespace thinkyoung {
             std::string key;
             struct StorageDataType before;
             struct StorageDataType after;
-            static ContractStorageChangeItem get_storage_data_change(const StorageDataType& before, const StorageDataType& after);
+            static ContractStorageChangeItem get_entry_change(const StorageDataType& before, const StorageDataType& after);
+            static StorageDataType apply_entry_change(const StorageDataType& before, ContractStorageChangeItem& item);
         };
         
         struct StorageDataBase {
@@ -200,7 +201,10 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::StorageValueTypes,
                 (storage_value_bool_array)
                 (storage_value_string_array)
                )
-
+FC_REFLECT(thinkyoung::blockchain::ContractStorageChangeItem, (contract_id)
+           (key)
+           (before)
+           (after))
 FC_REFLECT(thinkyoung::blockchain::StorageDataType,
            (storage_type)
            (storage_data)

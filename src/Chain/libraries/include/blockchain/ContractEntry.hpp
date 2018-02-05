@@ -101,9 +101,11 @@ namespace thinkyoung {
         struct  ContractEntry;
         struct ContractStorageEntry;
         struct ContractValueEntry;
+        struct ContractStorageChangeEntry;
         //use fc optional to hold the return value
         typedef fc::optional<ContractEntry> oContractEntry;
         typedef fc::optional<ContractStorageEntry> oContractStorage;
+        typedef fc::optional<ContractStorageChangeEntry> oContractStorageChange;
         typedef fc::optional<ContractValueEntry> oContractValue;
         typedef fc::optional<ContractIdType> oContractIdType;
         typedef fc::optional<ContractValueIdType> oContractValueIdType;
@@ -152,7 +154,16 @@ namespace thinkyoung {
                 owner(entry.owner), owner_address(entry.owner), state(entry.state), description(entry.description), code_printable(entry.code), reserved(entry.reserved),
                 trx_id(entry.trx_id) {}
         };
-        
+        class PendingChainState;
+        //contract storage
+        //only in PendingChainState
+        struct ContractStorageChangeEntry {
+            std::map<std::string, ContractStorageChangeItem> contract_change;
+            
+            static oContractStorageChange lookup(const PendingChainState&, const ContractIdType&);
+            static void store(PendingChainState&, const ContractIdType&, const ContractStorageChangeEntry&);
+            static void remove(PendingChainState&, const ContractIdType&);
+        };
         //contract storage
         struct ContractStorageEntry {
             //std::vector<ContractChar> contract_storage;
@@ -162,7 +173,6 @@ namespace thinkyoung {
             static oContractStorage lookup(const ChainInterface&, const ContractIdType&);
             static void store(ChainInterface&, const ContractIdType&, const ContractStorageEntry&);
             static void remove(ChainInterface&, const ContractIdType&);
-            
         };
         struct ContractValueEntry {
             //std::vector<ContractChar> contract_storage;
@@ -259,7 +269,7 @@ namespace thinkyoung {
             virtual oContractValue  contract_lookup_value_by_valueid(const ContractValueIdType&) const = 0;
             virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &) = 0;
             virtual void contract_erase_value_by_valueid(const ContractValueIdType&) = 0;
-            
+            //virtual void contract_storage_diff(const ContractValueIdType&, const ) = 0;
         };
     }
 }
@@ -327,6 +337,7 @@ FC_REFLECT(thinkyoung::blockchain::ContractEntryPrintable,
           )
 
 FC_REFLECT(thinkyoung::blockchain::ContractStorageEntry, (id)(contract_storages))
+FC_REFLECT(thinkyoung::blockchain::ContractStorageChangeEntry, (contract_change))
 FC_REFLECT(thinkyoung::blockchain::ContractValueEntry, (id_)(value_name_)(index_)(storage_value_))
 FC_REFLECT(thinkyoung::blockchain::ResultTIdEntry, (res))
 FC_REFLECT(thinkyoung::blockchain::RequestIdEntry, (req))
