@@ -98,7 +98,6 @@ namespace thinkyoung {
             * @return void
             */
             virtual void                   get_undo_state(const ChainInterfacePtr& undo_state)const;
-            
             template<typename T, typename U>
             void populate_undo_state(const ChainInterfacePtr& undo_state, const ChainInterfacePtr& prev_state,
                                      const T& store_map, const U& remove_set)const {
@@ -119,7 +118,35 @@ namespace thinkyoung {
                     else undo_state->remove<V>(key);
                 }
             }
-            
+            template<typename T, typename U, typename K>
+            void populate_undo_state_change(const ChainInterfacePtr& undo_state, const ChainInterfacePtr& prev_state,
+                                            const T& store_map, const K& change, const U& remove_set)const {
+                using V = typename T::mapped_type;
+                
+                for (const auto& key : remove_set) {
+                    const auto prev_entry = prev_state->lookup<V>(key);
+                    
+                    //undo_state->get_entry_change(prev_entry);
+                    //change
+                    //before after
+                    if (prev_entry.valid()) {
+                        undo_state->store(key, *prev_entry);
+                    }
+                }
+                
+                for (const auto& item : store_map) {
+                    const auto& key = item.first;
+                    const auto prev_entry = prev_state->lookup<V>(key);
+                    
+                    if (prev_entry.valid()) {
+                        (item.second, *prev_entry)
+                        undo_state->store(key, *prev_entry);
+                        
+                    } else {
+                        undo_state->remove<V>(key);
+                    }
+                }
+            }
             template<typename T, typename U>
             void apply_entrys(const ChainInterfacePtr& prev_state, const T& store_map, const U& remove_set)const {
                 using V = typename T::mapped_type;
@@ -128,7 +155,18 @@ namespace thinkyoung {
                 
                 for (const auto& item : store_map) prev_state->store(item.first, item.second);
             }
-            
+            template<typename K, typename U>
+            void apply_entrys_change(const ChainInterfacePtr& prev_state, const K& change, const U& remove_set)const {
+                using V = typename T::mapped_type;
+                
+                for (const auto& key : remove_set) {
+                    prev_state->remove<V>(key);
+                }
+                
+                for (const auto& item : store_map) {
+                    prev_state->store(item.first, item.second);
+                }
+            }
             /**
             * load the state from a variant
             *
@@ -187,7 +225,7 @@ namespace thinkyoung {
             unordered_map<ContractName, ContractIdType>                       _contract_name_to_id;
             unordered_map<ContractIdType, ContractStorageEntry>                    _contract_id_to_storage;
             unordered_map<ContractValueIdType, ContractValueEntry>                    _value_id_to_storage;
-            unordered_map<ContractIdType, ContractStorageChangeEntry>                    _contract_to_storage_change;
+            unordered_map<ContractIdType, ContractStorageChangeEntry>         _contract_to_storage_change;
             
             unordered_map<TransactionIdType, ResultTIdEntry>                    _request_id_to_result_id;
             unordered_set<TransactionIdType>                                  _req_to_res_to_remove;

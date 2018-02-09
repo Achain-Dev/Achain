@@ -37,6 +37,7 @@ namespace thinkyoung {
             
             return prev_state->now();
         }
+        
         /*  check????
         oprice pending_chain_state::get_active_feed_price( const asset_id_type quote_id, const asset_id_type base_id )const
         {
@@ -44,40 +45,19 @@ namespace thinkyoung {
         FC_ASSERT( prev_state );
         return prev_state->get_active_feed_price( quote_id, base_id );
         }*/
-        /*
-        template<typename T, typename U, typename K>
-        void special_entrys(const ChainInterfacePtr& prev_state, const T& store_map, const U& remove_set, const K& diff)const {
+        
+        //special_entrys(prev_state, _contract_id_to_storage, _contract_id_remove, _contract_to_storage_change);
+        template<typename T, typename K>
+        void special_entrys_change(const T& store_map, const K& diff)const {
             using V = typename T::mapped_type;
-        
-            for (const auto& key : remove_set) prev_state->remove<V>(key);
-        
-            for (const auto& item : store_map) {
-                V old_item = prev_state->lookup<V>(key);
-                V new_item = K::apply_entry_change(prev_state, diff);
-                prev_state->store(item.first, item.second);
+            
+            for (const auto&item : store_map) {
+                if (diff[item.first].valid()) {
+                    K::apply_entry_change(item, diff[item.first]);
+                }
             }
         }
-        template<typename T, typename U, typename K>
-        void special_undo_state(const ChainInterfacePtr& undo_state, const ChainInterfacePtr& prev_state,
-                                const T& store_map, const U& remove_set, const K& diff)const {
-            using V = typename T::mapped_type;
         
-            for (const auto& key : remove_set) {
-                const auto prev_entry = prev_state->lookup<V>(key);
-        
-                if (prev_entry.valid()) undo_state->store(key, *prev_entry);
-            }
-        
-            for (const auto& item : store_map) {
-                const auto& key = item.first;
-                const auto prev_entry = prev_state->lookup<V>(key);
-                K new_item = K::get_entry_change(*prev_entry, item.second);
-        
-                if (prev_entry.valid()) undo_state->store(key, *prev_entry);
-        
-                else undo_state->remove<V>(key);
-            }
-        }*/
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes()const {
             ChainInterfacePtr prev_state = _prev_state.lock();
@@ -93,19 +73,36 @@ namespace thinkyoung {
             apply_entrys(prev_state, _slot_index_to_entry, _slot_index_remove);
             //contract related
             apply_entrys(prev_state, _contract_id_to_entry, _contract_id_remove);
-            apply_entrys(prev_state, _contract_id_to_storage, _contract_id_remove);
             apply_entrys(prev_state, _request_id_to_result_id, _req_to_res_to_remove);
             apply_entrys(prev_state, _result_id_to_request_id, _res_to_req_to_remove);
             apply_entrys(prev_state, _trx_to_contract_id, _trx_to_contract_id_remove);
             apply_entrys(prev_state, _contract_to_trx_id, _contract_to_trx_id_remove);
             apply_entrys(prev_state, _value_id_to_storage, _value_id_remove);
-            /** do this last because it could have side effects on other entrys while
+            /* do this last because it could have side effects on other entrys while
              * we manage the short index
              */
             //apply_entrys( prev_state, _feed_index_to_entry, _feed_index_remove );
             //special apply for amounts of data
-            ContractStorageChangeItem item;
-            // special_entrys(prev_state, _contract_id_to_storage, _contract_id_remove, item);
+            apply_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
+        }
+        
+        void populate_undo_state_change(PendingChainStatePtr& undo_state, ChainInterfacePtr &prev_state,
+                                        unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
+                                        unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+                                        unordered_set<ContractIdType>&       contract_id_remove) {
+            for (const auto& item : contract_id_remove) {
+                for (const auto& storage: contract_id_to_storage[item]) {
+                    ContractStorageChangeItem change;
+                    change.before = contract_id_to_storage[item];
+                    change.after = StorageDataType();
+                    contract_to_storage_change[item].contract_change[change.key] = change;
+                }
+            }
+            
+            for (const auto& item : contract_id_to_storage) {
+                auto change = ContractStorageChangeItem::get_entry_change(contract_id_to_storage[item.first], contract_to_storage_change[item.first]);
+                contract_to_storage_change[item.first].contract_change[change.key] = change;
+            }
         }
         
         void PendingChainState::get_undo_state(const ChainInterfacePtr& undo_state_arg)const {
@@ -121,15 +118,13 @@ namespace thinkyoung {
             populate_undo_state(undo_state, prev_state, _slot_index_to_entry, _slot_index_remove);
             //contract related
             populate_undo_state(undo_state, prev_state, _contract_id_to_entry, _contract_id_remove);
-            populate_undo_state(undo_state, prev_state, _contract_id_to_storage, _contract_id_remove);
             populate_undo_state(undo_state, prev_state, _request_id_to_result_id, _req_to_res_to_remove);
             populate_undo_state(undo_state, prev_state, _result_id_to_request_id, _res_to_req_to_remove);
             populate_undo_state(undo_state, prev_state, _trx_to_contract_id, _trx_to_contract_id_remove);
             populate_undo_state(undo_state, prev_state, _contract_to_trx_id, _contract_to_trx_id_remove);
             populate_undo_state(undo_state, prev_state, _value_id_to_storage, _value_id_remove);
             //special undo for amounts of data
-            ContractStorageChangeItem item;
-            //   special_undo_state(undo_state, prev_state, _value_id_to_storage, _contract_id_remove, item);
+            populate_undo_state_change(undo_state, prev_state, _contract_id_to_storage, _contract_to_storage_change, _contract_id_remove);
         }
         TransactionEvaluationStatePtr   PendingChainState::sandbox_evaluate_transaction(const SignedTransaction& trx, const ShareType required_fees) {
             try {
