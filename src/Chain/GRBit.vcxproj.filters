@@ -30,9 +30,6 @@
     <ClCompile Include="libraries\blockchain\Address.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="libraries\blockchain\applink.c">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="libraries\blockchain\Asset.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

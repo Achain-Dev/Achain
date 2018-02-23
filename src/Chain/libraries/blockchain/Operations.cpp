@@ -40,8 +40,8 @@ namespace thinkyoung {
         const OperationTypeEnum CallContractOperation::type = call_contract_op_type;
         const OperationTypeEnum EventOperation::type = event_op_type;
         const OperationTypeEnum DepositContractOperation::type = deposit_contract_op_type;
-		const OperationTypeEnum OnDestroyOperation::type = on_destroy_op_type;
-		const OperationTypeEnum OnUpgradeOperation::type = on_upgrade_op_type;
+        const OperationTypeEnum OnDestroyOperation::type = on_destroy_op_type;
+        const OperationTypeEnum OnUpgradeOperation::type = on_upgrade_op_type;
         const OperationTypeEnum OnCallSuccessOperation::type = on_call_success_op_type;
         static bool first_chain = []()->bool{
             thinkyoung::blockchain::OperationFactory::instance().register_operation<WithdrawOperation>();
@@ -70,58 +70,51 @@ namespace thinkyoung {
             thinkyoung::blockchain::OperationFactory::instance().register_operation<CallContractOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<EventOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<DepositContractOperation>();
-			thinkyoung::blockchain::OperationFactory::instance().register_operation<OnDestroyOperation>();
-			thinkyoung::blockchain::OperationFactory::instance().register_operation<OnUpgradeOperation>();
-			thinkyoung::blockchain::OperationFactory::instance().register_operation<OnCallSuccessOperation>();
+            thinkyoung::blockchain::OperationFactory::instance().register_operation<OnDestroyOperation>();
+            thinkyoung::blockchain::OperationFactory::instance().register_operation<OnUpgradeOperation>();
+            thinkyoung::blockchain::OperationFactory::instance().register_operation<OnCallSuccessOperation>();
 
             return true;
         }();
 
-        OperationFactory& OperationFactory::instance()
-        {
+        OperationFactory& OperationFactory::instance() {
             static std::unique_ptr<OperationFactory> inst(new OperationFactory());
             return *inst;
         }
 
-        void OperationFactory::to_variant(const thinkyoung::blockchain::Operation& in, fc::variant& output)
-        {
+        void OperationFactory::to_variant(const thinkyoung::blockchain::Operation& in, fc::variant& output) {
             try {
                 auto converter_itr = _converters.find(in.type.value);
                 FC_ASSERT(converter_itr != _converters.end(), "No such converter!");
                 converter_itr->second->to_variant(in, output);
-            } FC_RETHROW_EXCEPTIONS(warn, "")
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
-        void OperationFactory::from_variant(const fc::variant& in, thinkyoung::blockchain::Operation& output)
-        {
+        void OperationFactory::from_variant(const fc::variant& in, thinkyoung::blockchain::Operation& output) {
             try {
                 auto obj = in.get_object();
-
-                if (obj["type"].as_string() == "define_delegate_slate_op_type")
-                {
+                if (obj["type"].as_string() == "define_delegate_slate_op_type") {
                     output.type = define_slate_op_type;
                     return;
                 }
-
                 output.type = obj["type"].as<OperationTypeEnum>();
-
                 auto converter_itr = _converters.find(output.type.value);
                 FC_ASSERT(converter_itr != _converters.end());
                 converter_itr->second->from_variant(in, output);
-            } FC_RETHROW_EXCEPTIONS(warn, "", ("in", in))
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "", ("in", in))
         }
 
     }
 } // thinkyoung::blockchain
 
 namespace fc {
-    void to_variant(const thinkyoung::blockchain::Operation& var, variant& vo)
-    {
+    void to_variant(const thinkyoung::blockchain::Operation& var, variant& vo) {
         thinkyoung::blockchain::OperationFactory::instance().to_variant(var, vo);
     }
 
-    void from_variant(const variant& var, thinkyoung::blockchain::Operation& vo)
-    {
+    void from_variant(const variant& var, thinkyoung::blockchain::Operation& vo) {
         thinkyoung::blockchain::OperationFactory::instance().from_variant(var, vo);
     }
 }
