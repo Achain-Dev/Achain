@@ -17,3 +17,4 @@ x64
 /out
 /logs
 /CMakeCache*
+/deploy_tool
