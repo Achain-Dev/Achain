@@ -1724,6 +1724,7 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
         for (const auto& name : account_names)
         {
             map<AssetIdType, Asset> running_balances;
+            vector<PrettyTransaction>::iterator trx = pretties.begin();
             for (auto& trx : pretties)
             {
                 const auto fee_asset_id = trx.fee.asset_id;
@@ -1731,6 +1732,7 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                     running_balances[fee_asset_id] = Asset(0, fee_asset_id);
 
                 auto any_from_me = false;
+                auto ledger_size = trx.ledger_entries.size();
                 vector<PrettyLedgerEntry>::iterator entry = trx.ledger_entries.begin();
                 for (; entry != trx.ledger_entries.end();)
                 {
@@ -1754,6 +1756,11 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
   /*                      if (!trx.is_virtual && !any_from_me)
                             running_balances[fee_asset_id] -= trx.fee;
 							*/
+                        if (ledger_size == 1)
+                        {
+                            running_balances[fee_asset_id] -= trx.fee;
+                        }
+                            
                     }
                     
 
@@ -1792,16 +1799,21 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                             if (amount_asset_id != 0 && asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
                             {
                                 //multi-asset transfer OP
-                                entry = trx.ledger_entries.erase(entry);
+                                entry->amount = Asset(0, 0);
+                                running_balances[entry->amount.asset_id] -= trx.fee;
 
-                                if (entry != trx.ledger_entries.end())
+                                /*
+                                entry = trx->ledger_entries.erase(entry);
+
+                                if (entry != trx->ledger_entries.end())
                                 {
                                     entry->amount = Asset(0, 0);
 
-                                    running_balances[entry->amount.asset_id] -= trx.fee;
+                                    running_balances[entry->amount.asset_id] -= trx->fee;
                                 }
 
                                 continue;
+                                */
                             }
                         }
                         /*BUG:9146*/
@@ -1816,7 +1828,14 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
 
                     entry++;
                 }
+                /*
+                if (trx->ledger_entries.empty())
+                {
+                    trx = pretties.erase(trx);
 
+                    continue;
+                }
+                */
                 if (account_specified)
                 {
                     /* Don't return fees we didn't pay */
