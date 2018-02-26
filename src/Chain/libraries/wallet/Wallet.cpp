@@ -2800,17 +2800,6 @@ namespace thinkyoung {
                 const string memo_message = "withdraw pay";
                 trx.withdraw_pay(delegate_account_entry->id, amount_to_withdraw + required_fees.amount);
                 trx.deposit(receiver_account.owner_address(), Asset(amount_to_withdraw, 0));
-                //changed by CCW for deleting Titan Transfer
-                //        trx.deposit_to_account( receiver_account.active_key(),
-                //                                asset( amount_to_withdraw, 0 ),
-                //                                delegate_private_key,
-                //                                memo_message,
-                //                                delegate_public_key,
-                //                                my->get_new_private_key( delegate_name ),
-                //                                from_memo,
-                //                                receiver_account.is_titan_account()
-                //                                );
-                //my->set_delegate_slate(trx, strategy);
                 
                 if (sign)
                     my->sign_transaction(trx, required_signatures);
@@ -2825,23 +2814,6 @@ namespace thinkyoung {
                 trans_entry.fee = required_fees;
                 trans_entry.extra_addresses.push_back(receiver_account.owner_address());
                 trans_entry.trx = trx;
-                //changed by CCW for deleting Titan Transfer
-                //if (sign) my->sign_transaction(trx, required_signatures);
-                //
-                //        auto entry = ledger_entry();
-                //        entry.from_account = delegate_public_key;
-                //        entry.to_account = receiver_account.active_key(),
-                //        entry.amount = asset( amount_to_withdraw );
-                //        entry.memo = memo_message;
-                //
-                //        auto entry = wallet_transaction_entry();
-                //        entry.ledger_entries.push_back( entry );
-                //        entry.fee = required_fees;
-                //
-                //        if( sign )
-                //            my->sign_transaction( trx, required_signatures );
-                //
-                //        entry.trx = trx;
                 return trans_entry;
             }
             
@@ -3583,15 +3555,10 @@ namespace thinkyoung {
                 unordered_set<Address> required_signatures;
                 
                 if (alp_account != "") {
-                    //trx.from_account = from_account_name;
                     trx.alp_account = alp_account;
                     trx.alp_inport_asset = asset_to_transfer;
                 }
                 
-                //    if (memo_message != "")
-                //    {
-                //        trx.AddtionImessage(memo_message);
-                //    }
                 const auto required_fees = get_transaction_fee(asset_to_transfer.asset_id);
                 const auto required_imessage_fee = get_transaction_imessage_fee(memo_message);
                 
@@ -3615,8 +3582,6 @@ namespace thinkyoung {
                 trx.deposit(to_address, asset_to_transfer);
                 trx.expiration = blockchain::now() + get_transaction_expiration();
                 my->set_delegate_slate(trx, strategy);
-                //       if( sign )
-                //           my->sign_transaction( trx, required_signatures );
                 auto entry = LedgerEntry();
                 entry.from_account = sender_public_key;
                 entry.amount = asset_to_transfer;
@@ -3624,7 +3589,6 @@ namespace thinkyoung {
                 if (memo_message != "") {
                     entry.memo = memo_message;
                     trx.AddtionImessage(memo_message);
-                    //AddtionImessage(memo_message);
                     
                 } else
                     entry.memo = "To: " + string(to_address).substr(0, 8) + "...";
@@ -3682,12 +3646,8 @@ namespace thinkyoung {
                 const auto asset_id = asset_rec->id;
                 FC_ASSERT(asset_id == 0, "Asset symbol should be ACT");
                 const int64_t precision = asset_rec->precision ? asset_rec->precision : 1;
-                //ShareType amount_to_transfer = real_amount_to_transfer * precision;
-                //Asset asset_to_transfer(amount_to_transfer, asset_id);
                 FC_ASSERT(real_amount_to_transfer>=1.0/precision, "transfer amount must bigger than 0");
                 Asset asset_to_transfer = to_asset(asset_rec->id, precision, real_amount_to_transfer);
-                //ShareType amount_for_exec = exec_cost * precision;
-                //Asset asset_for_exec(amount_for_exec, asset_id);
                 Asset asset_for_exec = to_asset(asset_rec->id, precision, exec_cost);
                 PublicKeyType  sender_public_key = get_owner_public_key(from_account_name);
                 Address        sender_account_address = Address(sender_public_key);
