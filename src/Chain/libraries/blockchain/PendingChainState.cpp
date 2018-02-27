@@ -47,13 +47,35 @@ namespace thinkyoung {
         }*/
         
         //special_entrys(prev_state, _contract_id_to_storage, _contract_id_remove, _contract_to_storage_change);
-        template<typename T, typename K>
-        void special_entrys_change(const T& store_map, const K& diff)const {
-            using V = typename T::mapped_type;
+        void apply_storage_entrys_change(
+            const ChainInterfacePtr &prev_state,
+            const unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+            const unordered_set<ContractIdType>& contract_id_remove) {
+            for (const auto& key : contract_id_remove) {
+                prev_state->remove<ContractStorageEntry>(key);
+            }
             
-            for (const auto&item : store_map) {
-                if (diff[item.first].valid()) {
-                    K::apply_entry_change(item, diff[item.first]);
+            for (const auto& storage : contract_to_storage_change) {
+                auto& prev_entry = prev_state->lookup<ContractStorageEntry>(storage.first);
+                
+                //is valid
+                if (prev_entry.valid()) {
+                    for (const auto& item : storage.second.contract_change) {
+                        ContractStorageChangeItem change_item;
+                        
+                        if (ContractStorageChangeItem::isbeforechange((*prev_entry).contract_storages.at(item.first), item.second)) {
+                            change_item = item.second;
+                            change_item.update_contract_storages(item.first, change_item, (*prev_entry).contract_storages);
+                            
+                        } else {
+                            change_item.after = item.second.before;
+                            change_item.before = item.second.after;
+                            change_item.update_contract_storages(item.first, change_item, (*prev_entry).contract_storages);
+                        }
+                        
+                        //ContractStorageChangeItem::apply_storage_change();
+                        prev_state->store(storage.first, *prev_entry);
+                    }
                 }
             }
         }
@@ -83,28 +105,48 @@ namespace thinkyoung {
              */
             //apply_entrys( prev_state, _feed_index_to_entry, _feed_index_remove );
             //special apply for amounts of data
-            apply_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
+            apply_storage_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
         }
-        
-        void populate_undo_state_change(PendingChainStatePtr& undo_state, ChainInterfacePtr &prev_state,
-                                        unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
-                                        unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
-                                        unordered_set<ContractIdType>&       contract_id_remove) {
-            for (const auto& item : contract_id_remove) {
-                for (const auto& storage: contract_id_to_storage[item]) {
+        void PendingChainState::populate_undo_state_change(const PendingChainStatePtr& undo_state,
+                const ChainInterfacePtr &prev_state,
+                const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
+                unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+                const unordered_set<ContractIdType>& contract_id_remove) {
+            for (const auto& key : contract_id_remove) {
+                //TODO remove contract
+                const auto prev_entry = prev_state->lookup<ContractStorageEntry>(key);
+                
+                if (prev_entry.valid()) {
                     ContractStorageChangeItem change;
-                    change.before = contract_id_to_storage[item];
+                    //TODO before
+                    //change.before = contract_id_to_storage;
                     change.after = StorageDataType();
-                    contract_to_storage_change[item].contract_change[change.key] = change;
                 }
             }
             
-            for (const auto& item : contract_id_to_storage) {
-                auto change = ContractStorageChangeItem::get_entry_change(contract_id_to_storage[item.first], contract_to_storage_change[item.first]);
-                contract_to_storage_change[item.first].contract_change[change.key] = change;
+            for (auto& storage : contract_id_to_storage) {
+                auto prev_entry = prev_state->lookup<ContractStorageEntry>(storage.first);
+                thinkyoung::blockchain::ContractIdType contract_id = storage.first;
+                
+                if (prev_entry.valid()) {
+                    for (auto& item : (*prev_entry).contract_storages) {
+                        auto& storage_entry = contract_id_to_storage.at(storage.first);
+                        auto change = ContractStorageChangeItem::get_entry_change(item.second, storage_entry.contract_storages.at(item.first));
+                        auto& storage_change_entry = contract_to_storage_change[contract_id];
+                        //no const
+                        storage_change_entry.contract_change[item.first] = change;
+                    }
+                }
+                
+                undo_state->store(storage.first, contract_to_storage_change.at(storage.first));
             }
         }
-        
+        void PendingChainState::get_storage_change(const ChainInterfacePtr& undo_state_arg) {
+            auto undo_state = std::dynamic_pointer_cast<PendingChainState>(undo_state_arg);
+            ChainInterfacePtr prev_state = _prev_state.lock();
+            FC_ASSERT(prev_state, "Get preview state failed!");
+            populate_undo_state_change(undo_state, prev_state, _contract_id_to_storage, _contract_to_storage_change, _contract_id_remove);
+        }
         void PendingChainState::get_undo_state(const ChainInterfacePtr& undo_state_arg)const {
             auto undo_state = std::dynamic_pointer_cast<PendingChainState>(undo_state_arg);
             ChainInterfacePtr prev_state = _prev_state.lock();
@@ -124,7 +166,6 @@ namespace thinkyoung {
             populate_undo_state(undo_state, prev_state, _contract_to_trx_id, _contract_to_trx_id_remove);
             populate_undo_state(undo_state, prev_state, _value_id_to_storage, _value_id_remove);
             //special undo for amounts of data
-            populate_undo_state_change(undo_state, prev_state, _contract_id_to_storage, _contract_to_storage_change, _contract_id_remove);
         }
         TransactionEvaluationStatePtr   PendingChainState::sandbox_evaluate_transaction(const SignedTransaction& trx, const ShareType required_fees) {
             try {
@@ -170,11 +211,9 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((trx))
         }
-        
         oTransactionEntry PendingChainState::get_transaction(const TransactionIdType& trx_id, bool exact)const {
             return lookup<TransactionEntry>(trx_id);
         }
-        
         bool PendingChainState::is_known_transaction(const Transaction& trx)const {
             try {
                 if (_transaction_digests.count(trx.digest(get_chain_id())) > 0) return true;
@@ -188,26 +227,19 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((trx))
         }
-        
         void PendingChainState::store_transaction(const TransactionIdType& id, const TransactionEntry& rec) {
             store(id, rec);
         }
-        
-        
-        
         /** load the state from a variant */
         void PendingChainState::from_variant(const fc::variant& v) {
             fc::from_variant(v, *this);
         }
-        
         /** convert the state to a variant */
         fc::variant PendingChainState::to_variant()const {
             fc::variant v;
             fc::to_variant(*this, v);
             return v;
         }
-        
-        
         oPropertyEntry PendingChainState::property_lookup_by_id(const PropertyIdType id)const {
             const auto iter = _property_id_to_entry.find(id);
             
@@ -221,17 +253,14 @@ namespace thinkyoung {
             
             return prev_state->lookup<PropertyEntry>(id);
         }
-        
         void PendingChainState::property_insert_into_id_map(const PropertyIdType id, const PropertyEntry& entry) {
             _property_id_remove.erase(id);
             _property_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::property_erase_from_id_map(const PropertyIdType id) {
             _property_id_to_entry.erase(id);
             _property_id_remove.insert(id);
         }
-        
         oAccountEntry PendingChainState::account_lookup_by_id(const AccountIdType id)const {
             const auto iter = _account_id_to_entry.find(id);
             
@@ -245,7 +274,6 @@ namespace thinkyoung {
             
             return prev_state->lookup<AccountEntry>(id);
         }
-        
         oAccountEntry PendingChainState::account_lookup_by_name(const string& name)const {
             const auto iter = _account_name_to_id.find(name);
             
@@ -261,7 +289,6 @@ namespace thinkyoung {
             
             return oAccountEntry();
         }
-        
         oAccountEntry PendingChainState::account_lookup_by_address(const Address& addr)const {
             const auto iter = _account_address_to_id.find(addr);
             
@@ -277,39 +304,30 @@ namespace thinkyoung {
             
             return oAccountEntry();
         }
-        
         void PendingChainState::account_insert_into_id_map(const AccountIdType id, const AccountEntry& entry) {
             _account_id_remove.erase(id);
             _account_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::account_insert_into_name_map(const string& name, const AccountIdType id) {
             _account_name_to_id[name] = id;
         }
-        
         void PendingChainState::account_insert_into_address_map(const Address& addr, const AccountIdType id) {
             _account_address_to_id[addr] = id;
         }
-        
         void PendingChainState::account_insert_into_vote_set(const VoteDel&) {
         }
-        
         void PendingChainState::account_erase_from_id_map(const AccountIdType id) {
             _account_id_to_entry.erase(id);
             _account_id_remove.insert(id);
         }
-        
         void PendingChainState::account_erase_from_name_map(const string& name) {
             _account_name_to_id.erase(name);
         }
-        
         void PendingChainState::account_erase_from_address_map(const Address& addr) {
             _account_address_to_id.erase(addr);
         }
-        
         void PendingChainState::account_erase_from_vote_set(const VoteDel&) {
         }
-        
         oAssetEntry PendingChainState::asset_lookup_by_id(const AssetIdType id)const {
             const auto iter = _asset_id_to_entry.find(id);
             
@@ -323,7 +341,6 @@ namespace thinkyoung {
             
             return prev_state->lookup<AssetEntry>(id);
         }
-        
         oAssetEntry PendingChainState::asset_lookup_by_symbol(const string& symbol)const {
             const auto iter = _asset_symbol_to_id.find(symbol);
             
@@ -339,25 +356,20 @@ namespace thinkyoung {
             
             return oAssetEntry();
         }
-        
         void PendingChainState::asset_insert_into_id_map(const AssetIdType id, const AssetEntry& entry) {
             _asset_id_remove.erase(id);
             _asset_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::asset_insert_into_symbol_map(const string& symbol, const AssetIdType id) {
             _asset_symbol_to_id[symbol] = id;
         }
-        
         void PendingChainState::asset_erase_from_id_map(const AssetIdType id) {
             _asset_id_to_entry.erase(id);
             _asset_id_remove.insert(id);
         }
-        
         void PendingChainState::asset_erase_from_symbol_map(const string& symbol) {
             _asset_symbol_to_id.erase(symbol);
         }
-        
         oSlateEntry PendingChainState::slate_lookup_by_id(const SlateIdType id)const {
             const auto iter = _slate_id_to_entry.find(id);
             
@@ -371,17 +383,14 @@ namespace thinkyoung {
             
             return prev_state->lookup<SlateEntry>(id);
         }
-        
         void PendingChainState::slate_insert_into_id_map(const SlateIdType id, const SlateEntry& entry) {
             _slate_id_remove.erase(id);
             _slate_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::slate_erase_from_id_map(const SlateIdType id) {
             _slate_id_to_entry.erase(id);
             _slate_id_remove.insert(id);
         }
-        
         oBalanceEntry PendingChainState::balance_lookup_by_id(const BalanceIdType& id)const {
             const auto iter = _balance_id_to_entry.find(id);
             
@@ -395,17 +404,14 @@ namespace thinkyoung {
             
             return prev_state->lookup<BalanceEntry>(id);
         }
-        
         void PendingChainState::balance_insert_into_id_map(const BalanceIdType& id, const BalanceEntry& entry) {
             _balance_id_remove.erase(id);
             _balance_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::balance_erase_from_id_map(const BalanceIdType& id) {
             _balance_id_to_entry.erase(id);
             _balance_id_remove.insert(id);
         }
-        
         oTransactionEntry PendingChainState::transaction_lookup_by_id(const TransactionIdType& id)const {
             const auto iter = _transaction_id_to_entry.find(id);
             
@@ -419,26 +425,20 @@ namespace thinkyoung {
             
             return prev_state->lookup<TransactionEntry>(id);
         }
-        
         void PendingChainState::transaction_insert_into_id_map(const TransactionIdType& id, const TransactionEntry& entry) {
             _transaction_id_remove.erase(id);
             _transaction_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::transaction_insert_into_unique_set(const Transaction& trx) {
             _transaction_digests.insert(trx.digest(get_chain_id()));
         }
-        
         void PendingChainState::transaction_erase_from_id_map(const TransactionIdType& id) {
             _transaction_id_to_entry.erase(id);
             _transaction_id_remove.insert(id);
         }
-        
         void PendingChainState::transaction_erase_from_unique_set(const Transaction& trx) {
             _transaction_digests.erase(trx.digest(get_chain_id()));
         }
-        
-        
         oSlotEntry PendingChainState::slot_lookup_by_index(const SlotIndex index)const {
             const auto iter = _slot_index_to_entry.find(index);
             
@@ -452,7 +452,6 @@ namespace thinkyoung {
             
             return prev_state->lookup<SlotEntry>(index);
         }
-        
         oSlotEntry PendingChainState::slot_lookup_by_timestamp(const time_point_sec timestamp)const {
             const auto iter = _slot_timestamp_to_delegate.find(timestamp);
             
@@ -468,25 +467,20 @@ namespace thinkyoung {
             
             return oSlotEntry();
         }
-        
         void PendingChainState::slot_insert_into_index_map(const SlotIndex index, const SlotEntry& entry) {
             _slot_index_remove.erase(index);
             _slot_index_to_entry[index] = entry;
         }
-        
         void PendingChainState::slot_insert_into_timestamp_map(const time_point_sec timestamp, const AccountIdType delegate_id) {
             _slot_timestamp_to_delegate[timestamp] = delegate_id;
         }
-        
         void PendingChainState::slot_erase_from_index_map(const SlotIndex index) {
             _slot_index_to_entry.erase(index);
             _slot_index_remove.insert(index);
         }
-        
         void PendingChainState::slot_erase_from_timestamp_map(const time_point_sec timestamp) {
             _slot_timestamp_to_delegate.erase(timestamp);
         }
-        
         oContractEntry  PendingChainState::contract_lookup_by_id(const ContractIdType& id)const {
             const auto iter = _contract_id_to_entry.find(id);
             
@@ -500,7 +494,6 @@ namespace thinkyoung {
             
             return prev_state->lookup<ContractEntry>(id);
         }
-        
         oContractEntry  PendingChainState::contract_lookup_by_name(const ContractName& name)const {
             const auto iter = _contract_name_to_id.find(name);
             
@@ -516,7 +509,6 @@ namespace thinkyoung {
             
             return oContractEntry();
         }
-        
         oContractStorage PendingChainState::contractstorage_lookup_by_id(const ContractIdType& id)const {
             const auto iter = _contract_id_to_storage.find(id);
             
@@ -532,17 +524,14 @@ namespace thinkyoung {
             
             return oContractStorage();
         }
-        
         void PendingChainState::contract_insert_into_id_map(const ContractIdType& id, const ContractEntry& entry) {
             _contract_id_remove.erase(id);
             _contract_id_to_entry[id] = entry;
         }
-        
         void PendingChainState::contract_insert_into_name_map(const ContractName& name, const ContractIdType& id) {
             //_contract_id_remove.erase(id);
             _contract_name_to_id[name] = id;
         }
-        
         void PendingChainState::contractstorage_insert_into_id_map(const ContractIdType& id, const ContractStorageEntry& storage) {
             //_contract_id_remove.erase(id);
             _contract_id_to_storage[id] = storage;
@@ -563,17 +552,14 @@ namespace thinkyoung {
             
             return oContractValue();
         }
-        
         void PendingChainState::contract_store_value_by_valueid(const ContractValueIdType& id, const ContractValueEntry & value_data) {
             _value_id_to_storage[id] = value_data;
             _value_id_remove.erase(id);
         }
-        
         void PendingChainState::contract_erase_value_by_valueid(const ContractValueIdType& id) {
             _value_id_to_storage.erase(id);
             _value_id_remove.insert(id);
         }
-        
         oContractStorageChange PendingChainState::contract_storage_change_lookup(const ContractIdType& id) const {
             const auto iter = _contract_to_storage_change.find(id);
             
@@ -588,20 +574,16 @@ namespace thinkyoung {
             */
             return oContractStorageChange();
         }
-        
         void PendingChainState::contract_storage_change_remove(const ContractIdType& id) {
             _contract_to_storage_change.erase(id);
         }
-        
         void PendingChainState::contract_storage_change_store(const ContractIdType& id, const ContractStorageChangeEntry&  entry) {
             _contract_to_storage_change[id] = entry;
         }
-        
         void PendingChainState::contract_erase_from_id_map(const ContractIdType& id) {
             _contract_id_to_entry.erase(id);
             _contract_id_remove.insert(id);
         }
-        
         void PendingChainState::contract_erase_from_name_map(const ContractName& name) {
             // ContractIdType id = _contract_name_to_id[name];
             _contract_name_to_id.erase(name);
@@ -703,12 +685,10 @@ namespace thinkyoung {
             this->_trx_to_contract_id.erase(id);
             _trx_to_contract_id_remove.insert(id);
         }
-        
         void PendingChainState::contractstorage_erase_from_id_map(const ContractIdType& id) {
             _contract_id_to_storage.erase(id);
             //_contract_id_remove.insert(id);
         }
-        
         thinkyoung::blockchain::BlockIdType PendingChainState::get_block_id(uint32_t block_num) const {
             const ChainInterfacePtr prev_state = _prev_state.lock();
             
@@ -716,7 +696,6 @@ namespace thinkyoung {
             
             return BlockIdType();
         }
-        
         thinkyoung::blockchain::SignedBlockHeader PendingChainState::get_block_header(const BlockIdType& id) const {
             const ChainInterfacePtr prev_state = _prev_state.lock();
             
@@ -724,6 +703,5 @@ namespace thinkyoung {
             
             return SignedBlockHeader();
         }
-        
     }
 } // thinkyoung::blockchain

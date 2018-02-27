@@ -398,6 +398,68 @@ namespace thinkyoung {
             
             return stor_change;
         }
+        template<typename StorageType>
+        bool map_contain( const StorageDataType& before, const StorageDataType& after ) {
+            StorageType before_value = before.as<StorageType>();
+            StorageType after_value = after.as<StorageType>();
+            
+            for (auto it1 = before_value.raw_storage_map.begin(); it1 != before_value.raw_storage_map.end(); ++it1) {
+                auto found = after_value.raw_storage_map.find(it1->first);
+                
+                if (found == after_value.raw_storage_map.end()) {
+                    return false;
+                }
+                
+                if (found->second == it1->second) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        bool ContractStorageChangeItem::isbeforechange(const StorageDataType& before, const ContractStorageChangeItem& change) {
+            if (before.is_array_type(before.storage_type) || before.is_table_type(before.storage_type)) {
+                if (before.storage_type == StorageValueTypes::storage_value_int_table ||
+                        before.storage_type == StorageValueTypes::storage_value_int_array) {
+                    if (before.storage_type == StorageValueTypes::storage_value_int_table) {
+                        return map_contain<StorageIntTableType>(change.before, before);
+                        
+                    } else if (before.storage_type == StorageValueTypes::storage_value_int_array) {
+                        return map_contain<StorageIntArrayType>(change.before, before);
+                    }
+                    
+                } else if (before.storage_type == StorageValueTypes::storage_value_number_table ||
+                           before.storage_type == StorageValueTypes::storage_value_number_array) {
+                    if (before.storage_type == StorageValueTypes::storage_value_number_table) {
+                        return map_contain<StorageNumberTableType>(change.before, before);
+                        
+                    } else if (before.storage_type == StorageValueTypes::storage_value_number_array) {
+                        return map_contain<StorageNumberArrayType>(change.before, before);
+                    }
+                    
+                } else if (before.storage_type == StorageValueTypes::storage_value_bool_table ||
+                           before.storage_type == StorageValueTypes::storage_value_bool_array) {
+                    if (before.storage_type == StorageValueTypes::storage_value_bool_table) {
+                        return map_contain<StorageBoolTableType>(change.before, before);
+                        
+                    } else if (before.storage_type == StorageValueTypes::storage_value_bool_array) {
+                        return map_contain<StorageBoolArrayType>(change.before, before);
+                    }
+                    
+                } else if (before.storage_type == StorageValueTypes::storage_value_string_table ||
+                           before.storage_type == StorageValueTypes::storage_value_string_array) {
+                    if (before.storage_type == StorageValueTypes::storage_value_string_table) {
+                        return map_contain<StorageStringTableType>(change.before, before);
+                        
+                    } else if (before.storage_type == StorageValueTypes::storage_value_string_array) {
+                        return map_contain<StorageStringArrayType>(change.before, before);
+                    }
+                }
+                
+            } else {
+                return change.before.equals(before);
+            }
+        }
     }
     
 }

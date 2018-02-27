@@ -17,6 +17,7 @@ namespace thinkyoung {
             
         };
         
+        typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         class PendingChainState : public ChainInterface, public std::enable_shared_from_this < PendingChainState > {
           public:
           
@@ -85,7 +86,22 @@ namespace thinkyoung {
             * @return TransactionEvaluationStatePtr
             */
             virtual TransactionEvaluationStatePtr   sandbox_evaluate_transaction(const SignedTransaction& trx, const ShareType required_fees = 0);
+            /**
+            * call T::store to Store an T type data into database according key
             
+            * @param key key used to find data
+            * @param entry entry to be stored
+            *
+            * @return void
+            */
+            template<typename T, typename U>
+            void store(const U& key, const T& entry) {
+                try {
+                    T::store(*this, key, entry);
+                }
+                
+                FC_CAPTURE_AND_RETHROW((key)(entry))
+            }
             /** populate undo state with everything that would be necessary to revert this
              * pending state to the previous state.
              */
@@ -98,6 +114,7 @@ namespace thinkyoung {
             * @return void
             */
             virtual void                   get_undo_state(const ChainInterfacePtr& undo_state)const;
+            
             template<typename T, typename U>
             void populate_undo_state(const ChainInterfacePtr& undo_state, const ChainInterfacePtr& prev_state,
                                      const T& store_map, const U& remove_set)const {
@@ -118,14 +135,15 @@ namespace thinkyoung {
                     else undo_state->remove<V>(key);
                 }
             }
+            /*
             template<typename T, typename U, typename K>
             void populate_undo_state_change(const ChainInterfacePtr& undo_state, const ChainInterfacePtr& prev_state,
                                             const T& store_map, const K& change, const U& remove_set)const {
                 using V = typename T::mapped_type;
-                
+            
                 for (const auto& key : remove_set) {
                     const auto prev_entry = prev_state->lookup<V>(key);
-                    
+            
                     //undo_state->get_entry_change(prev_entry);
                     //change
                     //before after
@@ -133,20 +151,20 @@ namespace thinkyoung {
                         undo_state->store(key, *prev_entry);
                     }
                 }
-                
+            
                 for (const auto& item : store_map) {
                     const auto& key = item.first;
                     const auto prev_entry = prev_state->lookup<V>(key);
-                    
+            
                     if (prev_entry.valid()) {
                         (item.second, *prev_entry)
                         undo_state->store(key, *prev_entry);
-                        
+            
                     } else {
                         undo_state->remove<V>(key);
                     }
                 }
-            }
+            }*/
             template<typename T, typename U>
             void apply_entrys(const ChainInterfacePtr& prev_state, const T& store_map, const U& remove_set)const {
                 using V = typename T::mapped_type;
@@ -155,18 +173,20 @@ namespace thinkyoung {
                 
                 for (const auto& item : store_map) prev_state->store(item.first, item.second);
             }
+            /*
             template<typename K, typename U>
             void apply_entrys_change(const ChainInterfacePtr& prev_state, const K& change, const U& remove_set)const {
                 using V = typename T::mapped_type;
-                
+            
                 for (const auto& key : remove_set) {
                     prev_state->remove<V>(key);
                 }
-                
+            
                 for (const auto& item : store_map) {
                     prev_state->store(item.first, item.second);
                 }
             }
+            */
             /**
             * load the state from a variant
             *
@@ -192,6 +212,8 @@ namespace thinkyoung {
             virtual fc::time_point_sec     get_head_block_timestamp()const override;
             
             virtual BlockIdType               get_block_id(uint32_t block_num)const;
+            
+            void get_storage_change(const ChainInterfacePtr& undo_state_arg);
             map<PropertyIdType, PropertyEntry>                             _property_id_to_entry;
             set<PropertyIdType>                                              _property_id_remove;
             
@@ -669,8 +691,12 @@ namespace thinkyoung {
             oContractStorageChange contract_storage_change_lookup(const ContractIdType&) const;
             void contract_storage_change_remove(const ContractIdType&);
             void contract_storage_change_store(const ContractIdType&, const ContractStorageChangeEntry&);
+            void populate_undo_state_change(const PendingChainStatePtr& undo_state,
+                                            const ChainInterfacePtr &prev_state,
+                                            const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
+                                            unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+                                            const unordered_set<ContractIdType>& contract_id_remove);
         };
-        typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         
     }
 } // thinkyoung::blockchain

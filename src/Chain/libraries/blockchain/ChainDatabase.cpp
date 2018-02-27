@@ -840,6 +840,7 @@ namespace thinkyoung {
                         return;
                         
                     PendingChainStatePtr undo_state = std::make_shared<PendingChainState>(pending_state);
+                    pending_state->get_storage_change(undo_state);
                     pending_state->get_undo_state(undo_state);
                     
                     if (block_num > ALP_BLOCKCHAIN_MAX_UNDO_HISTORY) {
