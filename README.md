@@ -12,16 +12,20 @@ For more information about Achain, please read following document:
 Build Achain
 --------
 Different platforms have different build instructions:
-* [Windows](https://github.com/Achain-Dev/Achain)
-* [Ubuntu](https://github.com/Achain-Dev/Achain_ubuntu)
+* [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
+* [Linux](https://github.com/Achain-Dev/Achain_linux)
+
+How to deploy a private chain
+-------------------------------------
+* [deploy private chain](https://github.com/Achain-Dev/Achain/blob/master/deploy_private_chain.md)
 
 Integration instructions for exchanges
 -------------------------------------
-https://github.com/Achain-Dev/Achain-Exchange
+* [Achain-Exchange](https://github.com/Achain-Dev/Achain-Exchange)
 
 How to use RPC API
 --------------------
-https://www.achain.com/help-en/rpc.html
+* [RPC API](https://www.achain.com/help-en/rpc.html)
  
 Contributing
 ------------

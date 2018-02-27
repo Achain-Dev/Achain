@@ -188,7 +188,6 @@
     <ClCompile Include="libraries\blockchain\AccountEntry.cpp" />
     <ClCompile Include="libraries\blockchain\AccountOperations.cpp" />
     <ClCompile Include="libraries\blockchain\Address.cpp" />
-    <ClCompile Include="libraries\blockchain\applink.c" />
     <ClCompile Include="libraries\blockchain\Asset.cpp" />
     <ClCompile Include="libraries\blockchain\AssetEntry.cpp" />
     <ClCompile Include="libraries\blockchain\AssetOperations.cpp" />
