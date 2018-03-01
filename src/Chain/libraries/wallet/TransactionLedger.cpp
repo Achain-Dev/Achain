@@ -258,6 +258,47 @@ WalletTransactionEntry WalletImpl::scan_transaction(
             }
 
         } */
+        //scan:begin
+        auto withdraw = false;
+        auto deposit = false;
+        for (const auto& op : transaction.operations)
+        {
+            if (OperationTypeEnum(op.type) == withdraw_op_type)
+            {
+                withdraw = true;
+                continue;
+            }
+            if (OperationTypeEnum(op.type) == deposit_op_type)
+            {
+                deposit = true;
+                continue;
+            }
+
+
+        }
+        if (withdraw && deposit)
+        {
+#if 0
+            if (transaction_entry->ledger_entries.size() > 1 && transaction_entry->ledger_entries[0].amount.asset_id == 0)
+            {
+                transaction_entry->ledger_entries[0].amount -= total_fee;
+            }
+#endif
+            auto size = transaction_entry->ledger_entries.size();
+
+            if (size > 0 && transaction_entry->ledger_entries[0].amount.asset_id == 0)
+            {
+                if (has_withdrawal && !has_deposit)
+                {
+                    transaction_entry->ledger_entries[0].amount -= total_fee;
+                }
+                else if (size > 1)
+                {
+                    transaction_entry->ledger_entries[0].amount -= total_fee;
+                }
+            }
+        }
+        //scan:end
         transaction_entry->fee = total_fee;
 
         /* When the only withdrawal for asset 0 is the fee (bids) */
@@ -1659,7 +1700,8 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                 }
             }
 
-            if (pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction)
+            //pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction
+            if (pretty_trx.trx_type == thinkyoung::blockchain::TransactionType::transfer_multi_asset)
             {
                 if (asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
                 {
@@ -1732,11 +1774,25 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                     running_balances[fee_asset_id] = Asset(0, fee_asset_id);
 
                 auto any_from_me = false;
+                auto skip = false;
                 auto ledger_size = trx.ledger_entries.size();
                 vector<PrettyLedgerEntry>::iterator entry = trx.ledger_entries.begin();
                 for (; entry != trx.ledger_entries.end();)
                 {
                     const auto amount_asset_id = entry->amount.asset_id;
+
+                    //如果是多资产转账
+                    if (trx.trx_type == thinkyoung::blockchain::TransactionType::transfer_multi_asset)
+                    {
+                        if (((amount_asset_id != 0 && asset_symbol == ALP_BLOCKCHAIN_SYMBOL) ||
+                            (entry->amount.asset_id == 0) && !asset_symbol.empty() && asset_symbol != ALP_BLOCKCHAIN_SYMBOL) 
+                            && ledger_size > 1)
+                        {
+                            entry = trx.ledger_entries.erase(entry);
+                            continue;
+                        }
+                    }
+
                     if (running_balances.count(amount_asset_id) <= 0)
                         running_balances[amount_asset_id] = Asset(0, amount_asset_id);
 
@@ -1748,38 +1804,45 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
 
                     if (from_me)
                     {
-                        /* Special check to ignore asset issuing */
-                        //if ((running_balances[amount_asset_id] - entry.amount) >= Asset(0, amount_asset_id))
-                            running_balances[amount_asset_id] -= entry->amount;
+                        running_balances[amount_asset_id] -= entry->amount;
 
-                        /* Subtract fee once on the first entry */
-  /*                      if (!trx.is_virtual && !any_from_me)
-                            running_balances[fee_asset_id] -= trx.fee;
-							*/
-                        if (ledger_size == 1)
+                        if (trx.trx_type == thinkyoung::blockchain::TransactionType::create_asset)
                         {
                             running_balances[fee_asset_id] -= trx.fee;
                         }
-                            
-                    }
-                    
-
-                    /* Special case to subtract fee if we canceled a bid */
-                    if (!trx.is_virtual && trx.is_market_cancel && amount_asset_id != fee_asset_id)
-                        running_balances[fee_asset_id] -= trx.fee;
-
-                    auto to_me = false;
-                    to_me |= name == entry->to_account;
-                    to_me |= (entry->to_account.find(name + " ") == 0); /* If payer != sender */
-                    if (to_me) running_balances[amount_asset_id] += entry->amount;
-
-                    //auto from_to_me = from_me && to_me;
-
-                    /*if create_asset   balance -= fee*/
-                    if (any_from_me)
-                    {
-                        if (trx.trx_type == thinkyoung::blockchain::TransactionType::create_asset)
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::transfer_multi_asset)
                         {
+                            //if transfer multi-asset
+                            if (asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
+                            {
+                                //multi-asset transfer OP：specify ALP_BLOCKCHAIN_SYMBOL
+                                running_balances[amount_asset_id] += entry->amount;
+                                entry->amount = Asset(0, 0);
+                            }
+                            else if (ledger_size > 1 && amount_asset_id == 0)
+                            {
+                                running_balances[amount_asset_id] += entry->amount;
+                            }
+
+                            if (!skip)
+                                running_balances[fee_asset_id] -= trx.fee;
+
+                            skip = true;
+                        }
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction)
+                        {
+#if 0
+                            //transfer ACT
+                            if (ledger_size == 1)
+                            {
+                                running_balances[fee_asset_id] -= trx.fee;
+                            }
+                            // if wallet_set_transaction_scanning true，> 1 ledger
+                            else
+                            {
+                                entry->amount -= trx.fee;
+                            }
+#endif
                             running_balances[fee_asset_id] -= trx.fee;
                         }
                         else if (trx.trx_type == thinkyoung::blockchain::TransactionType::issue_asset)
@@ -1793,49 +1856,33 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
 
                             running_balances[fee_asset_id] -= trx.fee;
                         }
-                        //if transfer multi-asset
-                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::normal_transaction)
-                        {
-                            if (amount_asset_id != 0 && asset_symbol == ALP_BLOCKCHAIN_SYMBOL)
-                            {
-                                //multi-asset transfer OP
-                                entry->amount = Asset(0, 0);
-                                running_balances[entry->amount.asset_id] -= trx.fee;
-
-                                /*
-                                entry = trx->ledger_entries.erase(entry);
-
-                                if (entry != trx->ledger_entries.end())
-                                {
-                                    entry->amount = Asset(0, 0);
-
-                                    running_balances[entry->amount.asset_id] -= trx->fee;
-                                }
-
-                                continue;
-                                */
-                            }
-                        }
                         /*BUG:9146*/
                         else if (trx.trx_type == thinkyoung::blockchain::TransactionType::register_account_transaction)
                         {
                             running_balances[fee_asset_id] -= trx.fee;
                         }
+                        else if (trx.trx_type == thinkyoung::blockchain::TransactionType::withdraw_pay_transaction)
+                        {
+                            //代理领工资，不会改变该代理账户的可用余额，这里不用扣除
+                            running_balances[amount_asset_id] += entry->amount;
+                        }
                     }
+
+                    /* Special case to subtract fee if we canceled a bid */
+                    if (!trx.is_virtual && trx.is_market_cancel && amount_asset_id != fee_asset_id)
+                        running_balances[fee_asset_id] -= trx.fee;
+
+                    auto to_me = false;
+                    to_me |= name == entry->to_account;
+                    to_me |= (entry->to_account.find(name + " ") == 0); /* If payer != sender */
+                    if (to_me && entry->amount.amount != 0) running_balances[amount_asset_id] += entry->amount;
 
                     entry->running_balances[name][amount_asset_id] = running_balances[amount_asset_id];
                     entry->running_balances[name][fee_asset_id] = running_balances[fee_asset_id];
 
                     entry++;
                 }
-                /*
-                if (trx->ledger_entries.empty())
-                {
-                    trx = pretties.erase(trx);
-
-                    continue;
-                }
-                */
+ 
                 if (account_specified)
                 {
                     /* Don't return fees we didn't pay */
@@ -2055,6 +2102,18 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
                 pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::register_account_transaction;
                 break;
             }
+
+            case withdraw_op_type:
+            {
+                //multi-asset transfer
+                if (entry.amount.asset_id != 0)
+                {
+                    pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::transfer_multi_asset;
+                }
+
+                break;
+            }
+
             default:
                 break;
             }

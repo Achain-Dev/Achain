@@ -22,6 +22,7 @@ namespace thinkyoung {
             update_account_transaction = 5,     //更新账户信息
             create_asset = 6,       // 创建新资产
             issue_asset = 7,    //分配资产
+            transfer_multi_asset = 8,   //多资产转账
 
 
             
@@ -227,6 +228,7 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::TransactionType,
                 (update_account_transaction)
                 (create_asset)
                 (issue_asset)
+                (transfer_multi_asset)
                 (register_contract_transaction)
                 (transfer_contract_transaction)
                 (upgrade_contract_transaction)
