@@ -179,32 +179,6 @@ namespace thinkyoung {
                 
                 //ilog("@n I couldn't parse that as anything!: ${o}", ("o", vo));
             }
-            /*  check????
-            uint32_t detail::ClientImpl::wallet_import_keys_from_json( const fc::path& json_filename,
-            const string& imported_wallet_passphrase,
-            const string& account )
-            { try {
-            FC_ASSERT( fc::exists( json_filename ) );
-            FC_ASSERT( _wallet->is_open() );
-            FC_ASSERT( _wallet->is_unlocked() );
-            _wallet->get_account( account );
-            
-            const auto object = fc::json::from_file<fc::variant>( json_filename );
-            vector<private_key_type> keys;
-            read_keys( object, keys, imported_wallet_passphrase );
-            
-            uint32_t count = 0;
-            for( const auto& key : keys )
-            count += _wallet->friendly_import_private_key( key, account );
-            
-            _wallet->auto_backup( "json_key_import" );
-            ulog( "Successfully imported ${n} new private keys into account ${name}", ("n",count)("name",account) );
-            
-            _wallet->start_scan( 0, 1 );
-            
-            return count;
-            } FC_CAPTURE_AND_RETHROW( (json_filename) ) }
-            */
             
             bool detail::ClientImpl::wallet_set_automatic_backups(bool enabled) {
                 // set limit in  sandbox state
@@ -345,27 +319,6 @@ namespace thinkyoung {
                 
                 return errors;
             }
-            /*wallet_transaction_entry detail::ClientImpl::wallet_asset_authorize_key( const string& paying_account_name,//check????
-                                                                                       const string& symbol,
-                                                                                       const string& key,
-                                                                                       const object_id_type& meta )
-                                                                                       {
-                                                                                       address addr;
-                                                                                       try {
-                                                                                       try { addr = address( public_key_type( key ) ); }
-                                                                                       catch ( ... ) { addr = address( key ); }
-                                                                                       }
-                                                                                       catch ( ... )
-                                                                                       {
-                                                                                       auto account = _chain_db->get_account_entry( key );
-                                                                                       FC_ASSERT( account.valid() );
-                                                                                       addr = account->active_key();
-                                                                                       }
-                                                                                       auto entry = _wallet->asset_authorize_key( paying_account_name, symbol, addr, meta, true );
-                                                                                       _wallet->cache_transaction( entry );
-                                                                                       network_broadcast_transaction( entry.trx );
-                                                                                       return entry;
-                                                                                       }*/
             
             WalletTransactionEntry detail::ClientImpl::wallet_publish_slate(const string& publishing_account_name,
                     const string& paying_account_name) {
@@ -405,27 +358,6 @@ namespace thinkyoung {
                 return entry;
             }
             
-            // wallet_transaction_entry detail::ClientImpl::wallet_collect_vested_balances( const string& account_name )
-            // {
-            //     const auto filter = []( const balance_entry& entry ) -> bool
-            //     {
-            //         return entry.condition.type == withdraw_vesting_type;
-            //     };
-            //     auto entry = _wallet->collect_account_balances( account_name, filter, "collect vested", true );
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //     return entry;
-            // }
-            
-            // wallet_transaction_entry detail::ClientImpl::wallet_delegate_update_signing_key( const string& authorizing_account_name,
-            //                                                                                          const string& delegate_name,
-            //                                                                                          const public_key_type& signing_key )
-            // {
-            //    auto entry = _wallet->update_signing_key( authorizing_account_name, delegate_name, signing_key, true );
-            //    _wallet->cache_transaction( entry );
-            //    network_broadcast_transaction( entry.trx );
-            //    return entry;
-            // }
             
             int32_t detail::ClientImpl::wallet_recover_accounts(int32_t accounts_to_recover, int32_t maximum_number_of_attempts) {
                 // set limit in  sandbox state
@@ -436,11 +368,6 @@ namespace thinkyoung {
                 return _wallet->recover_accounts(accounts_to_recover, maximum_number_of_attempts);
             }
             
-            // wallet_transaction_entry detail::ClientImpl::wallet_recover_titan_deposit_info( const string& transaction_id_prefix,
-            //                                                                                   const string& recipient_account )
-            // {
-            //     return _wallet->recover_transaction( transaction_id_prefix, recipient_account );
-            // }
             
             optional<variant_object> detail::ClientImpl::wallet_verify_titan_deposit(const string& transaction_id_prefix) {
                 // set limit in  sandbox state
@@ -450,17 +377,6 @@ namespace thinkyoung {
                 return _wallet->verify_titan_deposit(transaction_id_prefix);
             }
             
-            // wallet_transaction_entry detail::ClientImpl::wallet_transfer(
-            //         const string& amount_to_transfer,
-            //         const string& asset_symbol,
-            //         const string& from_account_name,
-            //         const string& to_account_name,
-            //         const string& memo_message,
-            //         const vote_strategy& strategy )
-            // {
-            //     return wallet_transfer_from(amount_to_transfer, asset_symbol, from_account_name, from_account_name,
-            //                                 to_account_name, memo_message, strategy);
-            // }
             
             WalletTransactionEntry detail::ClientImpl::wallet_transfer_to_public_account(
                 const string& amount_to_transfer,
@@ -597,59 +513,6 @@ namespace thinkyoung {
                 //                _wallet->cache_transaction(entry);
                 return entry.trx;
             }
-            // wallet_transaction_entry detail::ClientImpl::wallet_transfer_from(
-            //         const string& amount_to_transfer,
-            //         const string& asset_symbol,
-            //         const string& paying_account_name,
-            //         const string& from_account_name,
-            //      const string& to_account_name,
-            //         const string& memo_message,
-            //         const vote_strategy& strategy )
-            // {
-            //     asset amount = _chain_db->to_ugly_asset(amount_to_transfer, asset_symbol);
-            //     auto payer = _wallet->get_account(paying_account_name);
-            //     auto recipient = _wallet->get_account(to_account_name);
-            //     transaction_builder_ptr builder = _wallet->create_transaction_builder();
-            //     auto entry = builder->deposit_asset(payer, recipient, amount,
-            //                                          memo_message, from_account_name)
-            //                           .finalize( true, strategy )
-            //                           .sign();
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //     /*for( auto&& notice : builder->encrypted_notifications() )
-            //         _mail_client->send_encrypted_message(std::move(notice),
-            //                                              from_account_name,
-            //                                              to_account_name,
-            //                                              recipient.owner_key);*/
-            //
-            //     return entry;
-            // }
-            //
-            // balance_id_type detail::ClientImpl::wallet_multisig_get_balance_id(
-            //                                         const string& asset_symbol,
-            //                                         uint32_t m,
-            //                                         const vector<address>& addresses )const
-            // {
-            //     auto id = _chain_db->get_asset_id( asset_symbol );
-            //     return balance_entry::get_multisig_balance_id( id, m, addresses );
-            // }
-            //
-            // wallet_transaction_entry detail::ClientImpl::wallet_multisig_deposit(
-            //                                                     const string& amount,
-            //                                                     const string& symbol,
-            //                                                     const string& from_name,
-            //                                                     uint32_t m,
-            //                                                     const vector<address>& addresses,
-            //                                                     const vote_strategy& strategy )
-            // {
-            //     asset ugly_asset = _chain_db->to_ugly_asset(amount, symbol);
-            //     auto builder = _wallet->create_transaction_builder();
-            //     builder->deposit_asset_to_multisig( ugly_asset, from_name, m, addresses );
-            //     auto entry = builder->finalize( true, strategy ).sign();
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //     return entry;
-            // }
             
             TransactionBuilder detail::ClientImpl::wallet_withdraw_from_address(
                 const string& amount,
@@ -689,177 +552,6 @@ namespace thinkyoung {
                 return *builder;
             }
             
-            // transaction_builder detail::ClientImpl::wallet_withdraw_from_legacy_address(
-            //                                                     const string& amount,
-            //                                                     const string& symbol,
-            //                                                     const pts_address& from_address,
-            //                                                     const string& to,
-            //                                                     const vote_strategy& strategy,
-            //                                                     bool sign,
-            //                                                     const string& builder_path )const
-            // {
-            //     address to_address;
-            //     try {
-            //         auto acct = _wallet->get_account( to );
-            //         to_address = acct.owner_address();
-            //     } catch (...) {
-            //         to_address = address( to );
-            //     }
-            //     asset ugly_asset = _chain_db->to_ugly_asset(amount, symbol);
-            //     auto builder = _wallet->create_transaction_builder();
-            //     auto fee = _wallet->get_transaction_fee();
-            //     builder->withdraw_from_balance( from_address, ugly_asset.amount + fee.amount );
-            //     builder->deposit_to_balance( to_address, ugly_asset );
-            //     builder->finalize( false, strategy );
-            //     if( sign )
-            //         builder->sign();
-            //     _wallet->write_latest_builder( *builder, builder_path );
-            //     return *builder;
-            // }
-            //
-            // transaction_builder detail::ClientImpl::wallet_multisig_withdraw_start(
-            //                                                     const string& amount,
-            //                                                     const string& symbol,
-            //                                                     const balance_id_type& from,
-            //                                                     const address& to_address,
-            //                                                     const vote_strategy& strategy,
-            //                                                     const string& builder_path )const
-            // {
-            //     asset ugly_asset = _chain_db->to_ugly_asset(amount, symbol);
-            //     auto builder = _wallet->create_transaction_builder();
-            //     auto fee = _wallet->get_transaction_fee();
-            //     builder->withdraw_from_balance( from, ugly_asset.amount + fee.amount );
-            //     builder->deposit_to_balance( to_address, ugly_asset );
-            //     _wallet->write_latest_builder( *builder, builder_path );
-            //     return *builder;
-            // }
-            //
-            // transaction_builder detail::ClientImpl::wallet_builder_add_signature(
-            //                                             const transaction_builder& builder,
-            //                                             bool broadcast )
-            // { try {
-            //     auto new_builder = _wallet->create_transaction_builder( builder );
-            //     if( new_builder->transaction_entry.trx.signatures.empty() )
-            //         new_builder->finalize( false );
-            //     new_builder->sign();
-            //     if( broadcast )
-            //     {
-            //         try {
-            //             network_broadcast_transaction( new_builder->transaction_entry.trx );
-            //         }
-            //         catch(...) {
-            //             ulog("I tried to broadcast the transaction but it was not valid.");
-            //         }
-            //     }
-            //     _wallet->write_latest_builder( *new_builder, "" );
-            //     return *new_builder;
-            // } FC_CAPTURE_AND_RETHROW( (builder)(broadcast) ) }
-            //
-            // transaction_builder detail::ClientImpl::wallet_builder_file_add_signature(
-            //                                             const string& builder_path,
-            //                                             bool broadcast )
-            // { try {
-            //     auto new_builder = _wallet->create_transaction_builder_from_file( builder_path );
-            //     if( new_builder->transaction_entry.trx.signatures.empty() )
-            //         new_builder->finalize( false );
-            //     new_builder->sign();
-            //     if( broadcast )
-            //     {
-            //         try {
-            //             network_broadcast_transaction( new_builder->transaction_entry.trx );
-            //         }
-            //         catch(...) {
-            //             ulog("I tried to broadcast the transaction but it was not valid.");
-            //         }
-            //     }
-            //     _wallet->write_latest_builder( *new_builder, builder_path );
-            //     _wallet->write_latest_builder( *new_builder, "" ); // always write to "latest"
-            //     return *new_builder;
-            // } FC_CAPTURE_AND_RETHROW( (broadcast)(builder_path) ) }
-            //
-            // wallet_transaction_entry detail::ClientImpl::wallet_release_escrow( const string& paying_account_name,
-            //                                                                       const address& escrow_balance_id,
-            //                                                                       const string& released_by,
-            //                                                                       double amount_to_sender,
-            //                                                                       double amount_to_receiver )
-            // {
-            //     auto payer = _wallet->get_account(paying_account_name);
-            //     auto balance_rec = _chain_db->get_balance_entry( escrow_balance_id );
-            //     FC_ASSERT( balance_rec.valid() );
-            //     FC_ASSERT( balance_rec->condition.type == withdraw_escrow_type );
-            //     FC_ASSERT( released_by == "sender" ||
-            //                released_by == "receiver" ||
-            //                released_by == "agent" );
-            //
-            //     auto asset_rec = _chain_db->get_asset_entry( balance_rec->asset_id() );
-            //     FC_ASSERT( asset_rec.valid() );
-            //     if( asset_rec->precision )
-            //     {
-            //        amount_to_sender   *= asset_rec->precision;
-            //        amount_to_receiver *= asset_rec->precision;
-            //     }
-            //
-            //     auto escrow_cond = balance_rec->condition.as<withdraw_with_escrow>();
-            //     address release_by_address;
-            //
-            //     if( released_by == "sender" ) release_by_address = escrow_cond.sender;
-            //     if( released_by == "receiver" ) release_by_address = escrow_cond.receiver;
-            //     if( released_by == "agent" ) release_by_address = escrow_cond.escrow;
-            //
-            //     transaction_builder_ptr builder = _wallet->create_transaction_builder();
-            //     auto entry = builder->release_escrow( payer, escrow_balance_id, release_by_address, amount_to_sender, amount_to_receiver )
-            //   //  TODO: restore this function       .finalize()
-            //                                         .sign();
-            //
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //
-            //     /* TODO: notify other parties of the transaction.
-            //     for( auto&& notice : builder->encrypted_notifications() )
-            //         _mail_client->send_encrypted_message(std::move(notice),
-            //                                              from_account_name,
-            //                                              to_account_name,
-            //                                              recipient.owner_key);
-            //
-            //     */
-            //     return entry;
-            // }
-            //
-            // wallet_transaction_entry detail::ClientImpl::wallet_transfer_from_with_escrow(
-            //         const string& amount_to_transfer,
-            //         const string& asset_symbol,
-            //         const string& paying_account_name,
-            //         const string& from_account_name,
-            //      const string& to_account_name,
-            //         const string& escrow_account_name,
-            //         const digest_type&   agreement,
-            //         const string& memo_message,
-            //         const vote_strategy& strategy )
-            // {
-            //     asset amount = _chain_db->to_ugly_asset(amount_to_transfer, asset_symbol);
-            //     auto sender = _wallet->get_account(from_account_name);
-            //     auto payer = _wallet->get_account(paying_account_name);
-            //     auto recipient = _wallet->get_account(to_account_name);
-            //     auto escrow_account = _wallet->get_account(escrow_account_name);
-            //     transaction_builder_ptr builder = _wallet->create_transaction_builder();
-            //
-            //     auto entry = builder->deposit_asset_with_escrow(payer, recipient, escrow_account, agreement,
-            //                                                      amount,memo_message, sender.owner_key)
-            //                           .finalize( true, strategy )
-            //                           .sign();
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //  /*
-            //     for( auto&& notice : builder->encrypted_notifications() )
-            //         _mail_client->send_encrypted_message(std::move(notice),
-            //                                              from_account_name,
-            //                                              to_account_name,
-            //                                              recipient.owner_key);
-            //                                           */
-            //
-            //     return entry;
-            // }
-            
             WalletTransactionEntry detail::ClientImpl::wallet_asset_create(
                 const string& symbol,
                 const string& asset_name,
@@ -879,37 +571,6 @@ namespace thinkyoung {
                 network_broadcast_transaction(entry.trx);
                 return entry;
             }
-            
-            
-            // wallet_transaction_entry detail::ClientImpl::wallet_asset_update(  //check???? to recover????
-            //         const string& symbol,
-            //         const optional<string>& name,
-            //         const optional<string>& description,
-            //         const optional<variant>& public_data,
-            //         const optional<double>& maximum_share_supply,
-            //         const optional<uint64_t>& precision,
-            //         const share_type& issuer_fee,
-            //         double issuer_market_fee,
-            //         const vector<asset_permissions>& flags,
-            //         const vector<asset_permissions>& issuer_permissions,
-            //         const string& issuer_account_name,
-            //         uint32_t required_sigs,
-            //         const vector<address>& authority
-            //       )
-            // {
-            //    uint32_t flags_int = 0;
-            //    uint32_t issuer_perms_int = 0;
-            //    for( auto item : flags ) flags_int |= item;
-            //    for( auto item : issuer_permissions ) issuer_perms_int |= item;
-            //    auto entry = _wallet->update_asset( symbol, name, description, public_data, maximum_share_supply,
-            //                                         precision, issuer_fee, issuer_market_fee, flags_int,
-            //                                         issuer_perms_int, issuer_account_name,
-            //                                         required_sigs, authority, true );
-            //
-            //    _wallet->cache_transaction( entry );
-            //    network_broadcast_transaction( entry.trx );
-            //    return entry;
-            // }
             
             
             WalletTransactionEntry detail::ClientImpl::wallet_asset_issue(
@@ -972,11 +633,6 @@ namespace thinkyoung {
                     
                 return _wallet->list_my_accounts();
             }
-            //
-            // vector<wallet_account_entry> detail::ClientImpl::wallet_list_favorite_accounts() const
-            // {
-            //   return _wallet->list_favorite_accounts();
-            // }
             
             vector<WalletAccountEntry> detail::ClientImpl::wallet_list_unregistered_accounts() const {
                 // set limit in  sandbox state
@@ -1200,11 +856,6 @@ namespace thinkyoung {
                 FC_CAPTURE_AND_RETHROW((account_name)(key_type))
             }
             
-            
-            
-            
-            
-            
             Address ClientImpl::wallet_account_create(const string& account_name,
                     const variant& private_data) {
                 // set limit in  sandbox state
@@ -1216,10 +867,6 @@ namespace thinkyoung {
                 return Address(result);
             }
             
-            // void ClientImpl::wallet_account_set_favorite( const string& account_name, bool is_favorite )
-            // {
-            //     _wallet->account_set_favorite( account_name, is_favorite );
-            // }
             
             void ClientImpl::wallet_rescan_blockchain(const uint32_t start_block_num, const uint32_t limit) {
                 // set limit in  sandbox state
@@ -1276,30 +923,6 @@ namespace thinkyoung {
                 
                 FC_RETHROW_EXCEPTIONS(warn, "", ("transaction_id", transaction_id)("overwrite_existing", overwrite_existing))
             }
-            
-            // void ClientImpl::wallet_scan_transaction_experimental( const string& transaction_id, bool overwrite_existing )
-            // { try {
-            // #ifndef ALP_TEST_NETWORK
-            //    FC_ASSERT( false, "This command is for developer testing only!" );
-            // #endif
-            //    _wallet->scan_transaction_experimental( transaction_id, overwrite_existing );
-            // } FC_RETHROW_EXCEPTIONS( warn, "", ("transaction_id",transaction_id)("overwrite_existing",overwrite_existing) ) }
-            
-            // void ClientImpl::wallet_add_transaction_note_experimental( const string& transaction_id, const string& note )
-            // { try {
-            // #ifndef ALP_TEST_NETWORK
-            //    FC_ASSERT( false, "This command is for developer testing only!" );
-            // #endif
-            //    _wallet->add_transaction_note_experimental( transaction_id, note );
-            // } FC_RETHROW_EXCEPTIONS( warn, "", ("transaction_id",transaction_id)("note",note) ) }
-            
-            // set<pretty_transaction_experimental> ClientImpl::wallet_transaction_history_experimental( const string& account_name )const
-            // { try {
-            // #ifndef ALP_TEST_NETWORK
-            //    FC_ASSERT( false, "This command is for developer testing only!" );
-            // #endif
-            //    return _wallet->transaction_history_experimental( account_name );
-            // } FC_RETHROW_EXCEPTIONS( warn, "", ("account_name",account_name) ) }
             
             WalletTransactionEntry ClientImpl::wallet_get_transaction(const string& transaction_id) {
                 // set limit in  sandbox state
@@ -1403,11 +1026,6 @@ namespace thinkyoung {
                 return summaries;
             }
             
-            // vector<thinkyoung::wallet::escrow_summary> ClientImpl::wallet_escrow_summary( const string& account_name ) const
-            // { try {
-            //    return _wallet->get_escrow_balances( account_name );
-            // } FC_CAPTURE_AND_RETHROW( (account_name) ) }
-            
             AccountBalanceSummaryType ClientImpl::wallet_account_balance(const string& account_name)const {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
@@ -1434,68 +1052,6 @@ namespace thinkyoung {
                 
                 FC_CAPTURE_AND_RETHROW((account_name))
             }
-            
-            // account_extended_balance_type ClientImpl::wallet_account_balance_extended( const string& account_name )const
-            // {
-            // #if 0
-            //     const map<string, vector<balance_entry>>& balance_entrys = _wallet->get_account_balance_entrys( account_name, false, -1 );
-            //
-            //     map<string, map<string, map<asset_id_type, share_type>>> raw_balances;
-            //     for( const auto& item : balance_entrys )
-            //     {
-            //         const string& account_name = item.first;
-            //         for( const auto& balance_entry : item.second )
-            //         {
-            //             string type_label;
-            //             if( balance_entry.snapshot_info.valid() )
-            //             {
-            //                 switch( withdraw_condition_types( balance_entry.condition.type ) )
-            //                 {
-            //                     case withdraw_signature_type:
-            //                         type_label = "GENESIS";
-            //                         break;
-            //                     case withdraw_vesting_type:
-            //                         type_label = "SHAREDROP";
-            //                         break;
-            //                     default:
-            //                         break;
-            //                 }
-            //             }
-            //             if( type_label.empty() )
-            //                 type_label = balance_entry.condition.type_label();
-            //
-            //             const asset& balance = balance_entry.get_spendable_balance( _chain_db->get_pending_state()->now() );
-            //             raw_balances[ account_name ][ type_label ][ balance.asset_id ] += balance.amount;
-            //         }
-            //     }
-            //
-            //     map<string, map<string, vector<asset>>> extended_balances;
-            //     for( const auto& item : raw_balances )
-            //     {
-            //         const string& account_name = item.first;
-            //         for( const auto& type_item : item.second )
-            //         {
-            //             const string& type_label = type_item.first;
-            //             for( const auto& balance_item : type_item.second )
-            //             {
-            //                 extended_balances[ account_name ][ type_label ].emplace_back( balance_item.second, balance_item.first );
-            //             }
-            //         }
-            //     }
-            //
-            //     return extended_balances;
-            // #endif
-            //     return account_extended_balance_type();
-            // }
-            
-            // account_vesting_balance_summary_type ClientImpl::wallet_account_vesting_balances( const string& account_name )const
-            // { try {
-            //     return _wallet->get_account_vesting_balances( account_name );
-            // } FC_CAPTURE_AND_RETHROW( (account_name) ) }
-            //
-            
-            
-            
             
             DelegatePaySalary ClientImpl::wallet_delegate_pay_balance_query(const string& delegate_name) {
                 // set limit in  sandbox state
