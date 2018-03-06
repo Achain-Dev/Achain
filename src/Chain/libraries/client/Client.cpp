@@ -1486,10 +1486,6 @@ namespace thinkyoung {
         WalletPtr Client::get_wallet()const {
             return my->_wallet;
         }
-        /*  //delete?
-        mail_client_ptr Client::get_mail_client()const { return my->_mail_client; }
-        mail_server_ptr Client::get_mail_server()const { return my->_mail_server; }
-        */
         ChainDatabasePtr Client::get_chain()const {
             return my->_chain_db;
         }
@@ -1876,7 +1872,7 @@ namespace thinkyoung {
             return my->_data_dir;
         }
         
-        /* static */ fc::ip::endpoint Client::string_to_endpoint(const std::string& remote_endpoint) {
+        fc::ip::endpoint Client::string_to_endpoint(const std::string& remote_endpoint) {
             try {
                 ASSERT_TASK_NOT_PREEMPTED(); // make sure no cancel gets swallowed by catch(...)
                 // first, try and parse the endpoint as a numeric_ipv4_address:port that doesn't need DNS lookup
