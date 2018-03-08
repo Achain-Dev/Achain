@@ -71,6 +71,7 @@ namespace thinkyoung {
                 void open(const fc::path& databaseFilename);
                 void close();
                 void clear();
+                void  dump_state(const fc::path& path);
                 void erase(const fc::ip::endpoint& endpointToErase);
                 void update_entry(const PotentialPeerEntry& updatedentry);
                 PotentialPeerEntry lookup_or_create_entry_for_endpoint(const fc::ip::endpoint& endpointToLookup);
@@ -145,6 +146,23 @@ namespace thinkyoung {
                     }
                 }
                 _potential_peer_set.clear();
+            }
+
+            void PeerDatabaseImpl::dump_state(const fc::path& path)
+            {
+                try
+                {
+                    const auto dir = fc::absolute(path);
+                    if (!fc::exists(dir))
+                    {
+                        fc::create_directories(dir);
+                    }
+                    fc::path next_path;
+                    next_path = dir / "peers.leveldb.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    _leveldb.export_to_json( next_path );
+                }
+                FC_CAPTURE_AND_RETHROW((path))
             }
 
             void PeerDatabaseImpl::erase(const fc::ip::endpoint& endpointToErase)
@@ -260,6 +278,11 @@ namespace thinkyoung {
         void PeerDatabase::clear()
         {
             my->clear();
+        }
+
+        void PeerDatabase::dump_state(const fc::path& path)
+        {
+            my->dump_state( path );
         }
 
         void PeerDatabase::erase(const fc::ip::endpoint& endpointToErase)

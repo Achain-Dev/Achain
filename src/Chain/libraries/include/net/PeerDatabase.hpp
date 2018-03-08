@@ -80,6 +80,8 @@ namespace thinkyoung {
             void close();
             void clear();
 
+            void dump_state(const fc::path& path);
+
             void erase(const fc::ip::endpoint& endpointToErase);
 
             void update_entry(const PotentialPeerEntry& updatedentry);

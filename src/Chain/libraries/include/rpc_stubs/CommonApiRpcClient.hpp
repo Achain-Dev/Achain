@@ -65,7 +65,7 @@ namespace thinkyoung {
             std::string blockchain_get_block_signee(const std::string& block) const override;
             thinkyoung::blockchain::Asset blockchain_unclaimed_genesis() const override;
             bool blockchain_verify_signature(const std::string& signer, const fc::sha256& hash, const fc::ecc::compact_signature& signature) const override;
-            void blockchain_dump_state(const std::string& path) const override;
+            void blockchain_dump_state(const std::string& path, const std::string& ldbname = fc::json::from_string("\"ALL\"").as<std::string>()) const override;
             void blockchain_broadcast_transaction(const thinkyoung::blockchain::SignedTransaction& trx) override;
             void blockchain_btc_address_convert(const std::string& path) const override;
             std::string blockchain_get_transaction_rpc(const std::string& transaction_id_prefix, bool exact = fc::json::from_string("false").as<bool>()) const override;

@@ -823,12 +823,23 @@ namespace thinkyoung {
                 }
             }
             
-            void ClientImpl::blockchain_dump_state(const string& path)const {
-                // set limit in  sandbox state
-                if (_chain_db->get_is_in_sandbox())
-                    FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
-                    
-                _chain_db->dump_state(fc::path(path));
+            void ClientImpl::blockchain_dump_state(const string& path, const std::string& ldbname )const {
+
+
+                    _p2p_node->dump_peerdb_state(fc::path(path), ldbname);
+
+                    if ("blacklist.leveldb" == ldbname ||
+                        "peers.leveldb" == ldbname)
+                    {
+                        return;
+                    }
+                    // set limit in  sandbox state
+                    if (_chain_db->get_is_in_sandbox())
+                        FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
+                  
+                    _chain_db->dump_state(fc::path(path), ldbname);
+                    return;
+
             }
             
             

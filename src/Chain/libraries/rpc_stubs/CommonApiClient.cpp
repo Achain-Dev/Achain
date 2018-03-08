@@ -1118,15 +1118,16 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
-        void CommonApiClient::blockchain_dump_state(const std::string& path) const
+        void CommonApiClient::blockchain_dump_state(const std::string& path, const std::string& ldbname /* = fc::json::from_string("\"ALL\"").as<std::string>() */) const
         {
-            ilog("received RPC call: blockchain_dump_state(${path})", ("path", path));
+            ilog("received RPC call: blockchain_dump_state(${path}, ${ldbname})", ("path", path)("ldbname", ldbname));
             thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
             uint64_t call_id = 0;
             fc::variants args;
             if( glog != NULL )
             {
                 args.push_back( fc::variant(path) );
+                args.push_back( fc::variant(ldbname) );
                 call_id = glog->log_call_started( this, "blockchain_dump_state", args );
             }
 
@@ -1139,7 +1140,7 @@ namespace thinkyoung {
             try
             {
                 std::nullptr_t result = nullptr;
-                get_impl()->blockchain_dump_state(path);
+                get_impl()->blockchain_dump_state(path, ldbname);
                 if( call_id != 0 )
                     glog->log_call_finished( call_id, this, "blockchain_dump_state", args, fc::variant(result) );
 
