@@ -297,7 +297,7 @@ namespace thinkyoung {
             *
             * @return void
             */
-            void  dump_state(const fc::path& path)const;
+            void  dump_state(const fc::path& path, const fc::string& ldbname)const;
             
             /**  Calculate by timestamp and get the delegate of the slot
             *

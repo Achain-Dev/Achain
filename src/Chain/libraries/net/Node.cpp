@@ -728,6 +728,7 @@ namespace thinkyoung {
                 NodeIdType                  get_node_id() const;
                 void                       set_allowed_peers(const std::vector<NodeIdType>& allowed_peers);
                 void                       clear_peer_database();
+                void                       dump_peerdb_state(const fc::path& path, const fc::string& ldbnames);
                 void                       set_total_bandwidth_limit(uint32_t upload_bytes_per_second, uint32_t download_bytes_per_second);
                 void                       disable_peer_advertising();
                 fc::variant_object         get_call_statistics() const;
@@ -4925,6 +4926,40 @@ namespace thinkyoung {
                 _potential_peer_db.clear();
             }
 
+            void NodeImpl::dump_peerdb_state(const fc::path& path, const fc::string& ldbname)
+            {
+                VERIFY_CORRECT_THREAD();
+
+                if ("ALL" == ldbname ||
+                    "peers.leveldb" == ldbname)
+                {
+                    _potential_peer_db.dump_state(path);
+
+                }
+
+                if ("ALL" == ldbname ||
+                    "blacklist.leveldb" == ldbname)
+                {
+                    try
+                    {
+                        const auto dir = fc::absolute(path);
+                        if (!fc::exists(dir))
+                        {
+                            fc::create_directories(dir);
+                        }
+                        fc::path next_path;
+                        next_path = dir / "blacklist.leveldb.json";
+                        FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                        _black_list_db.export_to_json(next_path);
+                    }
+                    FC_CAPTURE_AND_RETHROW((path))                    
+
+                }
+
+
+
+            }
+
             void NodeImpl::set_total_bandwidth_limit(uint32_t upload_bytes_per_second, uint32_t download_bytes_per_second)
             {
                 VERIFY_CORRECT_THREAD();
@@ -5154,6 +5189,11 @@ namespace thinkyoung {
         void Node::clear_peer_database()
         {
             INVOKE_IN_IMPL(clear_peer_database);
+        }
+
+        void Node::dump_peerdb_state(const fc::path& path, const fc::string& ldbname)
+        {
+            INVOKE_IN_IMPL(dump_peerdb_state, path, ldbname);
         }
 
         void Node::set_total_bandwidth_limit(uint32_t upload_bytes_per_second,

@@ -1021,8 +1021,11 @@ namespace thinkyoung {
             if (parameters.size() <= 0)
                 FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (path)");
             std::string path = parameters[0].as<std::string>();
+            std::string ldbname = (parameters.size() <= 1) ?
+            (fc::json::from_string("\"ALL\"").as<std::string>()) :
+            parameters[1].as<std::string>();
 
-            get_client()->blockchain_dump_state(path);
+            get_client()->blockchain_dump_state(path, ldbname);
             return fc::variant();
         }
 
@@ -1033,8 +1036,11 @@ namespace thinkyoung {
             if (!parameters.contains("path"))
                 FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'path'");
             std::string path = parameters["path"].as<std::string>();
+            std::string ldbname = parameters.contains("ldbname") ?
+                (fc::json::from_string("\"ALL\"").as<std::string>()) :
+                parameters["ldbname"].as<std::string>();
 
-            get_client()->blockchain_dump_state(path);
+            get_client()->blockchain_dump_state(path, ldbname);
             return fc::variant();
         }
 
@@ -10233,13 +10239,14 @@ namespace thinkyoung {
             {
                 // register method blockchain_dump_state
                 thinkyoung::api::MethodData blockchain_dump_state_method_metadata{ "blockchain_dump_state", nullptr,
-                    /* description */ "TODO",
+                    /* description */ "Dump the leveldb data into json file",
                     /* returns */ "void",
                     /* params: */{
-                        {"path", "string", thinkyoung::api::required_positional, fc::ovariant()}
+                        {"path", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"ldbname", "string", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"ALL\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 0,
-                    /* detailed description */ "TODO\n\nParameters:\n  path (string, required): the directory to dump the state into\n\nReturns:\n  void\n",
+                    /* detailed description */ "Dump the leveldb data into json file\n\nParameters:\n  path (string, required): the directory to dump the state into\n  ldbname (string, optional, defaults to \"ALL\"): the leveldb to dump the state\n\nReturns:\n  void\n",
                     /* aliases */ {}, true};
                 store_method_metadata(blockchain_dump_state_method_metadata);
             }
