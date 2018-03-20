@@ -24,8 +24,16 @@ namespace thinkyoung {
                     
                 // ilog("broadcasting transaction: ${id} ", ("id", transaction_to_broadcast.id()));
                 // p2p doesn't send messages back to the originator
-                _p2p_node->broadcast(TrxMessage(transaction_to_broadcast));
-                on_new_transaction(transaction_to_broadcast);
+                auto pending = blockchain_list_pending_transactions();
+                
+                if (pending.size() > ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE) {
+                    _local_pending_list.push_back(transaction_to_broadcast);
+                    
+                } else {
+                    _p2p_node->broadcast(TrxMessage(transaction_to_broadcast));
+                    on_new_transaction(transaction_to_broadcast);
+                }
+                
                 return transaction_to_broadcast.id();
             }
             
