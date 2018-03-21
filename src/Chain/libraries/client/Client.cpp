@@ -732,6 +732,56 @@ namespace thinkyoung {
                 fc::time_point::now() + fc::seconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 6)),
                 "rebroadcast_pending");
             }
+            
+            //Add start local pending loop function
+            void ClientImpl::start_local_pending_loop() {
+                if (!_local_pending_loop_done.valid() || _local_pending_loop_done.ready()) {
+                    _local_pending_loop_done = fc::schedule([=]() {
+                        local_pending_loop();
+                    },
+                    fc::time_point::now() + fc::microseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 50)),
+                    "local_pending");
+                }
+            }
+            
+            //Add local pending loop function
+            void ClientImpl::local_pending_loop() {
+                if (_sync_mode) {
+                    wlog("skip local_pending while syncing");
+                    
+                } else {
+                    try {
+                        auto pending = blockchain_list_pending_transactions();
+                        
+                        if (pending.size() <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_entry_list.empty()) {
+                            auto iter = _local_entry_list.begin();
+                            _wallet->cache_transaction(*iter, false);
+                            network_broadcast_transaction(iter->trx);
+                            _local_entry_list.erase(iter);
+                        }
+                        
+                        if (pending.size() <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_pending_list.empty()) {
+                            auto iter = _local_pending_list.begin();
+                            network_broadcast_transaction(*iter);
+                            _local_pending_list.erase(iter);
+                        }
+                        
+                    } catch (const fc::canceled_exception&) {
+                        throw;
+                        
+                    } catch (const fc::exception& e) {
+                        wlog("error local pending transacation: ${e}", ("e", e.to_detail_string()));
+                    }
+                }
+                
+                if (!_local_pending_loop_done.canceled()) {
+                    _local_pending_loop_done = fc::schedule([=]() {
+                        local_pending_loop();
+                    },
+                    fc::time_point::now() + fc::microseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 50)),
+                    "local_pending");
+                }
+            }
             void ClientImpl::fork_update_time_loop() {
                 uint32_t fork_num = _chain_db->get_fork_list_num();
                 uint32_t fork_pre_num = _chain_db->get_forkdb_num();
@@ -754,6 +804,15 @@ namespace thinkyoung {
                     
                 } catch (const fc::exception& e) {
                     wlog("Unexpected error from rebroadcast_pending(): ${e}", ("e", e));
+                }
+            }
+            
+            void ClientImpl::cancel_local_pending_loop() {
+                try {
+                    _local_pending_loop_done.cancel_and_wait(__FUNCTION__);
+                    
+                } catch (const fc::exception& e) {
+                    wlog("Unexpected error from local_pending(): ${e}", ("e", e));
                 }
             }
             
@@ -1459,6 +1518,7 @@ namespace thinkyoung {
                     
                 my->_p2p_node->set_node_delegate(my.get());
                 my->start_rebroadcast_pending_loop();
+                my->start_local_pending_loop();
                 std::map<uint32_t, std::vector<ForkEntry>> forks = my->blockchain_list_forks();
                 
                 if (!forks.empty()) {

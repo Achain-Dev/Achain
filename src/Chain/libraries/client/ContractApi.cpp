@@ -325,8 +325,16 @@ namespace thinkyoung {
                 Address contract_address;
                 contract_address = get_contract_address(contract);
                 auto entry = _wallet->call_contract(caller_name, contract_address, function_name, params, asset_symbol, *call_limit);
-                _wallet->cache_transaction(entry, false);
-                network_broadcast_transaction(entry.trx);
+                auto pending = blockchain_list_pending_transactions();
+                
+                if (pending.size() > ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE) {
+                    _local_entry_list.push_back(entry);
+                    
+                } else {
+                    _wallet->cache_transaction(entry, false);
+                    network_broadcast_transaction(entry.trx);
+                }
+                
                 return entry;
             }
             
