@@ -24,9 +24,19 @@ namespace thinkyoung {
                     
                 // ilog("broadcasting transaction: ${id} ", ("id", transaction_to_broadcast.id()));
                 // p2p doesn't send messages back to the originator
+                bool bContract = false;
                 auto pending = blockchain_list_pending_transactions();
                 
-                if (pending.size() > ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE) {
+                for (auto operation : transaction_to_broadcast.operations) {
+                    if (operation.type == register_contract_op_type || operation.type == upgrade_contract_op_type || operation.type == destroy_contract_op_type
+                            || operation.type == call_contract_op_type || operation.type == transfer_contract_op_type || operation.type == withdraw_contract_op_type
+                            || operation.type == deposit_contract_op_type) {
+                        bContract = true;
+                        break;
+                    }
+                }
+                
+                if (pending.size() > ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && bContract) {
                     _local_pending_list.push_back(transaction_to_broadcast);
                     
                 } else {
