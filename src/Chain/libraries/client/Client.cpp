@@ -751,16 +751,16 @@ namespace thinkyoung {
                     
                 } else {
                     try {
-                        auto pending = blockchain_list_pending_transactions();
+                        int size = get_pending_contract_trx_size();
                         
-                        if (pending.size() <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_entry_list.empty()) {
-                            auto iter = _local_entry_list.begin();
+                        if (size <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_entry_list.empty()) {
+                            auto iter = _local_entry_list.begin()   ;
                             _wallet->cache_transaction(*iter, false);
                             network_broadcast_transaction(iter->trx);
                             _local_entry_list.erase(iter);
                         }
                         
-                        if (pending.size() <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_pending_list.empty()) {
+                        if (size <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_pending_list.empty()) {
                             auto iter = _local_pending_list.begin();
                             network_broadcast_transaction(*iter);
                             _local_pending_list.erase(iter);

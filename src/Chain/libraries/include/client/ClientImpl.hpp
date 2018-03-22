@@ -238,7 +238,9 @@ namespace thinkyoung {
                     _config.client_debug_name = name;
                     return;
                 }
-
+                
+                uint32_t get_pending_contract_trx_size();
+                
                 /* Implement node_delegate */
                 // @{
 				virtual bool has_item(const thinkyoung::net::ItemId& id) override;
