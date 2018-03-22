@@ -25,7 +25,7 @@
 #define ALP_BLOCKCHAIN_NAME                                 "ACT"
 
 #define ALP_BLOCKCHAIN_DESCRIPTION                          "The Future of Banking"
-			
+
 #define ALP_BLOCKCHAIN_PRECISION                            100000
 
 #define ALP_BLOCKCHAIN_MAX_UIA_MARKET_FEE                   10000
@@ -39,7 +39,7 @@
 #define ALP_MAX_DELEGATE_PAY_PER_BLOCK                      int64_t( 1 * ALP_BLOCKCHAIN_PRECISION * ACT_DELEGATE_PAY_PER_BLOCK_TIMES )
 #define ALP_BLOCKCHAIN_MAX_UNDO_HISTORY                     ALP_BLOCKCHAIN_BLOCKS_PER_HOUR
 
-#define ALP_BLOCKCHAIN_REGISTER_ACCOUNT_FEE                 int64_t( 10 * ALP_BLOCKCHAIN_PRECISION ) 
+#define ALP_BLOCKCHAIN_REGISTER_ACCOUNT_FEE                 int64_t( 10 * ALP_BLOCKCHAIN_PRECISION )
 
 #define ALP_BLOCKCHAIN_MAX_SLATE_SIZE                       (ALP_BLOCKCHAIN_NUM_DELEGATES + (ALP_BLOCKCHAIN_NUM_DELEGATES/10))
 #define ALP_BLOCKCHAIN_MAX_MESSAGE_SIZE                     2048
@@ -53,7 +53,7 @@
 
 #define ALP_DEFAULT_TRANSACTION_FEE                         1000 // XTS
 #define ALP_DEFAULT_TRANSACTION_EXPIRATION_SEC              (60*60)
-#define ALP_DEFAULT_CONTRACT_MARGIN                         10 * ALP_BLOCKCHAIN_PRECISION 
+#define ALP_DEFAULT_CONTRACT_MARGIN                         10 * ALP_BLOCKCHAIN_PRECISION
 
 /**
  *  The maximum amount that can be issued for user assets.
@@ -76,9 +76,9 @@
 #define ALP_BLOCKCHAIN_MIN_BURN_FEE                         ALP_BLOCKCHAIN_PRECISION * 1 // 1 XTS
 
 #ifdef ALP_TEST_NETWORK
-#define ALP_BLOCKCHAIN_VOTE_UPDATE_PERIOD_SEC               10
+    #define ALP_BLOCKCHAIN_VOTE_UPDATE_PERIOD_SEC               10
 #else
-#define ALP_BLOCKCHAIN_VOTE_UPDATE_PERIOD_SEC               (60*60) // 1 hour
+    #define ALP_BLOCKCHAIN_VOTE_UPDATE_PERIOD_SEC               (60*60) // 1 hour
 #endif
 
 #define ALP_BLOCKCHAIN_MIN_FEEDS                            ((ALP_BLOCKCHAIN_NUM_DELEGATES/2) + 1)
@@ -87,14 +87,16 @@
 #define ALP_BLOCKCHAIN_MAX_YIELD_PERIOD_SEC                 (ALP_BLOCKCHAIN_BLOCKS_PER_YEAR * ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC) // 1 year
 
 #ifdef ALP_TEST_NETWORK
-#define ALP_BLOCKCHAIN_MAX_SHORT_PERIOD_SEC                 (2*60*60) // 2 hours
+    #define ALP_BLOCKCHAIN_MAX_SHORT_PERIOD_SEC                 (2*60*60) // 2 hours
 #else
-#define ALP_BLOCKCHAIN_MAX_SHORT_PERIOD_SEC                 (30*24*60*60) // 1 month
+    #define ALP_BLOCKCHAIN_MAX_SHORT_PERIOD_SEC                 (30*24*60*60) // 1 month
 #endif
 #define ALP_BLOCKCHAIN_MAX_SHORT_APR_PCT                    (uint64_t(50))
 
 #define ALP_BLOCKCHAIN_MCALL_D2C_NUMERATOR                  1
 #define ALP_BLOCKCHAIN_MCALL_D2C_DENOMINATOR                2
+
+#define ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE    30   //Local critical pending queue size
 
 // TODO: This stuff only matters for propagation throttling; should go somewhere else
 #define ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE                    1000 // XTS
@@ -105,23 +107,23 @@
 
 
 // for contract
-#define  CONTRACT_ADDRESS_PREFIX "CON" 
-#define  SCRIPT_ID_PREFIX "SCR" 
+#define  CONTRACT_ADDRESS_PREFIX "CON"
+#define  SCRIPT_ID_PREFIX "SCR"
 
 #define  CONTRACT_MAX_BYTECODE_SIZE   (1 * 1024 * 1024)  //just set to the limit of block size
-#define  CONTRACT_MAX_NAME_SIZE  32 
+#define  CONTRACT_MAX_NAME_SIZE  32
 #define  CONTRACT_MAX_DESCRIPTION_SIZE  256
 #define  LIMIT_PRICE 1
 #define  CONTRACT_PARAM_MAX_LEN  1024
 
-#define  CONTRACT_OFFLINE_LIMIT_MAX     (1024*1024*1024) 
-#define  CONTRACT_TESTING_LIMIT_MAX     (1024*1024*1024) 
+#define  CONTRACT_OFFLINE_LIMIT_MAX     (1024*1024*1024)
+#define  CONTRACT_TESTING_LIMIT_MAX     (1024*1024*1024)
 
 // for event
 #define  EVENT_PARAM_MAX_LEN  1024
 #define  EVENT_TYPE_MAX_LEN   256
 
-#define ALP_BLOCKCHAIN_FREESIGNATURE_LIMIT	10
+#define ALP_BLOCKCHAIN_FREESIGNATURE_LIMIT  10
 #define ALP_BLOCKCHAIN_MAX_SIGNAGTURE_NUM   1000
 #define ALP_BLOCKCHAIN_EXTRA_SIGNATURE_FEE  1000
 #define ALP_BLOCKCHAIN_TRANSACTION_MAX_DEPOSIT_NUM 100
