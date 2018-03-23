@@ -77,7 +77,12 @@ namespace thinkyoung {
             * @return void
             */
             virtual void                   apply_changes()const;
-            
+            /**
+            * apply changes from this pending state to the previous state just for undo
+            *
+            * @return void
+            */
+            virtual void PendingChainState::apply_changes_undo()const;
             /** in sandbox evaluate the transaction and return the results.
             *
             * @param  trx  SignedTransaction
@@ -691,6 +696,18 @@ namespace thinkyoung {
             oContractStorageChange contract_storage_change_lookup(const ContractIdType&) const;
             void contract_storage_change_remove(const ContractIdType&);
             void contract_storage_change_store(const ContractIdType&, const ContractStorageChangeEntry&);
+            /**
+            * Get populate undo state change (storage change)
+            * @param    undo_state  PendingChainStatePtr
+                        ChainData PendingChainState
+            * @param    prev_state ChainInterfacePtr
+                        ChainData from DB
+            * @param    contract_id_to_storage map<ContractIdType, ContractStorageEntry>
+                        storage after Trx ops evaluate
+            * @param    contract_to_storage_contract map<ContractIdType, ContractStorageChangeEntry>
+                        storage change after Trx evaluate
+            * @param    contract_id_remove set<ContractIdType> contract_remove_set
+            */
             void populate_undo_state_change(const PendingChainStatePtr& undo_state,
                                             const ChainInterfacePtr &prev_state,
                                             const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,

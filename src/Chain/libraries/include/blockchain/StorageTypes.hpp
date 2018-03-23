@@ -15,14 +15,13 @@
 
 namespace thinkyoung {
     namespace blockchain {
-    
         extern std::map <StorageValueTypes, std::string> storage_type_map;
         struct StorageDataBase;
         struct StorageDataType {
             fc::enum_type<uint8_t, StorageValueTypes>  storage_type;
             std::vector<char>                           storage_data;
             
-            StorageDataType() :storage_type(storage_value_null) {}
+            StorageDataType();
             
             template<typename StorageType>
             StorageDataType(const StorageType& t) {
@@ -178,6 +177,7 @@ namespace thinkyoung {
             std::string key;
             struct StorageDataType before;
             struct StorageDataType after;
+            bool changed;
             static ContractStorageChangeItem get_entry_change(const StorageDataType& before, const StorageDataType& after);
             static bool isbeforechange(const StorageDataType& before, const ContractStorageChangeItem& change);
             
@@ -282,7 +282,8 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::StorageValueTypes,
 FC_REFLECT(thinkyoung::blockchain::ContractStorageChangeItem, (contract_id)
            (key)
            (before)
-           (after))
+           (after)
+           (changed))
 FC_REFLECT(thinkyoung::blockchain::StorageDataType,
            (storage_type)
            (storage_data)

@@ -530,7 +530,7 @@ namespace thinkyoung {
                     auto prev_itr = _fork_db.find(block_data.previous);
                     
                     if (prev_itr.valid()) { // we already know about its previous (note: we always know about genesis block)
-                        elog("           we already know about its previous: ${p}", ("p", block_data.previous));
+                        //elog("           we already know about its previous: ${p}", ("p", block_data.previous));
                         prev_fork_data = prev_itr.value();
                         
                     } else { //if we don't know about the previous block even as a placeholder, create a placeholder for the previous block (placeholder block defaults as unlinked)
@@ -840,7 +840,7 @@ namespace thinkyoung {
                         return;
                         
                     PendingChainStatePtr undo_state = std::make_shared<PendingChainState>(pending_state);
-                    pending_state->get_storage_change(undo_state);
+                    // pending_state->get_storage_change(undo_state);
                     pending_state->get_undo_state(undo_state);
                     
                     if (block_num > ALP_BLOCKCHAIN_MAX_UNDO_HISTORY) {
@@ -1223,7 +1223,7 @@ namespace thinkyoung {
                     const auto& undo_state = undo_iter->second;
                     thinkyoung::blockchain::PendingChainStatePtr undo_state_ptr = std::make_shared<thinkyoung::blockchain::PendingChainState>(undo_state);
                     undo_state_ptr->set_prev_state(self->shared_from_this());
-                    undo_state_ptr->apply_changes();
+                    undo_state_ptr->apply_changes_undo();
                     _head_block_id = previous_block_id;
                     
                     if (_head_block_id == BlockIdType())
@@ -1252,7 +1252,7 @@ namespace thinkyoung {
                     const auto& undo_state = undo_iter->second;
                     thinkyoung::blockchain::PendingChainStatePtr undo_state_ptr = std::make_shared<thinkyoung::blockchain::PendingChainState>(undo_state);
                     undo_state_ptr->set_prev_state(self->shared_from_this());
-                    undo_state_ptr->apply_changes();
+                    undo_state_ptr->apply_changes_undo();
                     _head_block_id = previous_block_id;
                     
                     if (_head_block_id == BlockIdType())

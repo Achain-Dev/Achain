@@ -41,6 +41,12 @@ namespace thinkyoung {
         const uint8_t StorageStringArrayType::type = storage_value_string_array;
         
         
+        StorageDataType::StorageDataType() {
+            StorageNullType null;
+            storage_type = StorageNullType::type;
+            storage_data = fc::raw::pack(null);
+        }
+        
         StorageDataType StorageDataType::get_storage_data_from_lua_storage(const GluaStorageValue& lua_storage) {
             StorageDataType storage_data;
             
@@ -347,6 +353,12 @@ namespace thinkyoung {
             ContractStorageChangeItem stor_change;
             FC_ASSERT((before.storage_type == after.storage_type) || (before.storage_type == thinkyoung::blockchain::StorageValueTypes::storage_value_null));
             FC_ASSERT(after.storage_type != StorageValueTypes::storage_value_null);
+            
+            if (before.storage_type == thinkyoung::blockchain::StorageValueTypes::storage_value_null) {
+                stor_change.before = before;
+                stor_change.after = after;
+                return stor_change;
+            }
             
             if (
                 thinkyoung::blockchain::is_any_array_storage_value_type(after.storage_type)
