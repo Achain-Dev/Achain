@@ -353,11 +353,12 @@ namespace thinkyoung {
              */
             virtual bool blockchain_verify_signature(const std::string& signer, const fc::sha256& hash, const fc::ecc::compact_signature& signature) const = 0;
             /**
-             * TODO.
+             * Dump the leveldb data into json file.
              *
              * @param path the directory to dump the state into (string, required)
+             * @param ldbname the leveldb to dump the state (string, optional, defaults to "ALL")
              */
-            virtual void blockchain_dump_state(const std::string& path) const = 0;
+            virtual void blockchain_dump_state(const std::string& path, const std::string& ldbname = fc::json::from_string("\"ALL\"").as<std::string>()) const = 0;
             /**
              * Takes a signed transaction and broadcasts it to the network.
              *

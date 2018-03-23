@@ -18,7 +18,6 @@
 
 #include <iomanip>
 #include <iostream>
-
 #include <blockchain/ForkBlocks.hpp>
 #include <fc/real128.hpp>
 #include <blockchain/api_extern.hpp>
@@ -3402,144 +3401,323 @@ namespace thinkyoung {
             }
         }
         
-        void ChainDatabase::dump_state(const fc::path& path)const {
+        void ChainDatabase::dump_state(const fc::path& path, const fc::string& ldbname)const {
             try {
                 const auto dir = fc::absolute(path);
-                FC_ASSERT(!fc::exists(dir), "Directory ${n} exsits!", ("n", dir));
-                fc::create_directories(dir);
-                fc::path next_path;
-                ulog("This will take a while...");
-                next_path = dir / "_block_extend_status.json";
-                my->_block_extend_status.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_block_id_to_full_block.json";
-                my->_block_id_to_full_block.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_block_id_to_undo_state.json";
-                my->_block_id_to_undo_state.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_fork_db.json";
-                my->_fork_db.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_revalidatable_future_blocks_db.json";
-                my->_revalidatable_future_blocks_db.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_block_num_to_id_db.json";
-                my->_block_num_to_id_db.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_block_id_to_block_entry_db.json";
-                my->_block_id_to_block_entry_db.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_property_id_to_entry.json";
-                my->_property_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_account_id_to_entry.json";
-                my->_account_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_account_name_to_id.json";
-                my->_account_name_to_id.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_account_address_to_id.json";
-                my->_account_address_to_id.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_asset_id_to_entry.json";
-                my->_asset_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_asset_symbol_to_id.json";
-                my->_asset_symbol_to_id.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_slate_id_to_entry.json";
-                my->_slate_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_balance_id_to_entry.json";
-                my->_balance_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_transaction_id_to_entry.json";
-                my->_transaction_id_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_address_to_transaction_ids.json";
-                my->_address_to_transaction_ids.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                /*
-                next_path = dir / "_delegate_votes.json";
-                my->_delegate_votes.export_to_json(next_path);
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_property_id_to_entry.json";
-                my->_property_id_to_entry.export_to_json(next_path);
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_block_num_to_id_db.json";
-                my->_block_num_to_id_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_block_id_to_block_entry_db.json";
-                my->_block_id_to_block_entry_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_block_id_to_block_data_db.json";
-                my->_block_id_to_block_data_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_id_to_transaction_entry_db.json";
-                my->_id_to_transaction_entry_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_asset_db.json";
-                my->_asset_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_balance_db.json";
-                my->_balance_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                
-                
-                next_path = dir / "_account_db.json";
-                my->_account_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_address_to_account_db.json";
-                my->_address_to_account_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_account_index_db.json";
-                my->_account_index_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_symbol_index_db.json";
-                my->_symbol_index_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                
-                next_path = dir / "_delegate_vote_index_db.json";
-                my->_delegate_vote_index_db.export_to_json( next_path );
-                ulog( "Dumped ${p}", ("p",next_path) );
-                */
-                next_path = dir / "_slot_index_to_entry.json";
-                my->_slot_index_to_entry.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_slot_timestamp_to_delegate.json";
-                my->_slot_timestamp_to_delegate.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "_fork_number_db.json";
-                my->_fork_number_db.export_to_json(next_path);
-                ulog("Dumped ${p}", ("p", next_path));
-                next_path = dir / "alp_transaction_balance_db.json";
-                my->_alp_input_balance_entry.export_to_json(next_path);
-                next_path = dir / "_contract_id_to_info_db.json";
-                my->_contract_id_to_entry.export_to_json(next_path);
-                next_path = dir / "_contract_id_to_storage_db.json";
-                my->_contract_id_to_storage.export_to_json(next_path);
-                next_path = dir / "_contract_name_to_id_db.json";
-                my->_contract_name_to_id.export_to_json(next_path);
-                next_path = dir / "_result_to_request_iddb.json";
-                my->_result_to_request_iddb.export_to_json(next_path);
-                next_path = dir / "_request_to_result_iddb.json";
-                my->_request_to_result_iddb.export_to_json(next_path);
-                next_path = dir / "_trx_to_contract_iddb.json";
-                my->_trx_to_contract_iddb.export_to_json(next_path);
-                next_path = dir / "_contract_to_trx_iddb.json";
-                my->_contract_to_trx_iddb.export_to_json(next_path);
+                if (!fc::exists(dir))
+                {
+                    fc::create_directories(dir);
+                }
+
+                if ("ALL" == ldbname)
+                { 
+                    fc::path next_path;
+                    ulog("This will take a while...");
+                    next_path = dir / "_block_extend_status.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_extend_status.export_to_json(next_path);
+
+                    next_path = dir / "block_id_to_block_data_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_full_block.export_to_json(next_path);
+
+                    next_path = dir / "block_id_to_undo_state.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_undo_state.export_to_json(next_path);
+
+                    next_path = dir / "fork_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_fork_db.export_to_json(next_path);
+
+                    next_path = dir / "future_blocks_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_revalidatable_future_blocks_db.export_to_json(next_path);
+
+                    next_path = dir / "block_num_to_id_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_num_to_id_db.export_to_json(next_path);
+
+                    next_path = dir / "block_id_to_block_entry_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_block_entry_db.export_to_json(next_path);
+
+                    next_path = dir / "property_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_property_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "account_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "account_name_to_id.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_name_to_id.export_to_json(next_path);
+
+                    next_path = dir / "account_address_to_id.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_address_to_id.export_to_json(next_path);
+
+                    next_path = dir / "asset_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_asset_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "asset_symbol_to_id.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_asset_symbol_to_id.export_to_json(next_path);
+
+                    next_path = dir / "slate_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slate_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "balance_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_balance_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "transaction_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_transaction_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "address_to_transaction_ids.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_address_to_transaction_ids.export_to_json(next_path);
+
+                    next_path = dir / "slot_index_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slot_index_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "slot_timestamp_to_delegate.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slot_timestamp_to_delegate.export_to_json(next_path);
+
+                    next_path = dir / "fork_number_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_fork_number_db.export_to_json(next_path);
+
+                    next_path = dir / "_alp_input_balance_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_alp_input_balance_entry.export_to_json(next_path);
+
+                    next_path = dir / "contract_id_to_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_id_to_entry.export_to_json(next_path);
+
+                    next_path = dir / "contract_id_to_storage.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_id_to_storage.export_to_json(next_path);
+
+                    next_path = dir / "contract_name_to_id.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_name_to_id.export_to_json(next_path);
+
+                    next_path = dir / "_result_to_request_id.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_result_to_request_iddb.export_to_json(next_path);
+
+                    next_path = dir / "_request_to_result_iddb.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_request_to_result_iddb.export_to_json(next_path);
+
+                    next_path = dir / "_trx_to_contract_iddb.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_trx_to_contract_iddb.export_to_json(next_path);
+
+                    next_path = dir / "_contract_to_trx_iddb.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_to_trx_iddb.export_to_json(next_path);
+
+                    next_path = dir / "_alp_full_entry.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_alp_full_entry.export_to_json(next_path);
+
+                    next_path = dir / "pending_transaction_db.json";
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_pending_transaction_db.export_to_json(next_path);
+                }
+                else if ("block_num_to_id_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_num_to_id_db.export_to_json(next_path);
+                }
+                else if ("block_id_to_block_data_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_full_block.export_to_json(next_path);
+                }
+                else if ("_alp_full_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_alp_full_entry.export_to_json(next_path);
+                }
+                else if ("_alp_input_balance_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_alp_input_balance_entry.export_to_json(next_path);
+                }
+                else if ("_block_extend_status" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_extend_status.export_to_json(next_path);
+                }
+                else if ("_contract_to_trx_iddb" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_to_trx_iddb.export_to_json(next_path);
+                }
+                else if ("_request_to_result_iddb" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_request_to_result_iddb.export_to_json(next_path);
+                }
+                else if ("_result_to_request_id" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_result_to_request_iddb.export_to_json(next_path);
+                }
+                else if ("_trx_to_contract_iddb" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_trx_to_contract_iddb.export_to_json(next_path);
+                }
+                else if ("account_address_to_id" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_address_to_id.export_to_json(next_path);
+                }
+                else if ("account_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_id_to_entry.export_to_json(next_path);
+                }
+                else if ("account_name_to_id" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_account_name_to_id.export_to_json(next_path);
+                }
+                else if ("address_to_transaction_ids" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_address_to_transaction_ids.export_to_json(next_path);
+                }
+                else if ("asset_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_asset_id_to_entry.export_to_json(next_path);
+                }
+                else if ("asset_symbol_to_id" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_asset_symbol_to_id.export_to_json(next_path);
+                }
+                else if ("balance_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_balance_id_to_entry.export_to_json(next_path);
+                }
+                else if ("block_id_to_block_entry_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_block_entry_db.export_to_json(next_path);
+                }
+                else if ("block_id_to_undo_state" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_block_id_to_undo_state.export_to_json(next_path);
+                }
+                else if ("contract_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_id_to_entry.export_to_json(next_path);
+                }
+                else if ("contract_id_to_storage" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_id_to_storage.export_to_json(next_path);
+                }
+                else if ("contract_name_to_id" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_contract_name_to_id.export_to_json(next_path);
+                }
+                else if ("fork_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_fork_db.export_to_json(next_path);
+                }
+                else if ("fork_number_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_fork_number_db.export_to_json(next_path);
+                }
+                else if ("future_blocks_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_revalidatable_future_blocks_db.export_to_json(next_path);
+                }
+                else if ("pending_transaction_db" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_pending_transaction_db.export_to_json(next_path);
+                }
+                else if ("property_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_property_id_to_entry.export_to_json(next_path);
+                }
+                else if ("slate_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slate_id_to_entry.export_to_json(next_path);
+                }
+                else if ("slot_index_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slot_index_to_entry.export_to_json(next_path);
+                }
+                else if ("slot_timestamp_to_delegate" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_slot_timestamp_to_delegate.export_to_json(next_path);
+                }
+                else if ("transaction_id_to_entry" == ldbname)
+                {
+                    fc::path next_path = dir / (ldbname + ".json");
+                    FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
+                    my->_transaction_id_to_entry.export_to_json(next_path);
+                }
+                else
+                {
+                    FC_ASSERT(false, "File ${n} doesn't exsits!", ("n", ldbname));
+                }
+
             }
             
             FC_CAPTURE_AND_RETHROW((path))
