@@ -209,9 +209,9 @@ namespace thinkyoung {
             fc::variant result = get_json_connection()->async_call("blockchain_verify_signature", std::vector<fc::variant>{fc::variant(signer), fc::variant(hash), fc::variant(signature)}).wait();
             return result.as<bool>();
         }
-        void CommonApiRpcClient::blockchain_dump_state(const std::string& path) const
+        void CommonApiRpcClient::blockchain_dump_state(const std::string& path, const std::string& ldbname /* = fc::json::from_string("\"ALL\"").as<std::string>() */) const
         {
-            fc::variant result = get_json_connection()->async_call("blockchain_dump_state", std::vector<fc::variant>{fc::variant(path)}).wait();
+            fc::variant result = get_json_connection()->async_call("blockchain_dump_state", std::vector<fc::variant>{fc::variant(path), fc::variant(ldbname)}).wait();
         }
         void CommonApiRpcClient::blockchain_broadcast_transaction(const thinkyoung::blockchain::SignedTransaction& trx)
         {

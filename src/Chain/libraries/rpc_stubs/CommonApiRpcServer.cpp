@@ -1021,8 +1021,11 @@ namespace thinkyoung {
             if (parameters.size() <= 0)
                 FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (path)");
             std::string path = parameters[0].as<std::string>();
+            std::string ldbname = (parameters.size() <= 1) ?
+            (fc::json::from_string("\"ALL\"").as<std::string>()) :
+            parameters[1].as<std::string>();
 
-            get_client()->blockchain_dump_state(path);
+            get_client()->blockchain_dump_state(path, ldbname);
             return fc::variant();
         }
 
@@ -1033,8 +1036,11 @@ namespace thinkyoung {
             if (!parameters.contains("path"))
                 FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'path'");
             std::string path = parameters["path"].as<std::string>();
+            std::string ldbname = parameters.contains("ldbname") ?
+                (fc::json::from_string("\"ALL\"").as<std::string>()) :
+                parameters["ldbname"].as<std::string>();
 
-            get_client()->blockchain_dump_state(path);
+            get_client()->blockchain_dump_state(path, ldbname);
             return fc::variant();
         }
 
@@ -10233,13 +10239,14 @@ namespace thinkyoung {
             {
                 // register method blockchain_dump_state
                 thinkyoung::api::MethodData blockchain_dump_state_method_metadata{ "blockchain_dump_state", nullptr,
-                    /* description */ "TODO",
+                    /* description */ "Dump the leveldb data into json file",
                     /* returns */ "void",
                     /* params: */{
-                        {"path", "string", thinkyoung::api::required_positional, fc::ovariant()}
+                        {"path", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"ldbname", "string", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"ALL\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 0,
-                    /* detailed description */ "TODO\n\nParameters:\n  path (string, required): the directory to dump the state into\n\nReturns:\n  void\n",
+                    /* detailed description */ "Dump the leveldb data into json file\n\nParameters:\n  path (string, required): the directory to dump the state into\n  ldbname (string, optional, defaults to \"ALL\"): the leveldb to dump the state\n\nReturns:\n  void\n",
                     /* aliases */ {}, true};
                 store_method_metadata(blockchain_dump_state_method_metadata);
             }
@@ -10790,9 +10797,9 @@ namespace thinkyoung {
                     /* returns */ "account_name",
                     /* params: */{
                         {"wif_key", "wif_private_key", thinkyoung::api::required_positional, fc::ovariant()},
-                        {"account_name", "account_name", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("null"))},
-                        {"create_new_account", "bool", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("false"))},
-                        {"rescan", "bool", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("false"))}
+                        { "account_name", "account_name", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("null")) },
+                        { "create_new_account", "bool", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("false")) },
+                        { "rescan", "bool", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("false")) }
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
                     /* detailed description */ "Loads the private key into the specified account. Returns which account it was actually imported to.\n\nParameters:\n  wif_key (wif_private_key, required): A private key in bitcoin Wallet Import Format (WIF)\n  account_name (account_name, optional, defaults to null): the name of the account the key should be imported into, if null then the key must belong to an active account\n  create_new_account (bool, optional, defaults to false): If true, the wallet will attempt to create a new account for the name provided rather than import the key into an existing account\n  rescan (bool, optional, defaults to false): If true, the wallet will rescan the blockchain looking for transactions that involve this private key\n\nReturns:\n  account_name\n",
