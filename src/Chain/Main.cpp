@@ -23,28 +23,43 @@
 
 #include <iostream>
 #include <iomanip>
+#ifdef WIN32
+    #include "Windows.h"
+    #include "DbgHelp.h"
+#endif //zxlwin
+#ifdef WIN32
+LONG WINAPI TopLevelExceptionFilter(struct _EXCEPTION_POINTERS *pExceptionInfo) { //zxlwin
+    HANDLE hFile = CreateFile("project.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    MINIDUMP_EXCEPTION_INFORMATION stExceptionParam;
+    stExceptionParam.ThreadId = GetCurrentThreadId();
+    stExceptionParam.ExceptionPointers = pExceptionInfo;
+    stExceptionParam.ClientPointers = FALSE;
+    MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithFullMemory, &stExceptionParam, NULL, NULL);
+    CloseHandle(hFile);
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
 
-int main(int argc, char** argv)
-{
-    try
-    {
+int main(int argc, char** argv) {
+#ifdef WIN32
+    SetUnhandledExceptionFilter(TopLevelExceptionFilter);
+#endif
+    
+    try {
         thinkyoung::client::ClientPtr client = std::make_shared<thinkyoung::client::Client>("act_client");
         client->configure_from_command_line(argc, argv);
         client->start().wait();
-    }
-    catch (const fc::exception& e)
-    {
+        
+    } catch (const fc::exception& e) {
         std::cerr << "------------ error --------------\n"
-            << e.to_detail_string() << "\n";
+                  << e.to_detail_string() << "\n";
         wlog("${e}", ("e", e.to_detail_string()));
     }
-
+    
     /* We need to shut down all the threads and tasks we can, things don't usually work very well when
        we rely on global destructors to handle cleanup */
-	thinkyoung::blockchain::shutdown_ntp_time();
-
+    thinkyoung::blockchain::shutdown_ntp_time();
     // we should probably terminate the asio threads here
-
     ilog("Leaving main()");
     /*
      * We restore the initial logging config here in order to destroy all of the current
