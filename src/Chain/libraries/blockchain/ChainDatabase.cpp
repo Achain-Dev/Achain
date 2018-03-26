@@ -2903,7 +2903,7 @@ namespace thinkyoung {
                 for (auto iter = my->_balance_id_to_entry.unordered_begin();
                         iter != my->_balance_id_to_entry.unordered_end(); ++iter) {
                     const BalanceEntry& entry = iter->second;
-
+                    
                     if (entry.asset_id() != 0) continue;
                     
                     GenesisBalance balance;

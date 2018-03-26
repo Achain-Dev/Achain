@@ -11,15 +11,12 @@ namespace thinkyoung {
         {
             switch (n)
             {
-#if 0
             case 1ll:
             case 10ll:
             case 100ll:
             case 1000ll:
             case 10000ll:
-#endif
             case 100000ll:
-#if 0
             case 1000000ll:
             case 10000000ll:
             case 100000000ll:
@@ -30,7 +27,6 @@ namespace thinkyoung {
             case 10000000000000ll:
             case 100000000000000ll:
             case 1000000000000000ll:
-#endif
                 return true;
             default:
                 return false;
@@ -40,6 +36,7 @@ namespace thinkyoung {
         void CreateAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
+                FC_ASSERT(false, "Disable CreateAssetOperation!");
                 if (NOT eval_state._current_state->is_valid_symbol_name(this->symbol))
                     FC_CAPTURE_AND_THROW(invalid_asset_symbol, (symbol));
 
@@ -106,6 +103,8 @@ namespace thinkyoung {
         void UpdateAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
+                FC_ASSERT(false, "Disable UpdateAssetOperation!");
+
                 oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->asset_id);
                 if (NOT current_asset_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_asset_id, (asset_id));
@@ -164,6 +163,8 @@ namespace thinkyoung {
 
         void UpdateAssetExtOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
+            FC_ASSERT(false, "Disable UpdateAssetExtOperation!");
+
             oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->asset_id);
             if (NOT current_asset_entry.valid())
                 FC_CAPTURE_AND_THROW(unknown_asset_id, (asset_id));
@@ -258,6 +259,7 @@ namespace thinkyoung {
         void IssueAssetOperation::evaluate(TransactionEvaluationState& eval_state)const
         {
             try {
+                FC_ASSERT(false, "Disable IssueAssetOperation!");
                 oAssetEntry current_asset_entry = eval_state._current_state->get_asset_entry(this->amount.asset_id);
                 if (NOT current_asset_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_asset_id, (amount.asset_id));

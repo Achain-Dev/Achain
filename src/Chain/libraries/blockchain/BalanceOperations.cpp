@@ -168,10 +168,9 @@ namespace thinkyoung {
                 
                 if (temp > 0 && owner.valid()) {
                     auto res=eval_state.owner_balance_not_usedup.insert(*owner);
-                    #if 0
+                    
                     if (!res.second)
                         FC_CAPTURE_AND_THROW(too_much_balances_withdraw_not_used_up, (*owner));
-                    #endif
                 }
                 
                 current_balance_entry->last_update = eval_state._current_state->now();

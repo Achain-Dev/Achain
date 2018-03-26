@@ -44,8 +44,20 @@ namespace thinkyoung {
         }
 
         /**
+         * Symbol names can be hierarchical: for example a primary symbol name, a '.', and a sub-symbol name.
          * A primary symbol name must be a minimum of 3 and a maximum of 8 characters in length.
          * Primary names can only contain uppercase letters (digits are not allowed to avoid 0 and 1 spoofing).
+         * A hierarchical symbol name (consisting of a primary symbol name, a dot, and a sub-symbol name) can be up to 12 chars
+         * in total length (including the dot).
+         * Sub-symbol names can contain uppercase letters or digits (digits are allowed in sub-symbols because the namespace is
+         * overseen by the owner of the primary symbol and is therefore not subject to spoofing).
+         *
+         * To fit under the 12 character limit, it is likely that users planning to register hierarchical names will
+         * choose shorter (more expensive) symbol names for their primary symbol, so that they can mirror more primary symbol names.
+         * The max of 12 for hierarchical symbol names will allow hierarchical mirroring of long primary symbol characters
+         * as long as the primary symbol buyer purchases a symbol of 3 in size. For example, if CRY was chosen as the primary symbol,
+         * CRY.ABCDEFGH could be registered. But if a longer name was chosen as a primary symbol, such as CRYPTO,
+         * then only symbols up to 5 in length can be mirrored (i.e CRYPTO.ABCDEFGH would be too long).
          */
         bool ChainInterface::is_valid_symbol_name(const string& symbol)const
         {
@@ -58,16 +70,40 @@ namespace thinkyoung {
                 if (symbol.size() < ALP_BLOCKCHAIN_MIN_SYMBOL_SIZE)
                     FC_ASSERT(false, "Symbol name too small");
 
+                int dots = 0;
+                int dot_position = 0;
                 int position = 0;
                 for (const char c : symbol)
                 {
-                    if (!std::isupper(c, std::locale::classic()))
+                    if (c == '.') //if we have hierarchical name
+                    {
+                        dot_position = position;
+                        if (++dots > 1)
+                            FC_ASSERT(false, "Symbol names can have at most one dot");
+                    }
+                    else if (dots == 0 && !std::isupper(c, std::locale::classic()))
                         FC_ASSERT(false, "Primary symbol names can only contain uppercase letters");
+                    else if (!std::isupper(c, std::locale::classic()) &&
+                        !std::isdigit(c, std::locale::classic()))
+                        FC_ASSERT(false, "Sub-symbol names can only contain uppercase letters or digits");
                     ++position;
                 }
 
-                if (position > ALP_BLOCKCHAIN_MAX_SUB_SYMBOL_SIZE)
-                    FC_ASSERT(false, "Symbol name too large");
+                if (symbol.back() == '.') return false;
+                if (symbol.front() == '.') return false;
+
+                if (dots == 0)
+                {
+                    if (position > ALP_BLOCKCHAIN_MAX_SUB_SYMBOL_SIZE)
+                        FC_ASSERT(false, "Symbol name too large");
+                }
+                else //dots == 1 means hierarchial asset name
+                {
+                    if (position - dot_position - 1 > ALP_BLOCKCHAIN_MAX_SUB_SYMBOL_SIZE)
+                        FC_ASSERT(false, "Sub-symbol name too large");
+                    if (symbol.size() > ALP_BLOCKCHAIN_MAX_SYMBOL_SIZE)
+                        FC_ASSERT(false, "Symbol name too large");
+                }
 
                 if (symbol.find("ACT") == 0)
                     FC_ASSERT(false, "Symbol names cannot be prefixed with ACT");
@@ -127,14 +163,15 @@ namespace thinkyoung {
         }
         ShareType ChainInterface::get_asset_registration_fee(uint8_t symbol_length)const
         {
-#if 0
-            static const ShareType symbol_price[] = { 500000000000, 480000000000, 460000000000, 440000000000, 420000000000,
-                400000000000, 380000000000, 360000000000, 340000000000, 320000000000, 300000000000 };
-            return symbol_price[symbol_length - 3];
-#endif
-            static const ShareType symbol_price = 100000000;
+            // if( get_head_block_num() < ALP_V0_4_24_FORK_BLOCK_NUM )
+            //return get_asset_registration_fee_v1();
 
-            return symbol_price;
+            // TODO: Add #define's for these fixed prices
+            static const ShareType long_symbol_price = 500 * ALP_BLOCKCHAIN_PRECISION; // $10 at $0.02/XTS
+            static const ShareType short_symbol_price = 1000 * long_symbol_price;
+            FC_ASSERT(long_symbol_price > 0, "Price of long symbol must bigger than 0");
+            FC_ASSERT(short_symbol_price > long_symbol_price, "Price of short symbol must bigger than the price of long symbol");
+            return symbol_length <= 5 ? short_symbol_price : long_symbol_price;
         }
 
         AssetIdType ChainInterface::last_asset_id()const
