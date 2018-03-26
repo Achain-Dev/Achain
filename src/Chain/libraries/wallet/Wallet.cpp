@@ -4197,7 +4197,10 @@ namespace thinkyoung {
                 FC_ASSERT(is_open(), "Wallet not open!");
                 FC_ASSERT(is_unlocked(), "Wallet not unlock!");
                 FC_ASSERT(my->_blockchain->is_valid_symbol_name(symbol)); // valid length and characters
+                FC_ASSERT(asset_name.size() <= ALP_BLOCKCHAIN_MAX_SYMBOL_NAME_SIZE, "Asset name too big");
+                FC_ASSERT(description.size() <= ALP_BLOCKCHAIN_MAX_SYMBOL_DES_SIZE, "Asset description too big");
                 FC_ASSERT(!my->_blockchain->is_valid_symbol(symbol)); // not yet registered
+
                 SignedTransaction     trx;
                 unordered_set<Address> required_signatures;
                 trx.expiration = blockchain::now() + get_transaction_expiration();
@@ -4222,9 +4225,13 @@ namespace thinkyoung {
                 auto ipos = max_share_supply.find(".");
                 
                 if (ipos != string::npos) {
+                    FC_ASSERT(false, "Asset supply must be integer");
+
+#if 0
                     string str = max_share_supply.substr(ipos + 1);
                     int64_t precision_input = static_cast<int64_t>(pow(10, str.size()));
                     FC_ASSERT((static_cast<uint64_t>(precision_input) <= precision), "Precision is not correct");
+#endif
                 }
                 
                 double dAmountToCreate = std::stod(max_share_supply);

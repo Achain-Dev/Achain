@@ -855,7 +855,7 @@ namespace thinkyoung {
             out << std::left;
 
             out << std::setw(6) << "ID";
-            out << std::setw(7) << "SYMBOL";
+            out << std::setw(13) << "SYMBOL";
             out << std::setw(24) << "NAME";
             out << std::setw(48) << "DESCRIPTION";
             out << std::setw(32) << "ISSUER";
@@ -871,7 +871,7 @@ namespace thinkyoung {
                 const auto asset_id = asset_entry.id;
                 out << std::setw(6) << asset_id;
 
-                out << std::setw(7) << asset_entry.symbol;
+                out << std::setw(13) << asset_entry.symbol;
                 out << std::setw(24) << pretty_shorten(asset_entry.name, 23);
                 out << std::setw(48) << pretty_shorten(asset_entry.description, 47);
 
