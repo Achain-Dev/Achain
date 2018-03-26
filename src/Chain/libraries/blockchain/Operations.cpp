@@ -23,7 +23,6 @@ namespace thinkyoung {
         const OperationTypeEnum UpdateAssetOperation::type = update_asset_op_type;
         const OperationTypeEnum IssueAssetOperation::type = issue_asset_op_type;
         const OperationTypeEnum DefineSlateOperation::type = define_slate_op_type;
-        const OperationTypeEnum ReleaseEscrowOperation::type = release_escrow_op_type;
         const OperationTypeEnum UpdateSigningKeyOperation::type = update_signing_key_op_type;
         const OperationTypeEnum UpdateBalanceVoteOperation::type = update_balance_vote_op_type;
         const OperationTypeEnum UpdateAssetExtOperation::type = update_asset_ext_op_type;
@@ -53,7 +52,6 @@ namespace thinkyoung {
             thinkyoung::blockchain::OperationFactory::instance().register_operation<UpdateAssetOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<IssueAssetOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<DefineSlateOperation>();
-            thinkyoung::blockchain::OperationFactory::instance().register_operation<ReleaseEscrowOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<UpdateSigningKeyOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<UpdateBalanceVoteOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<UpdateAssetExtOperation>();
@@ -73,39 +71,43 @@ namespace thinkyoung {
             thinkyoung::blockchain::OperationFactory::instance().register_operation<OnDestroyOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<OnUpgradeOperation>();
             thinkyoung::blockchain::OperationFactory::instance().register_operation<OnCallSuccessOperation>();
-
+            
             return true;
         }();
-
+        
         OperationFactory& OperationFactory::instance() {
             static std::unique_ptr<OperationFactory> inst(new OperationFactory());
             return *inst;
         }
-
+        
         void OperationFactory::to_variant(const thinkyoung::blockchain::Operation& in, fc::variant& output) {
             try {
                 auto converter_itr = _converters.find(in.type.value);
                 FC_ASSERT(converter_itr != _converters.end(), "No such converter!");
                 converter_itr->second->to_variant(in, output);
             }
+            
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
-
+        
         void OperationFactory::from_variant(const fc::variant& in, thinkyoung::blockchain::Operation& output) {
             try {
                 auto obj = in.get_object();
+                
                 if (obj["type"].as_string() == "define_delegate_slate_op_type") {
                     output.type = define_slate_op_type;
                     return;
                 }
+                
                 output.type = obj["type"].as<OperationTypeEnum>();
                 auto converter_itr = _converters.find(output.type.value);
                 FC_ASSERT(converter_itr != _converters.end());
                 converter_itr->second->from_variant(in, output);
             }
+            
             FC_RETHROW_EXCEPTIONS(warn, "", ("in", in))
         }
-
+        
     }
 } // thinkyoung::blockchain
 
@@ -113,7 +115,7 @@ namespace fc {
     void to_variant(const thinkyoung::blockchain::Operation& var, variant& vo) {
         thinkyoung::blockchain::OperationFactory::instance().to_variant(var, vo);
     }
-
+    
     void from_variant(const variant& var, thinkyoung::blockchain::Operation& vo) {
         thinkyoung::blockchain::OperationFactory::instance().from_variant(var, vo);
     }

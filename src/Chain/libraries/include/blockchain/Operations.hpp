@@ -50,7 +50,6 @@ namespace thinkyoung {
             // reserved
             reserved_op_4_type = 21,
             reserved_op_5_type = 22,
-            release_escrow_op_type = 23,
             update_signing_key_op_type = 24,
             update_balance_vote_op_type = 27,
             
@@ -150,7 +149,6 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::OperationTypeEnum,
                 (define_slate_op_type)
                 (reserved_op_4_type)
                 (reserved_op_5_type)
-                (release_escrow_op_type)
                 (update_signing_key_op_type)
                 (update_balance_vote_op_type)
                 (update_asset_ext_op_type)

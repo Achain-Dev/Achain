@@ -63,11 +63,6 @@ namespace thinkyoung {
             
             void deposit_multisig(const MultisigMetaInfo& info, const Asset& amount);
             
-            void release_escrow(const Address& escrow_account,
-                                const Address& released_by,
-                                ShareType amount_to_sender,
-                                ShareType amount_to_receiver);
-                                
             PublicKeyType deposit_to_escrow(fc::ecc::public_key receiver_key,
                                             fc::ecc::public_key escrow_key,
                                             DigestType agreement,
