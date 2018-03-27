@@ -1,11 +1,8 @@
-#pragma once
-
-namespace thinkyoung {
-    namespace client {
-
-#ifndef ALP_TEST_NETWORK
-        static const std::vector<std::string> SeedNodes =
-        {
+#pragma once 
+namespace thinkyoung { 
+    namespace client { 
+#ifndef ALP_TEST_NETWORK 
+    static const std::vector<std::string> SeedNodes = {
             "47.52.62.164:61696",
             "47.90.206.220:61696",
             "47.90.202.190:61696",
@@ -17,12 +14,9 @@ namespace thinkyoung {
             "47.88.153.65:61696",
             "47.88.228.70:61696",
             "node.achain.com:61696"
-        }; 
-#else
-        static const std::vector<std::string> SeedNodes
-        {
-        };
+ }; 
+#else 
+ static const std::vector<std::string> SeedNodes { }; 
 #endif
-
-    }
-} // thinkyoung::client
+} 
+} // thinkyoung::client 
