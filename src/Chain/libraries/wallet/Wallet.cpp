@@ -160,7 +160,7 @@ namespace thinkyoung {
                         if (!owner.valid())
                             continue;
             
-                        //ÏÈ´¦Àí¿ÉÒÔÍËµÄwithdraw£¬ÔÙ´¦Àí²»¿ÉÒÔÍËµÄwithdraw
+                        //å…ˆå¤„ç†å¯ä»¥é€€çš„withdrawï¼Œå†å¤„ç†ä¸å¯ä»¥é€€çš„withdraw
                         if (deal_for_refund)
                         {
                             if (amount_remaining.amount > balance.amount)
@@ -2968,7 +2968,7 @@ namespace thinkyoung {
             } else
                 required_signatures.insert(owner_address);
                 
-            ContractIdType contract_id = trx.register_contract(contract_code, owner_public_key, asset_limit, fee, balances); //²åÈëºÏÔ¼×¢²áop
+            ContractIdType contract_id = trx.register_contract(contract_code, owner_public_key, asset_limit, fee, balances); //æ’å…¥åˆçº¦æ³¨å†Œop
             FC_ASSERT(register_fee.asset_id == 0, "register fee must be ACT");
             FC_ASSERT(margin.asset_id == 0, "register fee must be ACT");
             FC_ASSERT(fee.asset_id == 0, "register fee must be ACT");
@@ -3027,7 +3027,7 @@ namespace thinkyoung {
             if (CallContractOperation::is_function_not_allow_call(method)) {
                 FC_CAPTURE_AND_THROW(method_can_not_be_called_explicitly, (method)("method can't be called explicitly !"));
             }
-            
+            FC_ASSERT(cost_limit < 20000, "cost_limit should less than 20000");
             FC_ASSERT(cost_limit > 0, "cost_limit should greater than 0");
             FC_ASSERT(is_open(), "Wallet not open!");
             FC_ASSERT(is_unlocked(), "Wallet not unlock!");
@@ -3059,7 +3059,7 @@ namespace thinkyoung {
             } else
                 required_signatures.insert(caller_address);
                 
-            trx.call_contract(contract, method, arguments, caller_public_key, asset_limit, fee, balances); //²åÈëºÏÔ¼µ÷ÓÃop
+            trx.call_contract(contract, method, arguments, caller_public_key, asset_limit, fee, balances); //æ’å…¥åˆçº¦è°ƒç”¨op
             FC_ASSERT(fee.asset_id == 0, "register fee must be ACT");
             trx.expiration = blockchain::now() + get_transaction_expiration();
             my->sign_transaction(trx, required_signatures);
