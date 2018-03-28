@@ -739,7 +739,7 @@ namespace thinkyoung {
                     _local_pending_loop_done = fc::schedule([=]() {
                         local_pending_loop();
                     },
-                    fc::time_point::now() + fc::milliseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 50)),
+                    fc::time_point::now() + fc::milliseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 30)),
                     "local_pending");
                 }
             }
@@ -778,7 +778,7 @@ namespace thinkyoung {
                     _local_pending_loop_done = fc::schedule([=]() {
                         local_pending_loop();
                     },
-                    fc::time_point::now() + fc::milliseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 50)),
+                    fc::time_point::now() + fc::milliseconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 30)),
                     "local_pending");
                 }
             }
