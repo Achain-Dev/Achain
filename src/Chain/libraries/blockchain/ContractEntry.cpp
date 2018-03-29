@@ -450,7 +450,7 @@ namespace thinkyoung {
             FC_CAPTURE_AND_RETHROW((id));
         }
         
-        thinkyoung::blockchain::ContractValueIdType ContractValueEntry::get_contract_value_id() {
+        thinkyoung::blockchain::ContractValueIdType ContractValueEntry::get_contract_value_id() const {
             ContractValueIdType value_id;
             
             if (index_.size() > 0) {

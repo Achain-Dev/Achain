@@ -3028,6 +3028,7 @@ namespace thinkyoung {
                 FC_CAPTURE_AND_THROW(method_can_not_be_called_explicitly, (method)("method can't be called explicitly !"));
             }
             
+            FC_ASSERT(cost_limit < 20000, "cost_limit should less than 20000");
             FC_ASSERT(cost_limit > 0, "cost_limit should greater than 0");
             FC_ASSERT(is_open(), "Wallet not open!");
             FC_ASSERT(is_unlocked(), "Wallet not unlock!");

@@ -185,7 +185,7 @@ namespace thinkyoung {
             static void store(ChainInterface&, const ContractValueIdType&, const ContractValueEntry&);
             static void remove(ChainInterface&, const ContractValueIdType&);
             
-            ContractValueIdType ContractValueEntry::get_contract_value_id();
+            ContractValueIdType get_contract_value_id() const;
             //ContractValueIdType
         };
         struct  ResultTIdEntry;

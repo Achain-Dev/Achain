@@ -463,6 +463,9 @@ namespace thinkyoung {
             
             bool                               is_valid_contract_description(const string& description) const;
             
+            oContractValue ChainInterface::get_contract_value(const ContractValueIdType& id) const;
+            void ChainInterface::remove_contract_value_entry(const ContractValueIdType& id);
+            void ChainInterface::store_contract_value_entry(const ContractValueEntry& entry);
             
             virtual BlockIdType               get_block_id(uint32_t block_num)const = 0;
             /**
