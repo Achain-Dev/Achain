@@ -47,56 +47,7 @@ namespace thinkyoung {
         }*/
         
         //special_entrys(prev_state, _contract_id_to_storage, _contract_id_remove, _contract_to_storage_change);
-        void apply_storage_entrys_change(
-            const ChainInterfacePtr &prev_state,
-            const unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
-            const unordered_set<ContractIdType>& contract_id_remove) {
-            for (const auto& storage : contract_to_storage_change) {
-                auto& prev_entry = prev_state->lookup<ContractStorageEntry>(storage.first);
-                
-                //is valid
-                //Initing storage. prev_entry is invalid.
-                if (prev_entry.valid()) {
-                    auto& contract_stroages_entry = (*prev_entry).contract_storages;
-                    
-                    for (const auto& item : storage.second.contract_change) {
-                        ContractStorageChangeItem change_item;
-                        
-                        if (item.second.before.equals(item.second.after)) {
-                            //call_contract No change to contract storage
-                            //TODO add change_item change flag
-                            continue;
-                        }
-                        
-                        if (ContractStorageChangeItem::isbeforechange(contract_stroages_entry.at(item.first), item.second)) {
-                            change_item = item.second;
-                            change_item.update_contract_storages(item.first, change_item, contract_stroages_entry);
-                            
-                        } else {
-                            change_item.after = item.second.before;
-                            change_item.before = item.second.after;
-                            change_item.update_contract_storages(item.first, change_item, contract_stroages_entry);
-                        }
-                    }
-                    
-                    auto& contract_storage = *prev_entry;
-                    prev_state->store(storage.first, contract_storage);
-                    
-                } else {
-                    ContractStorageEntry entry;
-                    entry.id = storage.first;
-                    
-                    for (const auto& item : storage.second.contract_change) {
-                        ContractStorageChangeItem change_item;
-                        change_item = item.second;
-                        change_item.update_contract_storages(item.first, change_item, entry.contract_storages);
-                        //ContractStorageChangeItem::apply_storage_change();
-                    }
-                    
-                    prev_state->store(storage.first, entry);
-                }
-            }
-        }
+        
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes_undo()const {
             ChainInterfacePtr prev_state = _prev_state.lock();
@@ -122,7 +73,6 @@ namespace thinkyoung {
             */
             //apply_entrys( prev_state, _feed_index_to_entry, _feed_index_remove );
             //special apply for amounts of data
-            apply_storage_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
         }
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes()const {
@@ -148,6 +98,7 @@ namespace thinkyoung {
             /* do this last because it could have side effects on other entrys while
              * we manage the short index
              */
+            apply_storage_index_entrys(prev_state, _value_map_index);
         }
         void PendingChainState::populate_undo_state_change(const PendingChainStatePtr& undo_state,
                 const ChainInterfacePtr &prev_state,
@@ -183,12 +134,6 @@ namespace thinkyoung {
                 
                 undo_state->store(storage.first, contract_to_storage_change.at(contract_id));
             }
-        }
-        void PendingChainState::get_storage_change(const ChainInterfacePtr& undo_state_arg) {
-            auto undo_state = std::dynamic_pointer_cast<PendingChainState>(undo_state_arg);
-            ChainInterfacePtr prev_state = _prev_state.lock();
-            FC_ASSERT(prev_state, "Get preview state failed!");
-            populate_undo_state_change(undo_state, prev_state, _contract_id_to_storage, _contract_to_storage_change, _contract_id_remove);
         }
         
         void PendingChainState::get_undo_state(const ChainInterfacePtr& undo_state_arg)const {
@@ -283,6 +228,11 @@ namespace thinkyoung {
             fc::variant v;
             fc::to_variant(*this, v);
             return v;
+        }
+        void PendingChainState::apply_storage_index_entrys(const ChainInterfacePtr & prev_state) const {
+            ChainInterfacePtr prev_state = _prev_state.lock();
+            
+            if (!prev_state) return;
         }
         oPropertyEntry PendingChainState::property_lookup_by_id(const PropertyIdType id)const {
             const auto iter = _property_id_to_entry.find(id);

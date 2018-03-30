@@ -109,6 +109,7 @@ namespace thinkyoung {
         typedef fc::optional<ContractValueEntry> oContractValue;
         typedef fc::optional<ContractIdType> oContractIdType;
         typedef fc::optional<ContractValueIdType> oContractValueIdType;
+        typedef fc::optional<unordered_set<ContractValueIdType>> oContractIndexSet;
         
         
         //contract information
@@ -188,6 +189,14 @@ namespace thinkyoung {
             ContractValueIdType get_contract_value_id() const;
             //ContractValueIdType
         };
+        
+        struct ContractIndexSetEntry {
+            static oContractIndexSet lookup(const ChainInterface&, const ContractIndexIdType&);
+            static void store(ChainInterface&, const ContractIndexIdType&, const ContractValueEntry&);
+            static void remove(ChainInterface&, const ContractIndexIdType&);
+            static void add_index(ChainInterface&, const unordered_set<ContractValueEntry> index);
+        };
+        
         struct  ResultTIdEntry;
         typedef fc::optional<ResultTIdEntry> oResultTIdEntry;
         struct ResultTIdEntry {
@@ -270,6 +279,11 @@ namespace thinkyoung {
             virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &) = 0;
             virtual void contract_erase_value_by_valueid(const ContractValueIdType&) = 0;
             //virtual void contract_storage_diff(const ContractValueIdType&, const ) = 0;
+            
+            //new storage interface
+            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const = 0;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &) = 0;
+            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&) = 0;
         };
     }
 }

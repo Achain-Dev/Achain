@@ -3615,6 +3615,24 @@ namespace thinkyoung {
             my->_value_id_to_storage.remove(id);
         }
         
+        oContractIndexSet ChainDatabase::contract_lookup_index_by_indexid(const ContractIndexIdType &index_id) const {
+            auto it = my->_value_map_index.unordered_find(index_id);
+            
+            if (it != my->_value_map_index.unordered_end()) {
+                return it->second;
+            }
+            
+            return oContractIndexSet();
+        }
+        
+        void ChainDatabase::contract_store_index_by_indexid(const ContractIndexIdType & index_id, const std::unordered_set<ContractValueIdType>& value_id_set) {
+            my->_value_map_index.store(index_id, value_id_set);
+        }
+        
+        void ChainDatabase::contract_erase_index_by_indexid(const ContractIndexIdType & index_id) {
+            my->_request_to_result_iddb.remove(index_id);
+        }
+        
         oResultTIdEntry thinkyoung::blockchain::ChainDatabase::contract_lookup_resultid_by_reqestid(const TransactionIdType & id) const {
             auto it = my->_request_to_result_iddb.unordered_find(id);
             
@@ -3682,6 +3700,8 @@ namespace thinkyoung {
         void thinkyoung::blockchain::ChainDatabase::contract_erase_contractid_by_trxid(const TransactionIdType & tid) {
             my->_trx_to_contract_iddb.remove(tid);
         }
+        
+        
         
         vector<ContractIdType> ChainDatabase::get_all_contract_entries() const {
             vector<ContractIdType> vec_contract;
