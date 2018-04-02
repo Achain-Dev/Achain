@@ -1717,7 +1717,7 @@ vector<PrettyTransaction> Wallet::get_pretty_transaction_history(const string& a
                     }
                 }
             }
-            pretties.push_back(to_pretty_trx(item));
+            pretties.push_back(pretty_trx);
         }
 
         const auto sorter = [](const PrettyTransaction& a, const PrettyTransaction& b) -> bool
@@ -2111,6 +2111,13 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
                     pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::transfer_multi_asset;
                 }
 
+                break;
+            }
+
+            /*contract*/
+            case transaction_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::call_contract_transaction;
                 break;
             }
 
