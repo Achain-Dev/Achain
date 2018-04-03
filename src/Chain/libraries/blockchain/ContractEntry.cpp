@@ -452,16 +452,7 @@ namespace thinkyoung {
         
         thinkyoung::blockchain::ContractValueIdType ContractValueEntry::get_contract_value_id() const {
             ContractValueIdType value_id;
-            
-            if (index_.size() > 0) {
-                FC_ASSERT(storage_value_.is_array_type(storage_value_.storage_type) && storage_value_.is_table_type(storage_value_.storage_type), "", ("id", id_));
-                value_id = id_.AddressToString(contract_address) + value_name_ + index_;
-                
-            } else {
-                FC_ASSERT(!storage_value_.is_array_type(storage_value_.storage_type) && !storage_value_.is_table_type(storage_value_.storage_type), "", ("id", id_));
-                value_id = id_.AddressToString(contract_address) + value_name_;
-            }
-            
+            value_id = id_.AddressToString(contract_address) + value_name_ + index_;
             return value_id;
         }
         

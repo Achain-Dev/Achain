@@ -122,7 +122,7 @@ namespace thinkyoung {
             */
             //apply_entrys( prev_state, _feed_index_to_entry, _feed_index_remove );
             //special apply for amounts of data
-            apply_storage_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
+            // apply_storage_entrys_change(prev_state, _contract_to_storage_change, _contract_id_remove);
         }
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes()const {

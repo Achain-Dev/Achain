@@ -20,7 +20,7 @@ namespace thinkyoung {
             std::map<std::string, StorageDataChangeType> contract_change_storages;
             
             template<typename StorageBaseType, typename StorageContainerType, typename StorageContainerBaseType>
-            void update_contract_value(const StorageDataChangeType& change_storage, std::vector<ContractValueEntry>& value)const;
+            void update_contract_value(const std::string storage_name, const StorageDataChangeType& change_storage, std::vector<ContractValueEntry>& value)const;
             
             void update_contract_storages_value(const std::string storage_name, const StorageDataChangeType& change_storage,
                                                 std::vector<ContractValueEntry>& contract_change_vector) const;
