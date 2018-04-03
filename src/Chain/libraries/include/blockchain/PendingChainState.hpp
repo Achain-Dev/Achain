@@ -218,7 +218,6 @@ namespace thinkyoung {
             
             virtual BlockIdType               get_block_id(uint32_t block_num)const;
             
-            void get_storage_change(const ChainInterfacePtr& undo_state_arg);
             map<PropertyIdType, PropertyEntry>                             _property_id_to_entry;
             set<PropertyIdType>                                              _property_id_remove;
             
@@ -262,10 +261,12 @@ namespace thinkyoung {
             unordered_set<TransactionIdType>                    _trx_to_contract_id_remove;
             unordered_map<ContractIdType, ContractTrxEntry> _contract_to_trx_id;
             unordered_set<ContractIdType>                       _contract_to_trx_id_remove;
+            unordered_map<ContractIndexIdType, unordered_set<ContractValueIdType>>   _value_map_index;
             vector<EventOperation> event_vector;
             vector<thinkyoung::blockchain::SandboxAccountInfo>                     _vec_wallet_accounts;
             
           private:
+            void apply_storage_index_entrys(const ChainInterfacePtr& prev_state)const;
             // Not serialized
             std::weak_ptr<ChainInterface>                                     _prev_state;
             
@@ -747,5 +748,6 @@ FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_result_id_to_request_id)
            (_res_to_req_to_remove)
            (_vec_wallet_accounts)
+           (_value_id_to_storage)
           )
 FC_REFLECT(thinkyoung::blockchain::SandboxAccountInfo, (id)(name)(delegate_info)(owner_address)(registration_date)(last_update)(owner_key))
