@@ -150,6 +150,7 @@ namespace thinkyoung {
                     _account_name_to_id.open(data_dir / "index/account_name_to_id");
                     _account_address_to_id.open(data_dir / "index/account_address_to_id");
                     //contract db
+                    _value_map_index.open(data_dir / "index/value_map_index");
                     _contract_id_to_entry.open(data_dir / "index/contract_id_to_entry");
                     _contract_id_to_storage.open(data_dir / "index/contract_id_to_storage");
                     _value_id_to_storage.open(data_dir / "index/value_id_to_storage");
@@ -3625,12 +3626,27 @@ namespace thinkyoung {
             return oContractIndexSet();
         }
         
-        void ChainDatabase::contract_store_index_by_indexid(const ContractIndexIdType & index_id, const std::unordered_set<ContractValueIdType>& value_id_set) {
+        void ChainDatabase::contract_store_index_by_indexid(const ContractIndexIdType& index_id,
+                const std::unordered_set<ContractValueIdType>& value_id_set) {
             my->_value_map_index.store(index_id, value_id_set);
         }
         
-        void ChainDatabase::contract_erase_index_by_indexid(const ContractIndexIdType & index_id) {
-            my->_request_to_result_iddb.remove(index_id);
+        void ChainDatabase::contract_erase_index_by_indexid(const ContractIndexIdType& index_id) {
+            my->_value_map_index.remove(index_id);
+        }
+        
+        void ChainDatabase::contract_add_index_by_indexid(const ContractIndexIdType& index_id,
+                const std::unordered_set<ContractValueIdType>& value_id_set) {
+            auto it = my->_value_map_index.unordered_find(index_id);
+            
+            if (it != my->_value_map_index.unordered_end()) {
+                std::unordered_set<ContractValueIdType> set = it->second;
+                set.insert(value_id_set.begin(), value_id_set.end());
+                my->_value_map_index.store(index_id, set);
+                
+            } else {
+                my->_value_map_index.store(index_id, value_id_set);
+            }
         }
         
         oResultTIdEntry thinkyoung::blockchain::ChainDatabase::contract_lookup_resultid_by_reqestid(const TransactionIdType & id) const {

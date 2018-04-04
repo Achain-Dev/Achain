@@ -85,6 +85,7 @@ namespace thinkyoung {
                     FC_CAPTURE_AND_THROW(not_be_result_of_execute, (type));
                     
                 //
+                std::unordered_set<ContractValueIdType> eval_set;
                 std::vector<ContractValueEntry> value_entry;
                 std::vector<ContractValueEntry> remove_value_entry;
                 
@@ -98,9 +99,15 @@ namespace thinkyoung {
                     update_contract_storages_value(iter_change->first, iter_change->second, value_entry);
                 }
                 
+                auto undo_state = (PendingChainState*)(eval_state._current_state);
+                
                 for (auto& value : value_entry) {
-                    auto undo_state = (PendingChainState*)(eval_state._current_state);
                     undo_state->store(value.get_contract_value_id(), value);
+                    
+                    if (value.is_map_value()) {
+                        auto& undo_set = undo_state->_value_map_index[value.get_contract_index_id()];
+                        undo_set.emplace(value.get_contract_value_id());
+                    }
                 }
             }
             

@@ -2,6 +2,7 @@
 #include <blockchain/PendingChainState.hpp>
 #include <blockchain/Time.hpp>
 #include <fc/io/raw_variant.hpp>
+#include <blockchain/ChainDatabase.hpp>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -96,9 +97,25 @@ namespace thinkyoung {
             apply_entrys(prev_state, _contract_to_trx_id, _contract_to_trx_id_remove);
             apply_entrys(prev_state, _value_id_to_storage, _value_id_remove);
             apply_entrys(prev_state, _contract_id_to_storage, _contract_id_remove);
+            apply_index_changes();
             /* do this last because it could have side effects on other entrys while
              * we manage the short index
              */
+            //apply_entrys(prev_state, _value_map_index, _contract_id_remove);
+        }
+        void PendingChainState::apply_index_changes() const {
+            ChainDatabasePtr prev_state = std::dynamic_pointer_cast<ChainDatabase>(_prev_state.lock());
+            
+            if (!prev_state) {
+                return;
+            }
+            
+            //prev_state->(index);
+            _value_map_index;
+            
+            for (auto& index : _value_map_index) {
+                prev_state->contract_add_index_by_indexid(index.first, index.second);
+            }
         }
         void PendingChainState::populate_undo_state_change(const PendingChainStatePtr& undo_state,
                 const ChainInterfacePtr &prev_state,
@@ -230,9 +247,6 @@ namespace thinkyoung {
             return v;
         }
         void PendingChainState::apply_storage_index_entrys(const ChainInterfacePtr & prev_state) const {
-            ChainInterfacePtr prev_state = _prev_state.lock();
-            
-            if (!prev_state) return;
         }
         oPropertyEntry PendingChainState::property_lookup_by_id(const PropertyIdType id)const {
             const auto iter = _property_id_to_entry.find(id);
@@ -573,6 +587,13 @@ namespace thinkyoung {
         }
         void PendingChainState::contract_storage_change_store(const ContractIdType& id, const ContractStorageChangeEntry&  entry) {
             _contract_to_storage_change[id] = entry;
+        }
+        oContractIndexSet PendingChainState::contract_lookup_index_by_indexid(const ContractIndexIdType &) const {
+            return oContractIndexSet();
+        }
+        void PendingChainState::contract_store_index_by_indexid(const ContractIndexIdType &, const std::unordered_set<ContractValueIdType>&) {
+        }
+        void PendingChainState::contract_erase_index_by_indexid(const ContractIndexIdType &) {
         }
         void PendingChainState::contract_erase_from_id_map(const ContractIdType& id) {
             _contract_id_to_entry.erase(id);

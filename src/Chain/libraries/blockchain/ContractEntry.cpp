@@ -456,6 +456,20 @@ namespace thinkyoung {
             return value_id;
         }
         
+        bool ContractValueEntry::is_map_value() const {
+            return index_.size() == 0;
+        }
+        
+        ContractIndexIdType ContractValueEntry::get_contract_index_id() const {
+            if (is_map_value()) {
+                ContractIndexIdType value_id;
+                value_id = id_.AddressToString(contract_address) + value_name_;
+                return value_id;
+            }
+            
+            return ContractIndexIdType();
+        }
+        
         
         oContractStorageChange ContractStorageChangeEntry::lookup(const PendingChainState& db, const ContractIdType& id) {
             try {

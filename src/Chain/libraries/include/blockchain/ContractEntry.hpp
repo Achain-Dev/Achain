@@ -187,6 +187,8 @@ namespace thinkyoung {
             static void remove(ChainInterface&, const ContractValueIdType&);
             
             ContractValueIdType get_contract_value_id() const;
+            ContractIndexIdType get_contract_index_id() const;
+            bool is_map_value() const;
             //ContractValueIdType
         };
         

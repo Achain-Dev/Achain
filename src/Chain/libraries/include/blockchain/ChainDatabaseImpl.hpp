@@ -364,9 +364,6 @@ namespace thinkyoung {
                 set<UniqueTransactionKey>                                                 _unique_transactions;
                 thinkyoung::db::LevelMap<Address, unordered_set<TransactionIdType>>             _address_to_transaction_ids;
                 
-                
-                
-                
                 thinkyoung::db::LevelMap<SlotIndex, SlotEntry>                                 _slot_index_to_entry;
                 thinkyoung::db::LevelMap<time_point_sec, AccountIdType>                         _slot_timestamp_to_delegate;
                 

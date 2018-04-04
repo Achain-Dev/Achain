@@ -78,6 +78,12 @@ namespace thinkyoung {
             */
             virtual void                   apply_changes()const;
             /**
+            * apply changes from this pending state to the previous state
+            *
+            * @return void
+            */
+            virtual void                   apply_index_changes()const;
+            /**
             * apply changes from this pending state to the previous state just for undo
             *
             * @return void
@@ -697,6 +703,11 @@ namespace thinkyoung {
             oContractStorageChange contract_storage_change_lookup(const ContractIdType&) const;
             void contract_storage_change_remove(const ContractIdType&);
             void contract_storage_change_store(const ContractIdType&, const ContractStorageChangeEntry&);
+            
+            //new storage interface
+            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &);
+            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
             /**
             * Get populate undo state change (storage change)
             * @param    undo_state  PendingChainStatePtr

@@ -864,6 +864,7 @@ namespace thinkyoung {
             * @return vector<ContractEntry>
             */
             vector<ContractIdType> get_all_contract_entries() const;
+            void contract_add_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType>&);
             
           private:
             unique_ptr<detail::ChainDatabaseImpl> my;
@@ -1318,7 +1319,6 @@ namespace thinkyoung {
             virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
             virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &);
             virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
-            
           public:
             bool generating_block;
             
