@@ -247,70 +247,41 @@ namespace thinkyoung {
             
             return lua_storage;
         }
-        /*
-        std::shared_ptr<StorageDataBase> StorageDataType::create_storage_value(const StorageDataType& storage) {
-            std::shared_ptr<StorageDataBase> ret_data = nullptr;
-        
+        GluaStorageValue StorageDataType::create_lua_storage_from_storage_value(lua_State * L, const StorageDataType& storage) {
+            GluaStorageValue lua_storage;
+            GluaStorageValue* p_lua_storage = &lua_storage;
+            GluaStorageValue null_storage;
+            
             if (storage.storage_type == StorageValueTypes::storage_value_null) {
-                ret_data = std::make_shared<StorageNullType>(new StorageNullType());
-        
+                p_lua_storage->type = thinkyoung::blockchain::StorageValueTypes::storage_value_null;
+                
             } else if (storage.storage_type == StorageValueTypes::storage_value_int) {
-                ret_data = std::make_shared<StorageIntType>(new StorageIntType(storage.as<StorageIntType>()));
-        
+                p_lua_storage->type = thinkyoung::blockchain::StorageValueTypes::storage_value_int;
+                p_lua_storage->value.int_value = storage.as<StorageIntType>().raw_storage;
+                
             } else if (storage.storage_type == StorageValueTypes::storage_value_number) {
-                ret_data = std::make_shared<StorageNumberType>(new StorageNumberType(storage.as<StorageNumberType>()));
-        
+                p_lua_storage->type = thinkyoung::blockchain::StorageValueTypes::storage_value_number;
+                p_lua_storage->value.number_value = storage.as<StorageNumberType>().raw_storage;
+                
             } else if (storage.storage_type == StorageValueTypes::storage_value_bool) {
-                ret_data = std::make_shared<StorageBoolType>(new StorageBoolType(storage.as<StorageBoolType>()));
-        
+                p_lua_storage->type = thinkyoung::blockchain::StorageValueTypes::storage_value_bool;
+                p_lua_storage->value.bool_value = storage.as<StorageBoolType>().raw_storage;
+                
             } else if (storage.storage_type == StorageValueTypes::storage_value_string) {
-                ret_data = std::make_shared<StorageStringType>(new StorageStringType(storage.as<StorageStringType>()));
-        
-            } else if (
-                thinkyoung::blockchain::is_any_array_storage_value_type(storage.storage_type)
-                || thinkyoung::blockchain::is_any_table_storage_value_type(storage.storage_type)
-            ) {
-                if (storage.storage_type == StorageValueTypes::storage_value_int_table ||
-                        storage.storage_type == StorageValueTypes::storage_value_int_array) {
-                    if (storage.storage_type == StorageValueTypes::storage_value_int_table) {
-                        ret_data = std::make_shared<StorageIntTableType>(new StorageIntTableType(storage.as<StorageIntTableType>()));
-        
-                    } else if (storage.storage_type == StorageValueTypes::storage_value_int_array) {
-                        ret_data = std::make_shared<StorageIntArrayType>(new StorageIntArrayType(storage.as<StorageIntArrayType>()));
-                    }
-        
-                } else if (storage.storage_type == StorageValueTypes::storage_value_number_table ||
-                           storage.storage_type == StorageValueTypes::storage_value_number_array) {
-                    if (storage.storage_type == StorageValueTypes::storage_value_number_table) {
-                        ret_data = std::make_shared<StorageNumberTableType>(new StorageNumberTableType(storage.as<StorageNumberTableType>()));
-        
-                    } else if (storage.storage_type == StorageValueTypes::storage_value_number_array) {
-                        ret_data = std::make_shared<StorageNumberArrayType>(new StorageNumberArrayType(storage.as<StorageNumberArrayType>()));
-                    }
-        
-                } else if (storage.storage_type == StorageValueTypes::storage_value_bool_table ||
-                           storage.storage_type == StorageValueTypes::storage_value_bool_array) {
-                    if (storage.storage_type == StorageValueTypes::storage_value_bool_table) {
-                        ret_data = std::make_shared<StorageBoolTableType>(new StorageBoolTableType(storage.as<StorageBoolTableType>()));
-        
-                    } else if (storage.storage_type == StorageValueTypes::storage_value_bool_array) {
-                        ret_data = std::make_shared<StorageBoolArrayType>(new StorageBoolArrayType(storage.as<StorageBoolArrayType>()));
-                    }
-        
-                } else if (storage.storage_type == StorageValueTypes::storage_value_string_table ||
-                           storage.storage_type == StorageValueTypes::storage_value_string_array) {
-                    if (storage.storage_type == StorageValueTypes::storage_value_string_table) {
-                        ret_data = std::make_shared<StorageStringTableType>(new StorageStringTableType(storage.as<StorageStringTableType>()));
-        
-                    } else if (storage.storage_type == StorageValueTypes::storage_value_string_array) {
-                        ret_data = std::make_shared<StorageStringArrayType>(new StorageStringArrayType(storage.as<StorageStringArrayType>()));
-                    }
-                }
+                p_lua_storage->type = thinkyoung::blockchain::StorageValueTypes::storage_value_string;
+                std::string storage_string = storage.as<StorageStringType>().raw_storage;
+                size_t string_len = storage_string.length();
+                p_lua_storage->value.string_value = thinkyoung::lua::lib::malloc_managed_string(L, string_len + 1);
+                
+                if (!p_lua_storage->value.string_value)
+                    return null_storage;
+                    
+                strncpy(p_lua_storage->value.string_value, storage_string.c_str(), string_len);
+                p_lua_storage->value.string_value[string_len] = '\0';
             }
-        
-            return ret_data;
         }
-        */
+        
+        
         template<typename StorageType>
         void get_storage_map_change(
             const StorageDataType& before, const StorageDataType& after,
@@ -348,7 +319,6 @@ namespace thinkyoung {
             new_before = StorageDataType(new_before_value);
             new_after = StorageDataType(new_after_value);
         }
-        
         ContractStorageChangeItem ContractStorageChangeItem::get_entry_change(const StorageDataType& before, const StorageDataType& after) {
             ContractStorageChangeItem stor_change;
             FC_ASSERT((before.storage_type == after.storage_type) || (before.storage_type == thinkyoung::blockchain::StorageValueTypes::storage_value_null));

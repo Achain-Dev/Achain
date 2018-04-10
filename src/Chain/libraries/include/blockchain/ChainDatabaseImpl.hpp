@@ -382,7 +382,7 @@ namespace thinkyoung {
                 thinkyoung::db::fast_level_map<TransactionIdType, RequestIdEntry>         _result_to_request_iddb;
                 thinkyoung::db::fast_level_map<TransactionIdType, ContractinTrxEntry>         _trx_to_contract_iddb;
                 thinkyoung::db::fast_level_map<ContractIdType, ContractTrxEntry>       _contract_to_trx_iddb;
-                thinkyoung::db::fast_level_map<ContractIndexIdType, unordered_set<ContractValueIdType>>   _value_map_index;
+                thinkyoung::db::fast_level_map<ContractIndexIdType, ContractIndexSetEntry >   _value_map_index;
                 // sandbox contract related
                 PendingChainStatePtr    _sandbox_pending_state = nullptr;
                 bool                    _is_in_sandbox = false;

@@ -864,7 +864,7 @@ namespace thinkyoung {
             * @return vector<ContractEntry>
             */
             vector<ContractIdType> get_all_contract_entries() const;
-            void contract_add_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType>&);
+            void contract_add_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry&);
             
           private:
             unique_ptr<detail::ChainDatabaseImpl> my;
@@ -1315,12 +1315,13 @@ namespace thinkyoung {
             virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &) override;
             virtual void contract_erase_value_by_valueid(const ContractValueIdType&) override;
             
-            //new storage interface
-            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
-            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &);
-            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
+            
           public:
             bool generating_block;
+            //new storage interface
+            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const  ContractIndexSetEntry&);
+            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
             
         };
         typedef shared_ptr<ChainDatabase> ChainDatabasePtr;

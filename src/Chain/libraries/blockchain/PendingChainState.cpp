@@ -110,9 +110,6 @@ namespace thinkyoung {
                 return;
             }
             
-            //prev_state->(index);
-            _value_map_index;
-            
             for (auto& index : _value_map_index) {
                 prev_state->contract_add_index_by_indexid(index.first, index.second);
             }
@@ -588,12 +585,25 @@ namespace thinkyoung {
         void PendingChainState::contract_storage_change_store(const ContractIdType& id, const ContractStorageChangeEntry&  entry) {
             _contract_to_storage_change[id] = entry;
         }
-        oContractIndexSet PendingChainState::contract_lookup_index_by_indexid(const ContractIndexIdType &) const {
-            return oContractIndexSet();
+        
+        oContractIndexSet PendingChainState::contract_lookup_index_by_indexid(const ContractIndexIdType& id) const {
+            auto it = _value_map_index.find(id);
+            
+            if (it != _value_map_index.end())
+                return  it->second;
+                
+            const ChainInterfacePtr prev_state = _prev_state.lock();
+            
+            if (!prev_state)
+                return oContractIndexSet();
+                
+            return  prev_state->lookup<ContractIndexSetEntry>(id);;
         }
-        void PendingChainState::contract_store_index_by_indexid(const ContractIndexIdType &, const std::unordered_set<ContractValueIdType>&) {
+        void PendingChainState::contract_store_index_by_indexid(const ContractIndexIdType & id, const ContractIndexSetEntry& entry) {
+            _value_map_index[id] = entry;
         }
-        void PendingChainState::contract_erase_index_by_indexid(const ContractIndexIdType &) {
+        void PendingChainState::contract_erase_index_by_indexid(const ContractIndexIdType & id) {
+            _value_map_index.erase(id);
         }
         void PendingChainState::contract_erase_from_id_map(const ContractIdType& id) {
             _contract_id_to_entry.erase(id);

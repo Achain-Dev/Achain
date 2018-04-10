@@ -3627,7 +3627,7 @@ namespace thinkyoung {
         }
         
         void ChainDatabase::contract_store_index_by_indexid(const ContractIndexIdType& index_id,
-                const std::unordered_set<ContractValueIdType>& value_id_set) {
+                const ContractIndexSetEntry& value_id_set) {
             my->_value_map_index.store(index_id, value_id_set);
         }
         
@@ -3636,13 +3636,13 @@ namespace thinkyoung {
         }
         
         void ChainDatabase::contract_add_index_by_indexid(const ContractIndexIdType& index_id,
-                const std::unordered_set<ContractValueIdType>& value_id_set) {
+                const ContractIndexSetEntry& value_id_set) {
             auto it = my->_value_map_index.unordered_find(index_id);
             
             if (it != my->_value_map_index.unordered_end()) {
-                std::unordered_set<ContractValueIdType> set = it->second;
-                set.insert(value_id_set.begin(), value_id_set.end());
-                my->_value_map_index.store(index_id, set);
+                std::unordered_set<ContractValueIdType> set = it->second.index_set;
+                set.insert(value_id_set.index_set.begin(), value_id_set.index_set.end());
+                my->_value_map_index.store(index_id, it->second);
                 
             } else {
                 my->_value_map_index.store(index_id, value_id_set);

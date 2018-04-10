@@ -37,6 +37,8 @@ namespace thinkyoung {
             
             static StorageDataType get_storage_data_from_lua_storage(const GluaStorageValue& lua_storage);
             static GluaStorageValue create_lua_storage_from_storage_data(lua_State *L, const StorageDataType& storage_data);
+            static GluaStorageValue create_lua_storage_from_storage_value(lua_State * L, const StorageDataType& storage);
+            static GluaStorageValue create_lua_storage_from_storage_index(lua_State *L, const unordered_set<ContractIndexIdType>& contract_index);
             
             inline static bool is_table_type(StorageValueTypes type) {
                 return (type >= StorageValueTypes::storage_value_unknown_table && type <= StorageValueTypes::storage_value_string_table);

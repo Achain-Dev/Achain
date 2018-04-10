@@ -457,7 +457,7 @@ namespace thinkyoung {
         }
         
         bool ContractValueEntry::is_map_value() const {
-            return index_.size() == 0;
+            return index_.size() != 0;
         }
         
         ContractIndexIdType ContractValueEntry::get_contract_index_id() const {
@@ -492,6 +492,32 @@ namespace thinkyoung {
         void ContractStorageChangeEntry::remove(PendingChainState& db, const ContractIdType& id) {
             try {
                 db.contract_storage_change_remove(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        oContractIndexSet ContractIndexSetEntry::lookup(const ChainInterface &db, const ContractIndexIdType &id) {
+            try {
+                //        db.contract_lookup_index_by_indexid(id);
+                return oContractIndexSet();
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        void ContractIndexSetEntry::store(ChainInterface &db, const ContractIndexIdType &id,
+                                          const ContractIndexSetEntry& value) {
+            try {
+                //      db.contract_index(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        void ContractIndexSetEntry::remove(ChainInterface &db, const ContractIndexIdType &id) {
+            try {
+                //    db.contract_storage_change_remove(id);
             }
             
             FC_CAPTURE_AND_RETHROW((id));

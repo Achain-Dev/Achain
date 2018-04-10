@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <boost/uuid/sha1.hpp>
 
 
@@ -102,6 +103,7 @@ namespace thinkyoung {
         struct ContractStorageEntry;
         struct ContractValueEntry;
         struct ContractStorageChangeEntry;
+        struct ContractIndexSetEntry;
         //use fc optional to hold the return value
         typedef fc::optional<ContractEntry> oContractEntry;
         typedef fc::optional<ContractStorageEntry> oContractStorage;
@@ -109,7 +111,7 @@ namespace thinkyoung {
         typedef fc::optional<ContractValueEntry> oContractValue;
         typedef fc::optional<ContractIdType> oContractIdType;
         typedef fc::optional<ContractValueIdType> oContractValueIdType;
-        typedef fc::optional<unordered_set<ContractValueIdType>> oContractIndexSet;
+        typedef fc::optional<ContractIndexSetEntry> oContractIndexSet;
         
         
         //contract information
@@ -193,10 +195,11 @@ namespace thinkyoung {
         };
         
         struct ContractIndexSetEntry {
+            std::unordered_set<ContractIndexIdType> index_set;
             static oContractIndexSet lookup(const ChainInterface&, const ContractIndexIdType&);
-            static void store(ChainInterface&, const ContractIndexIdType&, const ContractValueEntry&);
+            static void store(ChainInterface&, const ContractIndexIdType&, const ContractIndexSetEntry&);
             static void remove(ChainInterface&, const ContractIndexIdType&);
-            static void add_index(ChainInterface&, const unordered_set<ContractValueEntry> index);
+            //   static void add_index(ChainInterface&, const unordered_set<ContractValueEntry> index);
         };
         
         struct  ResultTIdEntry;
@@ -249,6 +252,7 @@ namespace thinkyoung {
             friend struct RequestIdEntry;
             friend struct ContractinTrxEntry;
             friend struct ContractTrxEntry;
+            friend struct ContractIndexSetEntry;
             //lookup related
             virtual  oContractEntry  contract_lookup_by_id(const ContractIdType&)const = 0;
             virtual  oContractEntry  contract_lookup_by_name(const ContractName&)const = 0;
@@ -284,7 +288,7 @@ namespace thinkyoung {
             
             //new storage interface
             virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const = 0;
-            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &) = 0;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry &) = 0;
             virtual void contract_erase_index_by_indexid(const ContractIndexIdType&) = 0;
         };
     }
@@ -359,4 +363,5 @@ FC_REFLECT(thinkyoung::blockchain::ResultTIdEntry, (res))
 FC_REFLECT(thinkyoung::blockchain::RequestIdEntry, (req))
 FC_REFLECT(thinkyoung::blockchain::ContractTrxEntry, (trx_id))
 FC_REFLECT(thinkyoung::blockchain::ContractinTrxEntry, (contract_id))
+FC_REFLECT(thinkyoung::blockchain::ContractIndexSetEntry, (index_set))
 

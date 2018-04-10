@@ -106,7 +106,7 @@ namespace thinkyoung {
                     
                     if (value.is_map_value()) {
                         auto& undo_set = undo_state->_value_map_index[value.get_contract_index_id()];
-                        undo_set.emplace(value.get_contract_value_id());
+                        undo_set.index_set.emplace(value.get_contract_value_id());
                     }
                 }
             }

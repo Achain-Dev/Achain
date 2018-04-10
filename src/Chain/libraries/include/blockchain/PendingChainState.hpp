@@ -267,7 +267,7 @@ namespace thinkyoung {
             unordered_set<TransactionIdType>                    _trx_to_contract_id_remove;
             unordered_map<ContractIdType, ContractTrxEntry> _contract_to_trx_id;
             unordered_set<ContractIdType>                       _contract_to_trx_id_remove;
-            unordered_map<ContractIndexIdType, unordered_set<ContractValueIdType>>   _value_map_index;
+            unordered_map<ContractIndexIdType, ContractIndexSetEntry>   _value_map_index;
             vector<EventOperation> event_vector;
             vector<thinkyoung::blockchain::SandboxAccountInfo>                     _vec_wallet_accounts;
             
@@ -706,7 +706,7 @@ namespace thinkyoung {
             
             //new storage interface
             virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
-            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const std::unordered_set<ContractValueIdType> &);
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry &);
             virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
             /**
             * Get populate undo state change (storage change)

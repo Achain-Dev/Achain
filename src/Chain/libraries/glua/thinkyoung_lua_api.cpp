@@ -378,18 +378,71 @@ namespace thinkyoung {
                     return null_storage;
                     
                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state_ptr->_current_state;
-                oContractStorage entry = cur_state->get_contractstorage_entry(Address(std::string(contract_address), AddressType::contract_address));
+                ContractIndexIdType contract_index = contract_address + name;
+                oContractIndexSet index_entry = cur_state->lookup<ContractIndexSetEntry>(contract_index);
                 
-                if (NOT entry.valid())
-                    return null_storage;
+                if (NOT index_entry.valid()) {
+                    oContractValue value = cur_state->get_contract_value(contract_index);
+                    FC_ASSERT(value.valid(), "contract storage base value index error");
+                    return StorageDataType::create_lua_storage_from_storage_value(L, value->storage_value_);
                     
-                auto iter = entry->contract_storages.find(std::string(name));
-                
-                if (iter == entry->contract_storages.end())
-                    return null_storage;
+                } else {
+                    GluaStorageValue lua_storage;
+                    GluaStorageValue* p_lua_storage = &lua_storage;
+                    GluaStorageValue null_storage;
+                    null_storage.type = thinkyoung::blockchain::StorageValueTypes::storage_value_null;
+                    thinkyoung::blockchain::ChainInterface* cur_state = eval_state_ptr->_current_state;
                     
-                thinkyoung::blockchain::StorageDataType storage_data = iter->second;
-                return thinkyoung::blockchain::StorageDataType::create_lua_storage_from_storage_data(L, storage_data);
+                    //Set data is too large to require caching
+                    for (const auto& index : index_entry->index_set) {
+                        oContractValue value = cur_state->get_contract_value(index);
+                        FC_ASSERT(value.valid(), "contract storage base value index error");
+                        const StorageDataType& storage = value->storage_value_;
+                        //all is map
+                        p_lua_storage->type = get_storage_table_type(storage.storage_type);
+                        p_lua_storage->value.table_value = thinkyoung::lua::lib::create_managed_lua_table_map(L);
+                        
+                        if (!p_lua_storage->value.table_value) {
+                            return null_storage;
+                        }
+                        
+                        if (storage.storage_type == StorageValueTypes::storage_value_int) {
+                            LUA_INTEGER num = storage.as<StorageIntType>().raw_storage;
+                            GluaStorageValue base_storage = GluaStorageValue::from_int(num);
+                            p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
+                            
+                        } else if (storage.storage_type == StorageValueTypes::storage_value_number) {
+                            lua_Number num = storage.as<StorageNumberType>().raw_storage;
+                            GluaStorageValue base_storage;
+                            base_storage.type = thinkyoung::blockchain::StorageValueTypes::storage_value_number;
+                            base_storage.value.number_value = num;
+                            p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
+                            
+                        } else if (storage.storage_type == StorageValueTypes::storage_value_bool) {
+                            bool num = storage.as<StorageBoolType>().raw_storage;
+                            GluaStorageValue base_storage;
+                            base_storage.type = thinkyoung::blockchain::StorageValueTypes::storage_value_bool;
+                            base_storage.value.bool_value = num;
+                            p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
+                            
+                        } else if (storage.storage_type == StorageValueTypes::storage_value_string) {
+                            string str = storage.as<StorageStringType>().raw_storage;
+                            GluaStorageValue base_storage;
+                            base_storage.type = thinkyoung::blockchain::StorageValueTypes::storage_value_string;
+                            size_t string_len = str.length();
+                            base_storage.value.string_value = thinkyoung::lua::lib::malloc_managed_string(L, string_len + 1);
+                            
+                            if (!base_storage.value.string_value)
+                                return null_storage;
+                                
+                            strncpy(base_storage.value.string_value, str.c_str(), string_len);
+                            base_storage.value.string_value[string_len] = '\0';
+                            p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
+                        }
+                        
+                        return lua_storage;
+                    }
+                }
             }
             
             bool GluaChainApi::commit_storage_changes_to_thinkyoung(lua_State *L, AllContractsChangesMap &changes) {
