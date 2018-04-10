@@ -9,6 +9,14 @@ Replicas of the state machine are kept consistent using the Result Delegated Pro
 For more information about Achain, please read following document:
 * [Achain White Paper](https://www.achain.com/Achain%20Whitepaper%202.0_EN.pdf).
 
+## Supported Operating Systems
+Achain currently supports the following operating systems:  
+1. Windows 7 and higher version
+2. CentOS/RHEL 7.2.1511 / 7.3.1611
+3. Ubuntu 16.04
+4. Mac Os
+5. Fedora 27 / 25
+
 Build Achain
 --------
 Different platforms have different build instructions:
