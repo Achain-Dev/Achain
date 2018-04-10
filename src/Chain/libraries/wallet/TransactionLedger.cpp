@@ -1960,6 +1960,8 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
     pretty_trx.trx_id = !trx_rec.is_virtual ? trx_rec.trx.id() : trx_rec.entry_id;
     pretty_trx.block_num = trx_rec.block_num;
 
+    auto size = trx_rec.trx.operations.size();
+
     for (const auto& entry : trx_rec.ledger_entries)
     {
         auto pretty_entry = PrettyLedgerEntry();
@@ -2116,6 +2118,30 @@ PrettyTransaction Wallet::to_pretty_trx(const WalletTransactionEntry& trx_rec) c
 
             /*contract*/
             case transaction_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::contract_op_type;
+                if (size == 3)
+                {
+                    pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::transfer_contract_transaction;
+                }
+                break;
+            }
+            case on_upgrade_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::upgrade_contract_transaction;
+                break;
+            }
+            case on_destroy_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::destroy_contract_transaction;
+                break;
+            }
+            case contract_info_op_type:
+            {
+                pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::register_contract_transaction;
+                break;
+            }
+            case on_call_success_op_type:
             {
                 pretty_trx.trx_type = thinkyoung::blockchain::TransactionType::call_contract_transaction;
                 break;

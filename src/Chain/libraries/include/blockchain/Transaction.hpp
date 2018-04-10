@@ -23,9 +23,10 @@ namespace thinkyoung {
             create_asset = 6,       // 创建新资产
             issue_asset = 7,    //分配资产
             transfer_multi_asset = 8,   //多资产转账
+            contract_op_type = 9,   //合约调用
 
 
-            
+            /*以下是合约的具体调用*/
             register_contract_transaction = 10,
             transfer_contract_transaction = 11,
             upgrade_contract_transaction = 12,
