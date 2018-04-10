@@ -20,6 +20,11 @@ namespace thinkyoung {
             register_delegate_transaction = 3,   //注册代理
             upgrade_account_transaction = 4,    //代理升级
             update_account_transaction = 5,     //更新账户信息
+            create_asset = 6,       // 创建新资产
+            issue_asset = 7,    //分配资产
+            transfer_multi_asset = 8,   //多资产转账
+
+
             
             register_contract_transaction = 10,
             transfer_contract_transaction = 11,
@@ -216,6 +221,9 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::TransactionType,
                 (register_delegate_transaction)
                 (upgrade_account_transaction)
                 (update_account_transaction)
+                (create_asset)
+                (issue_asset)
+                (transfer_multi_asset)
                 (register_contract_transaction)
                 (transfer_contract_transaction)
                 (upgrade_contract_transaction)

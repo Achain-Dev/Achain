@@ -63,7 +63,7 @@
  *
  *  10^15 / 2^53 < 1 allows all values to be represented as a double or an int64
  */
-#define ALP_BLOCKCHAIN_MAX_SHARES                           (1000*1000*int64_t(1000)*1000*int64_t(1000))
+#define ALP_BLOCKCHAIN_MAX_SHARES                           (1000*1000*int64_t(1000)*1000 * 1000*int64_t(1000))
 
 #define ALP_BLOCKCHAIN_MIN_NAME_SIZE                        1
 #define ALP_BLOCKCHAIN_MAX_NAME_SIZE                        63
@@ -72,6 +72,9 @@
 #define ALP_BLOCKCHAIN_MAX_SUB_SYMBOL_SIZE                  8 // characters
 #define ALP_BLOCKCHAIN_MIN_SYMBOL_SIZE                      3 // characters
 #define ALP_BLOCKCHAIN_MAX_SYMBOL_SIZE                      12 // characters
+
+#define ALP_BLOCKCHAIN_MAX_SYMBOL_NAME_SIZE                 20 //characters
+#define ALP_BLOCKCHAIN_MAX_SYMBOL_DES_SIZE                 256 //characters
 
 #define ALP_BLOCKCHAIN_MIN_BURN_FEE                         ALP_BLOCKCHAIN_PRECISION * 1 // 1 XTS
 
