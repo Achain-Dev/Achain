@@ -279,6 +279,8 @@ namespace thinkyoung {
                 strncpy(p_lua_storage->value.string_value, storage_string.c_str(), string_len);
                 p_lua_storage->value.string_value[string_len] = '\0';
             }
+            
+            return lua_storage;
         }
         
         

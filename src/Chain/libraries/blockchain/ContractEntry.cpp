@@ -499,8 +499,7 @@ namespace thinkyoung {
         
         oContractIndexSet ContractIndexSetEntry::lookup(const ChainInterface &db, const ContractIndexIdType &id) {
             try {
-                //        db.contract_lookup_index_by_indexid(id);
-                return oContractIndexSet();
+                return db.contract_lookup_index_by_indexid(id);
             }
             
             FC_CAPTURE_AND_RETHROW((id));
@@ -509,7 +508,7 @@ namespace thinkyoung {
         void ContractIndexSetEntry::store(ChainInterface &db, const ContractIndexIdType &id,
                                           const ContractIndexSetEntry& value) {
             try {
-                //      db.contract_index(id);
+                db.contract_store_index_by_indexid(id, value);
             }
             
             FC_CAPTURE_AND_RETHROW((id));

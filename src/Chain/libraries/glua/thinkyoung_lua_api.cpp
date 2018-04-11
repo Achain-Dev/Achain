@@ -383,8 +383,13 @@ namespace thinkyoung {
                 
                 if (NOT index_entry.valid()) {
                     oContractValue value = cur_state->get_contract_value(contract_index);
-                    FC_ASSERT(value.valid(), "contract storage base value index error");
-                    return StorageDataType::create_lua_storage_from_storage_value(L, value->storage_value_);
+                    
+                    if (value.valid()) {
+                        return StorageDataType::create_lua_storage_from_storage_value(L, value->storage_value_);
+                        
+                    } else {
+                        return null_storage;
+                    }
                     
                 } else {
                     GluaStorageValue lua_storage;
@@ -396,7 +401,11 @@ namespace thinkyoung {
                     //Set data is too large to require caching
                     for (const auto& index : index_entry->index_set) {
                         oContractValue value = cur_state->get_contract_value(index);
-                        FC_ASSERT(value.valid(), "contract storage base value index error");
+                        
+                        if (NOT value.valid()) {
+                            continue;
+                        }
+                        
                         const StorageDataType& storage = value->storage_value_;
                         //all is map
                         p_lua_storage->type = get_storage_table_type(storage.storage_type);
@@ -442,6 +451,8 @@ namespace thinkyoung {
                         
                         return lua_storage;
                     }
+                    
+                    return null_storage;
                 }
             }
             
