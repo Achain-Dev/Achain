@@ -152,16 +152,6 @@ namespace thinkyoung {
 					if(!(entry.valid()&&entry->balance>=0))
 						FC_CAPTURE_AND_THROW(insufficient_funds, (entry->balance));
 				}
-                /* if( _current_state->get_head_block_num() >= ALP_V0_6_4_FORK_BLOCK_NUM )
-                {
-                for( const auto& op : trx.operations )
-                {
-                if( operation_type_enum( op.type ) == cover_op_type )
-                {
-                FC_ASSERT( balance[ 0 ] <= ALP_BLOCKCHAIN_PRECISION );
-                }
-                }
-                }*/
             } FC_CAPTURE_AND_RETHROW()
         }
 
@@ -300,7 +290,7 @@ namespace thinkyoung {
                         FC_CAPTURE_AND_THROW(expired_transaction, (trx_arg)(_current_state->now())(expired_by_sec));
                     }
 
-                    // 因为 current_state->now 获取的是slot time，slot_time加上expiration_time很有可能小于交易中的expiration，因此加上一个slot区间
+                    // 鍥犱负 current_state->now 鑾峰彇鐨勬槸slot time锛宻lot_time鍔犱笂expiration_time寰堟湁鍙兘灏忎簬浜ゆ槗涓殑expiration锛屽洜姝ゅ姞涓婁竴涓猻lot鍖洪棿
                     if ((_current_state->now() + ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC + ALP_BLOCKCHAIN_MAX_TRANSACTION_EXPIRATION_SEC) < trx_arg.expiration)
                         FC_CAPTURE_AND_THROW(invalid_transaction_expiration, (trx_arg)(_current_state->now()));
 
@@ -338,13 +328,7 @@ namespace thinkyoung {
                     if (!_skip_signature_check)
                     {
                         const auto trx_digest = trx_arg.digest(_current_state->get_chain_id());
-						set<fc::ecc::compact_signature> sig_set;
-						for (const auto& sig : trx_arg.signatures)//避免对相同的签名做重复解签，可以算是某种优化，但是大部分情况下都没有意义
-						{
-							sig_set.insert(sig);
-						}
-						for(const auto& sig:sig_set)
-						{
+			for (const auto& sig : trx_arg.signatures) {
                             const auto key = fc::ecc::public_key(sig, trx_digest, _enforce_canonical_signatures).serialize();
                             signed_keys.insert(Address(key));
                             signed_keys.insert(Address(PtsAddress(key, false, 56)));
@@ -364,7 +348,7 @@ namespace thinkyoung {
                         ++current_op_index;
                         if (!skipexec)
                         {
-                            //FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//进行operation对比
+                            //FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//Compare operation
                             FC_ASSERT(trx_arg.result_trx_id == p_result_trx.id());
                         }
                         evaluate_contract_result = true;
@@ -376,7 +360,7 @@ namespace thinkyoung {
                             ++current_op_index;
                         }
 
-                        //如果块中有的不完整的结果交易，也需要记录下来
+                        //If block contains incomplete result transaction, still need to record it
                         if (trx_arg.result_trx_type == ResultTransactionType::incomplete_result_transaction)
                         {
                             trx = trx_arg;
@@ -479,7 +463,7 @@ namespace thinkyoung {
                         ++current_op_index;
                         if (!skipexec)
                         {
-                            FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//进行operation对比
+                            FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//杩涜operation瀵规瘮
                         }
 
                         evaluate_contract_result = true;
