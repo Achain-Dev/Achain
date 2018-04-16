@@ -10797,9 +10797,9 @@ namespace thinkyoung {
                     /* returns */ "account_name",
                     /* params: */{
                         {"wif_key", "wif_private_key", thinkyoung::api::required_positional, fc::ovariant()},
-                        { "account_name", "account_name", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("null")) },
-                        { "create_new_account", "bool", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("false")) },
-                        { "rescan", "bool", thinkyoung::api::required_positional, fc::variant(fc::json::from_string("false")) }
+                        {"account_name", "account_name", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("null"))},
+                        {"create_new_account", "bool", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("false"))},
+                        {"rescan", "bool", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("false"))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
                     /* detailed description */ "Loads the private key into the specified account. Returns which account it was actually imported to.\n\nParameters:\n  wif_key (wif_private_key, required): A private key in bitcoin Wallet Import Format (WIF)\n  account_name (account_name, optional, defaults to null): the name of the account the key should be imported into, if null then the key must belong to an active account\n  create_new_account (bool, optional, defaults to false): If true, the wallet will attempt to create a new account for the name provided rather than import the key into an existing account\n  rescan (bool, optional, defaults to false): If true, the wallet will rescan the blockchain looking for transactions that involve this private key\n\nReturns:\n  account_name\n",

@@ -1,5 +1,6 @@
 #include <blockchain/StorageTypes.hpp>
 #include <glua/thinkyoung_lua_api.h>
+#include <algorithm>
 
 
 namespace thinkyoung {
