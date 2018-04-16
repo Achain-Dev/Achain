@@ -1,5 +1,6 @@
 ﻿#define ljsonlib_cpp
 
+#include <glua/lua.h>
 #include <glua/lprefix.h>
 
 
@@ -9,8 +10,6 @@
 #include <string>
 #include <sstream>
 #include <cassert>
-
-#include <glua/lua.h>
 
 #include <glua/lauxlib.h>
 #include <glua/lualib.h>

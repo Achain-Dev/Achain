@@ -1047,7 +1047,7 @@ static bool findloader_for_import_stream(lua_State *L, const char *name) {
             luaL_error(L, "module '%s' not found:%s", name, lua_tostring(L, -1));
         }
         lua_pushstring(L, name);
-        lua_call(L, 1, 2);  /* call it *///searcher_thinkyoung
+        lua_call(L, 1, 2);  /* call it */
         if (lua_isfunction(L, -2))  /* did it find a loader? */
             return true;  /* module loader found */
         else if (lua_isstring(L, -2)) {  /* searcher returned error message? */

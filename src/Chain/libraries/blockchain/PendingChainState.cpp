@@ -36,13 +36,6 @@ namespace thinkyoung {
             if (!prev_state) return get_slot_start_time(blockchain::now());
             return prev_state->now();
         }
-        /*  check????
-        oprice pending_chain_state::get_active_feed_price( const asset_id_type quote_id, const asset_id_type base_id )const
-        {
-        const chain_interface_ptr prev_state = _prev_state.lock();
-        FC_ASSERT( prev_state );
-        return prev_state->get_active_feed_price( quote_id, base_id );
-        }*/
 
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes()const
@@ -465,7 +458,7 @@ namespace thinkyoung {
             if (iter != _contract_id_to_storage.end()) return iter->second;
             const ChainInterfacePtr prev_state = _prev_state.lock();
             if (!prev_state) return oContractStorage();
-            const oContractStorage entry = prev_state->lookup<ContractStorageEntry>(id);
+            oContractStorage entry = prev_state->lookup<ContractStorageEntry>(id);
             if (entry.valid() && _contract_id_remove.count(id) == 0) return entry;
             return oContractStorage();
         }

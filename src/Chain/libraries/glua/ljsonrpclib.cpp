@@ -1,5 +1,6 @@
 #define ljsonrpclib_cpp
 
+#include <boost/asio.hpp>
 #include "glua/lprefix.h"
 
 
@@ -10,7 +11,6 @@
 #include <time.h>
 #include <memory>
 #include <mutex>
-#include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 #include "glua/lua.h"
@@ -21,8 +21,6 @@
 
 #undef LUA_JSONRPC_VERSION
 #define LUA_JSONRPC_VERSION "1.0"
-
-// TODO
 
 static const luaL_Reg jsonrpclib[] = {
 	// { "listen", lualib_http_listen },
