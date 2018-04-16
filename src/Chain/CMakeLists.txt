@@ -99,7 +99,7 @@ INCLUDE_DIRECTORIES(
         ${Boost_INCLUDE_DIR}
         ${OPENSSL_INCLUDE_DIR}
         "libraries/include"
-        "../include"
+        "../../include"
 )
 
 LINK_DIRECTORIES( 
