@@ -365,10 +365,11 @@ namespace thinkyoung {
                         ++current_op_index;
                         
                         if (!skipexec) {
+                            /*
                             if (is_contract_trxs_same(trx_arg, p_result_trx) == false) {
                                 fc_ilog(fc::logger::get("stor_debug"), "CON TRX ERROR: ${trx_arg} ${p_result_trx}", ("trx_arg", trx_arg)("p_result_trx", p_result_trx));
                             }
-                            
+                            */
                             //进行operation对比
                             FC_ASSERT(trx_arg.result_trx_id == p_result_trx.id());
                         }

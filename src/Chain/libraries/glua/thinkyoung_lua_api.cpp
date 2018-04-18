@@ -464,11 +464,6 @@ namespace thinkyoung {
                             base_storage.value.string_value[string_len] = '\0';
                             p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
                         }
-                        
-                        fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet return in loop lua_storage size:${lua_storage}",
-                                ("lua_storage", lua_storage.value.table_value->size()));
-                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
-                        return lua_storage;
                     }
                     
                     fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet return out of loop lua_storage size:${lua_storage}",
