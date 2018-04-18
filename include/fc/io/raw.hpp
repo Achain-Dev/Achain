@@ -13,6 +13,7 @@
 #include <fc/safe.hpp>
 #include <fc/io/raw_fwd.hpp>
 #include <map>
+#include <deque>
 
 namespace fc { 
     namespace raw {
@@ -110,10 +111,16 @@ namespace fc {
        s.read( (char*)&usec_as_int64, sizeof(usec_as_int64) );
        usec = fc::microseconds(usec_as_int64);
     } FC_RETHROW_EXCEPTIONS( warn, "" ) }
-    
+
     template<typename Stream, typename T, size_t N> 
     inline void pack( Stream& s, const fc::array<T,N>& v) {
       s.write((const char*)&v.data[0],N*sizeof(T));
+    }
+
+    template<typename Stream, typename T>
+    inline void pack( Stream& s, const std::shared_ptr<T>& v)
+    {
+      pack( s, *v );
     }
 
     template<typename Stream, typename T, size_t N> 
@@ -436,6 +443,7 @@ namespace fc {
           value.insert( std::move(tmp) );
       }
     }
+
     template<typename Stream, typename K, typename V>
     inline void pack(Stream& s, const std::multimap<K, V>& value) {
         pack(s, unsigned_int((uint32_t)value.size()));
@@ -458,6 +466,29 @@ namespace fc {
             fc::raw::unpack(s, tmp);
             value.insert(std::move(tmp));
         }
+    }
+    template<typename Stream, typename T>
+    inline void pack( Stream& s, const std::deque<T>& value ) {
+      pack( s, unsigned_int((uint32_t)value.size()) );
+      auto itr = value.begin();
+      auto end = value.end();
+      while( itr != end ) {
+        fc::raw::pack( s, *itr );
+        ++itr;
+      }
+    }
+
+    template<typename Stream, typename T>
+    inline void unpack( Stream& s, std::deque<T>& value ) {
+      unsigned_int size; unpack( s, size );
+      FC_ASSERT( size.value*sizeof(T) < MAX_ARRAY_ALLOC_SIZE );
+      value.resize(size.value);
+      auto itr = value.begin();
+      auto end = value.end();
+      while( itr != end ) {
+        fc::raw::unpack( s, *itr );
+        ++itr;
+      }
     }
 
     template<typename Stream, typename T>

@@ -60,6 +60,7 @@ class sha256
       return ds;
     }
     friend sha256 operator << ( const sha256& h1, uint32_t i       );
+    friend sha256 operator >> ( const sha256& h1, uint32_t i       );
     friend bool   operator == ( const sha256& h1, const sha256& h2 );
     friend bool   operator != ( const sha256& h1, const sha256& h2 );
     friend sha256 operator ^  ( const sha256& h1, const sha256& h2 );
