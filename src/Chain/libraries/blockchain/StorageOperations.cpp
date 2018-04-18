@@ -32,6 +32,9 @@ namespace thinkyoung {
                 value.id_ = contract_id;
                 value.value_name_ = storage_name;
                 value_vector.emplace_back(value);
+                fc_ilog(fc::logger::get("stor_debug"), "update_contract_value(map) contract_id:${contract_id}\
+							storage_name: ${storage_name}  index: ${index} value:${value}", ("contract_id", value.index_)\
+                        ("storage_name", value.value_name_)("index", value.index_)("value", new_storage.raw_storage));
             }
         }
         void StorageOperation::update_contract_storages_value(const std::string storage_name, const StorageDataChangeType & change_storage,
@@ -49,7 +52,10 @@ namespace thinkyoung {
                     value.id_ = contract_id;
                     value.value_name_ = storage_name;
                     contract_change_vector.emplace_back(value);
-                    
+                    fc_ilog(fc::logger::get("stor_debug"), "update_contract_value(Plain) contract_id:${contract_id}\
+							storage_name: ${storage_name}  index: ${index} value:${value}", ("contract_id", value.index_)\
+                            ("storage_name", value.value_name_)("index", value.index_)("value", value.storage_value_.storage_data.size()));
+                            
                 } else if (storage_type == StorageValueTypes::storage_value_int_table)
                     update_contract_value<LUA_INTEGER, StorageIntTableType, StorageIntType>(storage_name, change_storage, contract_change_vector);
                     
@@ -88,6 +94,7 @@ namespace thinkyoung {
                 std::unordered_set<ContractValueIdType> eval_set;
                 std::vector<ContractValueEntry> value_entry;
                 std::vector<ContractValueEntry> remove_value_entry;
+                fc_ilog(fc::logger::get("stor_debug"), "-------storage operation evaluate start--------");
                 
                 for (auto iter_change = contract_change_storages.begin(); iter_change != contract_change_storages.end(); ++iter_change) {
                     //storage_after和storage_before类型不一致
@@ -100,6 +107,7 @@ namespace thinkyoung {
                 }
                 
                 auto undo_state = (PendingChainState*)(eval_state._current_state);
+                fc_ilog(fc::logger::get("stor_debug"), "storage operation evaluate change_value_size:${value_entry}", ("value_entry", value_entry.size()));
                 
                 for (auto& value : value_entry) {
                     undo_state->store(value.get_contract_value_id(), value);
@@ -107,8 +115,11 @@ namespace thinkyoung {
                     if (value.is_map_value()) {
                         auto& undo_set = undo_state->_value_map_index[value.get_contract_index_id()];
                         undo_set.index_set.emplace(value.get_contract_value_id());
+                        fc_ilog(fc::logger::get("stor_debug"), "storage operation evaluate index_set emplace:${value_id}", ("value_id", value.get_contract_index_id()));
                     }
                 }
+                
+                fc_ilog(fc::logger::get("stor_debug"), "-------storage operation evaluate over--------");
             }
             
             FC_CAPTURE_AND_RETHROW((*this))

@@ -1080,6 +1080,7 @@ namespace thinkyoung {
                     
                     try {
                         PublicKeyType block_signee;
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain start block_num:${block_num}", ("block_num", block_data.block_num));
                         
                         if (block_data.block_num > LAST_CHECKPOINT_BLOCK_NUM) {
                             block_signee = block_data.signee();
@@ -1108,6 +1109,7 @@ namespace thinkyoung {
                         
                         if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
                         
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain apply_transactions");
                         apply_transactions(block_data, pending_state);
                         summary.applied_changes->event_vector = pending_state->event_vector;
                         pay_delegate(block_id, block_signee, pending_state, block_entry);
@@ -1116,6 +1118,7 @@ namespace thinkyoung {
                         save_undo_state(block_data.block_num, block_id, pending_state);
                         self->store_extend_status(block_id, 1);
                         // TODO: Verify idempotency
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain apply_changes");
                         pending_state->apply_changes();
                         mark_included(block_id, true);
                         update_head_block(block_data, block_id);
@@ -2244,6 +2247,7 @@ namespace thinkyoung {
                 // Initialize block
                 FullBlock new_block;
                 size_t block_size = new_block.block_size();
+                fc_ilog(fc::logger::get("stor_debug"), "generate_block start");
                 
                 if (config.block_max_transaction_count > 0 && config.block_max_size > block_size) {
                     // Evaluate pending transactions
@@ -2251,7 +2255,9 @@ namespace thinkyoung {
                     
                     for (const TransactionEvaluationStatePtr& item : pending_trx) {
                         // Check block production time limit
-                        if (time_point::now() - start_time >= config.block_max_production_time)
+                        const time_point produce_time = time_point::now();
+                        
+                        if (produce_time - start_time >= config.block_max_production_time)
                             break;
                             
                         const SignedTransaction& new_transaction = item->trx;
@@ -2311,6 +2317,7 @@ namespace thinkyoung {
                                 trx_eval_state->_enforce_canonical_signatures = config.transaction_canonical_signatures_required;
                                 trx_eval_state->_skip_signature_check = true;
                                 trx_eval_state->skipexec = false;
+                                fc_ilog(fc::logger::get("stor_debug"), "generate_block new_transaction");
                                 trx_eval_state->evaluate(new_transaction);
                                 
                                 if (trx_eval_state->p_result_trx.operations.size() > 0) {
@@ -2319,6 +2326,7 @@ namespace thinkyoung {
                                     result_eval_state->_skip_signature_check = true;
                                     pending_trx_state = res_trx_state;
                                     result_eval_state->skipexec = true;
+                                    fc_ilog(fc::logger::get("stor_debug"), "generate_block evaluate p_result_trx");
                                     result_eval_state->evaluate(trx_eval_state->p_result_trx);
                                     const ImessageIdType iMessageLength = trx_eval_state->imessage_length;
                                     
@@ -2388,6 +2396,7 @@ namespace thinkyoung {
                                 continue;
                             }
                             
+                            fc_ilog(fc::logger::get("stor_debug"), "generate_block apply_changes");
                             pending_trx_state->apply_changes();
                             new_block.user_transactions.push_back(trx);
                             block_size += trx.data_size();
@@ -3640,9 +3649,9 @@ namespace thinkyoung {
             auto it = my->_value_map_index.unordered_find(index_id);
             
             if (it != my->_value_map_index.unordered_end()) {
-                std::unordered_set<ContractValueIdType> set = it->second.index_set;
-                set.insert(value_id_set.index_set.begin(), value_id_set.index_set.end());
-                my->_value_map_index.store(index_id, it->second);
+                auto set = it->second;
+                set.index_set.insert(value_id_set.index_set.begin(), value_id_set.index_set.end());
+                my->_value_map_index.store(index_id, set);
                 
             } else {
                 my->_value_map_index.store(index_id, value_id_set);

@@ -31,7 +31,17 @@ namespace thinkyoung {
             virtual ~ChainInterface() {};
             
             virtual fc::time_point_sec now()const = 0;
-            
+            /**  contract_add_index_by_indexid
+            * Determine  whether a string is a valid account name
+            * contract storage value_map_index add value_id_set
+            * @param  index_id  value_map_index id
+            *
+            * @param  value_id_set  value index set
+            * @return void
+            */
+            virtual void contract_add_index_by_indexid(const ContractIndexIdType& index_id,
+                    const ContractIndexSetEntry& value_id_set) = 0;
+                    
             /**  is_valid_account_name
             * Determine  whether a string is a valid account name
             * @param  name  name to be checked

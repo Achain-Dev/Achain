@@ -377,6 +377,7 @@ namespace thinkyoung {
                 if (!eval_state_ptr)
                     return null_storage;
                     
+                fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage begin-----------");
                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state_ptr->_current_state;
                 ContractIndexIdType contract_index = contract_address + name;
                 oContractIndexSet index_entry = cur_state->lookup<ContractIndexSetEntry>(contract_index);
@@ -385,33 +386,48 @@ namespace thinkyoung {
                     oContractValue value = cur_state->get_contract_value(contract_index);
                     
                     if (value.valid()) {
+                        fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet not find index_entry:${value}",
+                                ("value", value));
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
                         return StorageDataType::create_lua_storage_from_storage_value(L, value->storage_value_);
                         
                     } else {
+                        fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet not find index_entry");
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
                         return null_storage;
                     }
                     
                 } else {
+                    fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet find index_entry:${contract_index}",
+                            ("contract_index", contract_index));
                     GluaStorageValue lua_storage;
                     GluaStorageValue* p_lua_storage = &lua_storage;
                     GluaStorageValue null_storage;
                     null_storage.type = thinkyoung::blockchain::StorageValueTypes::storage_value_null;
                     thinkyoung::blockchain::ChainInterface* cur_state = eval_state_ptr->_current_state;
-                    
+                    fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet size:${index_entry}",
+                            ("index_entry", index_entry->index_set.size()));
+                            
                     //Set data is too large to require caching
                     for (const auto& index : index_entry->index_set) {
                         oContractValue value = cur_state->get_contract_value(index);
                         
                         if (NOT value.valid()) {
+                            fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet not find index:${index}",
+                                    ("index", index));
+                            //delete index value
                             continue;
                         }
                         
+                        fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet find index:${value}",
+                                ("value", *value));
                         const StorageDataType& storage = value->storage_value_;
                         //all is map
                         p_lua_storage->type = get_storage_table_type(storage.storage_type);
                         p_lua_storage->value.table_value = thinkyoung::lua::lib::create_managed_lua_table_map(L);
                         
                         if (!p_lua_storage->value.table_value) {
+                            fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
                             return null_storage;
                         }
                         
@@ -449,10 +465,16 @@ namespace thinkyoung {
                             p_lua_storage->value.table_value->insert(make_pair(value->index_, base_storage));
                         }
                         
+                        fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet return in loop lua_storage size:${lua_storage}",
+                                ("lua_storage", lua_storage.value.table_value->size()));
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
                         return lua_storage;
                     }
                     
-                    return null_storage;
+                    fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet return out of loop lua_storage size:${lua_storage}",
+                            ("lua_storage", lua_storage.value.table_value->size()));
+                    fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                    return lua_storage;
                 }
             }
             
@@ -478,6 +500,8 @@ namespace thinkyoung {
                         storage_op.contract_change_storages.insert(make_pair(contract_name, storage_change));
                     }
                     
+                    fc_ilog(fc::logger::get("stor_debug"), "commit_storage_changes_to_thinkyoung contract_name:${contract_id} storage_change:${storage_change}",
+                            ("contract_id", contract_id)("storage_change", storage_op));
                     eval_state_ptr->p_result_trx.push_storage_operation(storage_op);
                 }
                 

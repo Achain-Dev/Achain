@@ -223,7 +223,8 @@ namespace thinkyoung {
             virtual fc::time_point_sec     get_head_block_timestamp()const override;
             
             virtual BlockIdType               get_block_id(uint32_t block_num)const;
-            
+            virtual void contract_add_index_by_indexid(const ContractIndexIdType& index_id,
+                    const ContractIndexSetEntry& value_id_set);
             map<PropertyIdType, PropertyEntry>                             _property_id_to_entry;
             set<PropertyIdType>                                              _property_id_remove;
             
@@ -708,6 +709,8 @@ namespace thinkyoung {
             virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
             virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry &);
             virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
+            
+            
             /**
             * Get populate undo state change (storage change)
             * @param    undo_state  PendingChainStatePtr

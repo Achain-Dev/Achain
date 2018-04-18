@@ -97,7 +97,12 @@ namespace thinkyoung {
             apply_entrys(prev_state, _contract_to_trx_id, _contract_to_trx_id_remove);
             apply_entrys(prev_state, _value_id_to_storage, _value_id_remove);
             apply_entrys(prev_state, _contract_id_to_storage, _contract_id_remove);
-            apply_index_changes();
+            //apply_index_changes();
+            
+            for (auto& index : _value_map_index) {
+                prev_state->contract_add_index_by_indexid(index.first, index.second);
+            }
+            
             /* do this last because it could have side effects on other entrys while
              * we manage the short index
              */
@@ -108,10 +113,6 @@ namespace thinkyoung {
             
             if (!prev_state) {
                 return;
-            }
-            
-            for (auto& index : _value_map_index) {
-                prev_state->contract_add_index_by_indexid(index.first, index.second);
             }
         }
         void PendingChainState::populate_undo_state_change(const PendingChainStatePtr& undo_state,
@@ -604,6 +605,19 @@ namespace thinkyoung {
         }
         void PendingChainState::contract_erase_index_by_indexid(const ContractIndexIdType & id) {
             _value_map_index.erase(id);
+        }
+        void PendingChainState::contract_add_index_by_indexid(const ContractIndexIdType & index_id,
+                const ContractIndexSetEntry & value_id_set) {
+            auto it = _value_map_index.find(index_id);
+            
+            if (it != _value_map_index.end()) {
+                auto set = it->second;
+                set.index_set.insert(value_id_set.index_set.begin(), value_id_set.index_set.end());
+                _value_map_index[index_id] =  set;
+                
+            } else {
+                _value_map_index[index_id] = value_id_set;
+            }
         }
         void PendingChainState::contract_erase_from_id_map(const ContractIdType& id) {
             _contract_id_to_entry.erase(id);
