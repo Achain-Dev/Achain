@@ -49,9 +49,9 @@ fi
 
 currentpath=$(pwd)
 leveldbpath=$currentpath/leveldb-1.20/
-miniupnpcpath=$currentpath/miniupnpc-1.7.20120830/
+miniupnpcpath=$currentpath/miniupnpc-1.8.20131209/
 leveldbtar=$currentpath/v1.20.tar.gz
-miniupnpctar=$currentpath/miniupnpc-1.7.20120830.tar.gz
+miniupnpctar=$currentpath/miniupnpc-1.8.20131209.tar.gz
 fc=$currentpath/fast-compile
 blockchain=$currentpath/Chain
 
@@ -84,15 +84,15 @@ fi
 echo "build and install the miniupnpc [ only  1.7 ]"
 
 if  [ "$Isdownload" = "download" ] ; then
-    echo "download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz"
-    wget -O miniupnpc-1.7.20120830.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
+    echo "download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz"
+    wget -O miniupnpc-1.8.20131209.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
 else
     echo "Do not download miniupnpc files"
 fi
 
 if [ -f $miniupnpctar ]; then 
     echo "unzip miniupnpc..."
-    tar -zxvf miniupnpc-1.7.20120830.tar.gz
+    tar -zxvf miniupnpc-1.8.20131209.tar.gz
 else
     echo
 fi

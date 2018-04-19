@@ -25,10 +25,10 @@ linux_installation_guide:
             sudo ldconfig
 
     4). install the miniupnpc [ only  1.7 ]
-            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
+            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
             
-            wget -O miniupnpc-1.7.20120830.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
-            tar -zxvf miniupnpc-1.7.20120830.tar.gz
+            wget -O miniupnpc-1.8.20131209.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
+            tar -zxvf miniupnpc-1.8.20131209.tar.gz
             cmake .
             make
             To install the library and headers on the system use :
@@ -99,10 +99,10 @@ linux_installation_guide:
             sudo ldconfig
 
     5). install the miniupnpc [ only  1.7 ]
-            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
+            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
             
-            wget -O miniupnpc-1.7.20120830.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
-            tar -zxvf miniupnpc-1.7.20120830.tar.gz
+            wget -O miniupnpc-1.8.20131209.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
+            tar -zxvf miniupnpc-1.8.20131209.tar.gz
             cmake .
             make
             To install the library and headers on the system use :
@@ -174,11 +174,11 @@ linux_installation_guide:
             sudo scp out-static/lib*  /usr/local/lib/        
             sudo ldconfig
 
-    5). install the miniupnpc [ only  1.7 ]
-            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
+    5). install the miniupnpc [ only  1.8 ]
+            download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
             
-            wget -O miniupnpc-1.7.20120830.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.7.20120830.tar.gz
-            tar -zxvf miniupnpc-1.7.20120830.tar.gz
+            wget -O miniupnpc-1.8.20131209.tar.gz http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz
+            tar -zxvf miniupnpc-1.8.20131209.tar.gz
             cmake .
             make
             To install the library and headers on the system use :
