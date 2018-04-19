@@ -6,8 +6,9 @@
  Implementaiton of the Burlish-Stoer method with dense output
  [end_description]
 
- Copyright 2009-2011 Karsten Ahnert
- Copyright 2009-2011 Mario Mulansky
+ Copyright 2011-2013 Mario Mulansky
+ Copyright 2011-2013 Karsten Ahnert
+ Copyright 2012 Christoph Koke
 
  Distributed under the Boost Software License, Version 1.0.
  (See accompanying file LICENSE_1_0.txt or
@@ -34,6 +35,8 @@
 #include <boost/numeric/odeint/stepper/controlled_step_result.hpp>
 #include <boost/numeric/odeint/algebra/range_algebra.hpp>
 #include <boost/numeric/odeint/algebra/default_operations.hpp>
+#include <boost/numeric/odeint/algebra/algebra_dispatcher.hpp>
+#include <boost/numeric/odeint/algebra/operations_dispatcher.hpp>
 
 #include <boost/numeric/odeint/util/state_wrapper.hpp>
 #include <boost/numeric/odeint/util/is_resizeable.hpp>
@@ -52,8 +55,8 @@ template<
     class Value = double ,
     class Deriv = State ,
     class Time = Value ,
-    class Algebra = range_algebra ,
-    class Operations = default_operations ,
+    class Algebra = typename algebra_dispatcher< State >::algebra_type ,
+    class Operations = typename operations_dispatcher< State >::operations_type ,
     class Resizer = initially_resizer
     >
 class bulirsch_stoer_dense_out {
@@ -106,7 +109,7 @@ public:
           m_table( m_k_max ) ,
           m_mp_states( m_k_max+1 ) ,
           m_derivs( m_k_max+1 ) ,
-          m_diffs( 2*m_k_max+1 ) ,
+          m_diffs( 2*m_k_max+2 ) ,
           STEPFAC1( 0.65 ) , STEPFAC2( 0.94 ) , STEPFAC3( 0.02 ) , STEPFAC4( 4.0 ) , KFAC1( 0.8 ) , KFAC2( 0.9 )
     {
         BOOST_USING_STD_MIN();
@@ -136,7 +139,7 @@ public:
             */
         }
         int num = 1;
-        for( int i = 2*(m_k_max) ; i >=0  ; i-- )
+        for( int i = 2*(m_k_max)+1 ; i >=0  ; i-- )
         {
             m_diffs[i].resize( num );
             num += (i+1)%2;
@@ -151,8 +154,6 @@ public:
         using std::pow;
         
         static const value_type val1( 1.0 );
-
-        typename odeint::unwrap_reference< System >::type &sys = system;
 
         bool reject( true );
 
@@ -169,11 +170,11 @@ public:
             m_midpoint.set_steps( m_interval_sequence[k] );
             if( k == 0 )
             {
-                m_midpoint.do_step( sys , in , dxdt , t , out , dt , m_mp_states[k].m_v , m_derivs[k]);
+                m_midpoint.do_step( system , in , dxdt , t , out , dt , m_mp_states[k].m_v , m_derivs[k]);
             }
             else
             {
-                m_midpoint.do_step( sys , in , dxdt , t , m_table[k-1].m_v , dt , m_mp_states[k].m_v , m_derivs[k] );
+                m_midpoint.do_step( system , in , dxdt , t , m_table[k-1].m_v , dt , m_mp_states[k].m_v , m_derivs[k] );
                 extrapolate( k , m_table , m_coeff , out );
                 // get error estimate
                 m_algebra.for_each3( m_err.m_v , out , m_table[0].m_v ,
@@ -258,6 +259,7 @@ public:
         {
 
             //calculate dxdt for next step and dense output
+            typename odeint::unwrap_reference< System >::type &sys = system;
             sys( out , dxdt_new , t+dt );
 
             //prepare dense output
@@ -364,7 +366,7 @@ public:
     void adjust_size( const StateIn &x )
     {
         resize_impl( x );
-        m_midpoint.adjust_size();
+        m_midpoint.adjust_size( x );
     }
 
 
@@ -585,7 +587,7 @@ private:
         for( size_t i = 0 ; i < m_k_max+1 ; ++i )
             for( size_t j = 0 ; j < m_derivs[i].size() ; ++j )
                 resized |= adjust_size_by_resizeability( m_derivs[i][j] , x , typename is_resizeable<deriv_type>::type() );
-        for( size_t i = 0 ; i < 2*m_k_max+1 ; ++i )
+        for( size_t i = 0 ; i < 2*m_k_max+2 ; ++i )
             for( size_t j = 0 ; j < m_diffs[i].size() ; ++j )
                 resized |= adjust_size_by_resizeability( m_diffs[i][j] , x , typename is_resizeable<deriv_type>::type() );
 

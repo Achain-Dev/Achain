@@ -19,7 +19,7 @@ namespace detail{
 
 //
 // These traits calculate the largest type in the list
-// [unsigned] long long, long, int, which has the specified number
+// [unsigned] boost::long_long_type, long, int, which has the specified number
 // of bits.  Note that intN_t and boost::int_t<N> find the first
 // member of the above list, not the last.  We want the last in the
 // list to ensure that mixed arithmetic operations are as efficient
@@ -29,8 +29,8 @@ template <unsigned N>
 struct largest_signed_type
 {
    typedef typename mpl::if_c<
-      1 + std::numeric_limits<long long>::digits == N,
-      long long,
+      1 + std::numeric_limits<boost::long_long_type>::digits == N,
+      boost::long_long_type,
       typename mpl::if_c<
          1 + std::numeric_limits<long>::digits == N,
          long,
@@ -47,8 +47,8 @@ template <unsigned N>
 struct largest_unsigned_type
 {
    typedef typename mpl::if_c<
-      std::numeric_limits<unsigned long long>::digits == N,
-      unsigned long long,
+      std::numeric_limits<boost::ulong_long_type>::digits == N,
+      boost::ulong_long_type,
       typename mpl::if_c<
          std::numeric_limits<unsigned long>::digits == N,
          unsigned long,
@@ -103,8 +103,8 @@ namespace multiprecision{
 
 typedef detail::largest_unsigned_type<32>::type limb_type;
 typedef detail::largest_signed_type<32>::type signed_limb_type;
-typedef boost::uint64_t double_limb_type;
-typedef boost::int64_t signed_double_limb_type;
+typedef detail::largest_unsigned_type<64>::type double_limb_type;
+typedef detail::largest_signed_type<64>::type signed_double_limb_type;
 static const limb_type max_block_10 = 1000000000;
 static const limb_type digits_per_block_10 = 9;
 

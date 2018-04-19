@@ -638,7 +638,7 @@ class voronoi_predicates {
 
       if (is_zero(denom)) {
         big_int_type numer = teta * teta - sum_AB * sum_AB;
-        big_int_type denom = teta * sum_AB;
+        denom = teta * sum_AB;
         cA[0] = denom * sum_x * 2 + numer * vec_x;
         cB[0] = segm_len;
         cA[1] = denom * sum_AB * 2 + numer * teta;

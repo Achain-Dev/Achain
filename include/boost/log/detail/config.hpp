@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -28,6 +28,14 @@
 
 #if defined(BOOST_NO_RTTI)
 #   error Boost.Log: RTTI is required by the library
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1600
+#   define BOOST_LOG_HAS_PRAGMA_DETECT_MISMATCH
+#endif
+
+#if defined(BOOST_LOG_HAS_PRAGMA_DETECT_MISMATCH)
+#include <boost/preprocessor/stringize.hpp>
 #endif
 
 #if !defined(BOOST_WINDOWS)
@@ -88,6 +96,13 @@
 #   define BOOST_LOG_BROKEN_CONSTANT_EXPRESSIONS
 #endif
 
+#if defined(BOOST_NO_CXX11_HDR_CODECVT)
+    // The compiler does not support std::codecvt<char16_t> and std::codecvt<char32_t> specializations.
+    // The BOOST_NO_CXX11_HDR_CODECVT means there's no usable <codecvt>, which is slightly different from this macro.
+    // But in order for <codecvt> to be implemented the std::codecvt specializations have to be implemented as well.
+#   define BOOST_LOG_NO_CXX11_CODECVT_FACETS
+#endif
+
 #if defined(__CYGWIN__)
     // Boost.ASIO is broken on Cygwin
 #   define BOOST_LOG_NO_ASIO
@@ -140,6 +155,9 @@
 #endif
 #if !defined(BOOST_LOG_UNREACHABLE)
 #   define BOOST_LOG_UNREACHABLE()
+#   define BOOST_LOG_UNREACHABLE_RETURN(r) return r
+#else
+#   define BOOST_LOG_UNREACHABLE_RETURN(r) BOOST_LOG_UNREACHABLE()
 #endif
 
 // Some compilers support a special attribute that shows that a function won't return
@@ -153,15 +171,6 @@
     // The rest compilers might emit bogus warnings about missing return statements
     // in functions with non-void return types when throw_exception is used.
 #   define BOOST_LOG_NORETURN
-#endif
-
-// cxxabi.h availability macro
-#if defined(BOOST_CLANG)
-#   if defined(__has_include) && __has_include(<cxxabi.h>)
-#       define BOOST_LOG_HAS_CXXABI_H
-#   endif
-#elif defined(__GNUC__) && !defined(__QNX__)
-#   define BOOST_LOG_HAS_CXXABI_H
 #endif
 
 #if !defined(BOOST_LOG_BUILDING_THE_LIB)
@@ -262,6 +271,11 @@
 #   endif
 #endif // defined(BOOST_LOG_USE_COMPILER_TLS)
 
+#ifndef BOOST_LOG_CPU_CACHE_LINE_SIZE
+//! The macro defines the CPU cache line size for the target architecture. This is mostly used for optimization.
+#define BOOST_LOG_CPU_CACHE_LINE_SIZE 64
+#endif
+
 namespace boost {
 
 // Setup namespace name
@@ -334,6 +348,10 @@ namespace log {}
 #   define BOOST_LOG_CLOSE_NAMESPACE }
 
 #endif // !defined(BOOST_LOG_DOXYGEN_PASS)
+
+#if defined(BOOST_LOG_HAS_PRAGMA_DETECT_MISMATCH)
+#pragma detect_mismatch("boost_log_abi", BOOST_PP_STRINGIZE(BOOST_LOG_VERSION_NAMESPACE))
+#endif
 
 } // namespace boost
 

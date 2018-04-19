@@ -1,6 +1,11 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
+// Copyright (c) 2007-2015 Barend Gehrels, Amsterdam, the Netherlands.
+
+// This file was modified by Oracle on 2015.
+// Modifications copyright (c) 2015 Oracle and/or its affiliates.
+
+// Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -10,13 +15,187 @@
 #define BOOST_GEOMETRY_ALGORITHMS_SYM_DIFFERENCE_HPP
 
 #include <algorithm>
-
+#include <iterator>
+#include <vector>
 
 #include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/algorithms/union.hpp>
+#include <boost/geometry/geometries/multi_polygon.hpp>
 
 
 namespace boost { namespace geometry
 {
+
+#ifndef DOXYGEN_NO_DETAIL
+namespace detail { namespace sym_difference
+{
+
+
+template <typename GeometryOut>
+struct compute_difference
+{
+    template
+    <
+        typename Geometry1,
+        typename Geometry2,
+        typename RobustPolicy,
+        typename OutputIterator,
+        typename Strategy
+    >
+    static inline OutputIterator apply(Geometry1 const& geometry1,
+                                       Geometry2 const& geometry2,
+                                       RobustPolicy const& robust_policy,
+                                       OutputIterator out,
+                                       Strategy const& strategy)
+    {
+        return geometry::dispatch::intersection_insert
+            <
+                Geometry1,
+                Geometry2,
+                GeometryOut,
+                overlay_difference,
+                geometry::detail::overlay::do_reverse
+                    <
+                        geometry::point_order<Geometry1>::value
+                    >::value,
+                geometry::detail::overlay::do_reverse
+                    <
+                        geometry::point_order<Geometry2>::value, true
+                    >::value
+            >::apply(geometry1, geometry2, robust_policy, out, strategy);
+    }
+};
+
+
+
+template <typename GeometryOut, typename Geometry1, typename Geometry2>
+struct sym_difference_generic
+{
+    template
+    <
+        typename RobustPolicy,
+        typename OutputIterator,
+        typename Strategy
+    >
+    static inline OutputIterator apply(Geometry1 const& geometry1,
+                                       Geometry2 const& geometry2,
+                                       RobustPolicy const& robust_policy,
+                                       OutputIterator out,
+                                       Strategy const& strategy)
+    {
+        out = compute_difference
+            <
+                GeometryOut
+            >::apply(geometry1, geometry2, robust_policy, out, strategy);
+
+        return compute_difference
+            <
+                GeometryOut
+            >::apply(geometry2, geometry1, robust_policy, out, strategy);
+    }
+};
+
+
+template <typename GeometryOut, typename Areal1, typename Areal2>
+struct sym_difference_areal_areal
+{
+    template
+    <
+        typename RobustPolicy,
+        typename OutputIterator,
+        typename Strategy
+    >
+    static inline OutputIterator apply(Areal1 const& areal1,
+                                       Areal2 const& areal2,
+                                       RobustPolicy const& robust_policy,
+                                       OutputIterator out,
+                                       Strategy const& strategy)
+    {
+        typedef geometry::model::multi_polygon
+            <
+                GeometryOut
+            > helper_geometry_type;
+
+        helper_geometry_type diff12, diff21;
+
+        std::back_insert_iterator<helper_geometry_type> oit12(diff12);
+        std::back_insert_iterator<helper_geometry_type> oit21(diff21);
+
+        compute_difference
+            <
+                GeometryOut
+            >::apply(areal1, areal2, robust_policy, oit12, strategy);
+
+        compute_difference
+            <
+                GeometryOut
+            >::apply(areal2, areal1, robust_policy, oit21, strategy);
+
+        return geometry::dispatch::union_insert
+            <
+                helper_geometry_type,
+                helper_geometry_type,
+                GeometryOut
+            >::apply(diff12, diff21, robust_policy, out, strategy);
+    }
+};
+
+
+}} // namespace detail::sym_difference
+#endif // DOXYGEN_NO_DETAIL
+
+
+
+#ifndef DOXYGEN_NO_DISPATCH
+namespace dispatch
+{
+
+
+template
+<
+    typename Geometry1,
+    typename Geometry2,
+    typename GeometryOut,
+    typename TagIn1 = typename geometry::tag_cast
+        <
+            typename tag<Geometry1>::type, areal_tag
+        >::type,
+    typename TagIn2 = typename geometry::tag_cast
+        <
+            typename tag<Geometry2>::type, areal_tag
+        >::type,
+    typename TagOut = typename geometry::tag<GeometryOut>::type
+>
+struct sym_difference_insert
+    : detail::sym_difference::sym_difference_generic
+        <
+            GeometryOut, Geometry1, Geometry2
+        >
+{};
+
+
+template
+<
+    typename Areal1,
+    typename Areal2,
+    typename GeometryOut,
+    typename TagOut
+>
+struct sym_difference_insert
+    <
+        Areal1, Areal2, GeometryOut,
+        areal_tag, areal_tag, TagOut
+    > : detail::sym_difference::sym_difference_areal_areal
+        <
+            GeometryOut, Areal1, Areal2
+        >
+{};
+
+
+} // namespace dispatch
+#endif // DOXYGEN_NO_DISPATCH
+
+
 
 #ifndef DOXYGEN_NO_DETAIL
 namespace detail { namespace sym_difference
@@ -46,35 +225,24 @@ template
     typename GeometryOut,
     typename Geometry1,
     typename Geometry2,
+    typename RobustPolicy,
     typename OutputIterator,
     typename Strategy
 >
 inline OutputIterator sym_difference_insert(Geometry1 const& geometry1,
-            Geometry2 const& geometry2, OutputIterator out,
+            Geometry2 const& geometry2,
+            RobustPolicy const& robust_policy,
+            OutputIterator out,
             Strategy const& strategy)
 {
     concept::check<Geometry1 const>();
     concept::check<Geometry2 const>();
     concept::check<GeometryOut>();
 
-    out = geometry::dispatch::intersection_insert
+    return dispatch::sym_difference_insert
         <
-            Geometry1, Geometry2,
-            GeometryOut,
-            overlay_difference,
-            geometry::detail::overlay::do_reverse<geometry::point_order<Geometry1>::value>::value,
-            geometry::detail::overlay::do_reverse<geometry::point_order<Geometry2>::value, true>::value
-        >::apply(geometry1, geometry2, out, strategy);
-    out = geometry::dispatch::intersection_insert
-        <
-            Geometry2, Geometry1,
-            GeometryOut,
-            overlay_difference,
-            geometry::detail::overlay::do_reverse<geometry::point_order<Geometry2>::value>::value,
-            geometry::detail::overlay::do_reverse<geometry::point_order<Geometry1>::value, true>::value,
-            geometry::detail::overlay::do_reverse<geometry::point_order<GeometryOut>::value>::value
-        >::apply(geometry2, geometry1, out, strategy);
-    return out;
+            Geometry1, Geometry2, GeometryOut
+        >::apply(geometry1, geometry2, robust_policy, out, strategy);
 }
 
 
@@ -97,10 +265,12 @@ template
     typename GeometryOut,
     typename Geometry1,
     typename Geometry2,
+    typename RobustPolicy,
     typename OutputIterator
 >
 inline OutputIterator sym_difference_insert(Geometry1 const& geometry1,
-            Geometry2 const& geometry2, OutputIterator out)
+            Geometry2 const& geometry2,
+            RobustPolicy const& robust_policy, OutputIterator out)
 {
     concept::check<Geometry1 const>();
     concept::check<Geometry2 const>();
@@ -111,10 +281,11 @@ inline OutputIterator sym_difference_insert(Geometry1 const& geometry1,
             typename cs_tag<GeometryOut>::type,
             Geometry1,
             Geometry2,
-            typename geometry::point_type<GeometryOut>::type
+            typename geometry::point_type<GeometryOut>::type,
+            RobustPolicy
         > strategy_type;
 
-    return sym_difference_insert<GeometryOut>(geometry1, geometry2, out, strategy_type());
+    return sym_difference_insert<GeometryOut>(geometry1, geometry2, robust_policy, out, strategy_type());
 }
 
 }} // namespace detail::sym_difference
@@ -150,8 +321,17 @@ inline void sym_difference(Geometry1 const& geometry1,
     typedef typename boost::range_value<Collection>::type geometry_out;
     concept::check<geometry_out>();
 
+    typedef typename geometry::rescale_overlay_policy_type
+        <
+            Geometry1,
+            Geometry2
+        >::type rescale_policy_type;
+
+    rescale_policy_type robust_policy
+            = geometry::get_rescale_policy<rescale_policy_type>(geometry1, geometry2);
+
     detail::sym_difference::sym_difference_insert<geometry_out>(
-            geometry1, geometry2,
+            geometry1, geometry2, robust_policy,
             std::back_inserter(output_collection));
 }
 
