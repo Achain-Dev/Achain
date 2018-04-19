@@ -13,17 +13,17 @@
 #           curl -LO http://sourceforge.net/projects/boost/files/boost/1.59.0/boost_1_59_0.tar.gz
 #           tar -zxvf boost_1_59_0.tar.gz
 #           cd boost_1_59_0
-#           ./bootstrap.sh  
+#           ./bootstrap.sh  --prefix=/usr/local/boost
 #           ./b2 cxxflags="-arch x86_64" linkflags="-arch x86_64"
-#           ./b2 install
+#           sudo ./b2 install
            
 #     2). install openssl 1.0.2k
 #           curl -LO https://www.openssl.org/source/old/1.0.2/openssl-1.0.2k.tar.gz
 #           tar -zxvf openssl-1.0.2k.tar.gz
 #           cd openssl-1.0.2k
-#           ./Configure darwin64-x86_64-cc --prefix= xxx 
+#           ./Configure darwin64-x86_64-cc --prefix=/usr/local/openssl
 #           make depend
-#           make install
+#           sudo make install
 
 #           details please refer to the WIKI(https://wiki.openssl.org/index.php/Compilation_and_Installation#OS_X)
 #--------------------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ else
 fi
 if [ -d "$fc" ]; then
     cd $fc
-    cmake . [ -DOPENSSL_ROOT_DIR=xxx -DBOOST_ROOT_DIR=xxx] 
+    cmake .  #[ -DOPENSSL_ROOT_DIR=/usr/local/openssl -DBOOST_ROOT=/usr/local/boost] 
     make
     sudo cp libfc.a  /usr/local/lib/
     sudo cp $fc/vendor/secp256k1-zkp/src/project_secp256k1-build/.libs/libsecp256k1.a /usr/local/lib
@@ -134,7 +134,7 @@ echo
 
 if [ -d "$blockchain" ]; then
     cd $blockchain
-    cmake .
+    cmake .  #[ -DOPENSSL_ROOT_DIR=/usr/local/openssl -DBOOST_ROOT=/usr/local/boost] 
     make
     cd ..
 else
