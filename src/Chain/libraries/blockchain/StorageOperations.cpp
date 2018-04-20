@@ -53,8 +53,8 @@ namespace thinkyoung {
                     value.value_name_ = storage_name;
                     contract_change_vector.emplace_back(value);
                     fc_ilog(fc::logger::get("stor_debug"), "update_contract_value(Plain) contract_id:${contract_id}\
-							storage_name: ${storage_name}  index: ${index} value:${value}", ("contract_id", value.index_)\
-                            ("storage_name", value.value_name_)("index", value.index_)("value", value.storage_value_.storage_data.size()));
+							storage_name: ${storage_name}  index: ${index} value:${value}", ("contract_id", value.id_)\
+                            ("storage_name", value.value_name_)("index", value.index_)("value", value.storage_value_));
                             
                 } else if (storage_type == StorageValueTypes::storage_value_int_table)
                     update_contract_value<LUA_INTEGER, StorageIntTableType, StorageIntType>(storage_name, change_storage, contract_change_vector);

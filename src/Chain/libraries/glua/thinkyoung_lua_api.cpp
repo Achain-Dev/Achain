@@ -408,6 +408,11 @@ namespace thinkyoung {
                     fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet size:${index_entry}",
                             ("index_entry", index_entry->index_set.size()));
                             
+                    if (index_entry->index_set.size() == 0) {
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                        return null_storage;
+                    }
+                    
                     //Set data is too large to require caching
                     for (const auto& index : index_entry->index_set) {
                         oContractValue value = cur_state->get_contract_value(index);
@@ -422,14 +427,17 @@ namespace thinkyoung {
                         fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet find index:${value}",
                                 ("value", *value));
                         const StorageDataType& storage = value->storage_value_;
-                        //all is map
-                        p_lua_storage->type = get_storage_table_type(storage.storage_type);
-                        p_lua_storage->value.table_value = thinkyoung::lua::lib::create_managed_lua_table_map(L);
                         
-                        if (!p_lua_storage->value.table_value) {
-                            fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
-                            return null_storage;
+                        if (p_lua_storage->value.table_value == nullptr) {
+                            p_lua_storage->value.table_value = thinkyoung::lua::lib::create_managed_lua_table_map(L);
+                            
+                            if (p_lua_storage->value.table_value == nullptr) {
+                                fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                                return null_storage;
+                            }
                         }
+                        
+                        p_lua_storage->type = get_storage_table_type(storage.storage_type);
                         
                         if (storage.storage_type == StorageValueTypes::storage_value_int) {
                             LUA_INTEGER num = storage.as<StorageIntType>().raw_storage;

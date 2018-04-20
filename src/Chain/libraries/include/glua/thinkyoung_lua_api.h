@@ -318,6 +318,7 @@ typedef struct GluaStorageValue {
     union GluaStorageValueUnion value;
     inline GluaStorageValue() {
         type = thinkyoung::blockchain::StorageValueTypes::storage_value_null;
+        value.table_value = nullptr;
     }
     inline static GluaStorageValue from_int(LUA_INTEGER val) {
         GluaStorageValue sv;
