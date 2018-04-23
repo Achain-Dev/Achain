@@ -53,7 +53,7 @@ miniupnpcpath=$currentpath/miniupnpc-1.8.20131209/
 leveldbtar=$currentpath/v1.20.tar.gz
 miniupnpctar=$currentpath/miniupnpc-1.8.20131209.tar.gz
 fc=$currentpath/fast-compile
-blockchain=$currentpath/Chain
+blockchain=$currentpath/src/Chain
 
 echo "build and  install the leveldb [1.18 or later]"
 if [ "$Isdownload" = "download" ]
@@ -81,7 +81,7 @@ else
     echo "Error: there are no related leveldb files, pls check ..."
 fi
 
-echo "build and install the miniupnpc [ only  1.7 ]"
+echo "build and install the miniupnpc [ 1.8 ]"
 
 if  [ "$Isdownload" = "download" ] ; then
     echo "download http://miniupnp.free.fr/files/download.php?file=miniupnpc-1.8.20131209.tar.gz"
