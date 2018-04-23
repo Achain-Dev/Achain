@@ -374,9 +374,11 @@ namespace thinkyoung {
                     (thinkyoung::blockchain::TransactionEvaluationState*)
                     (thinkyoung::lua::lib::get_lua_state_value(L, "evaluate_state").pointer_value);
                     
-                if (!eval_state_ptr)
+                if (!eval_state_ptr) {
+                    fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------NULL");
                     return null_storage;
-                    
+                }
+                
                 fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage begin-----------");
                 thinkyoung::blockchain::ChainInterface* cur_state = eval_state_ptr->_current_state;
                 ContractIndexIdType contract_index = contract_address + name;
@@ -393,7 +395,7 @@ namespace thinkyoung {
                         
                     } else {
                         fc_ilog(fc::logger::get("stor_debug"), "ContractIndexSet not find index_entry");
-                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------NULL");
                         return null_storage;
                     }
                     
@@ -409,7 +411,7 @@ namespace thinkyoung {
                             ("index_entry", index_entry->index_set.size()));
                             
                     if (index_entry->index_set.size() == 0) {
-                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                        fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------NULL");
                         return null_storage;
                     }
                     
@@ -432,7 +434,7 @@ namespace thinkyoung {
                             p_lua_storage->value.table_value = thinkyoung::lua::lib::create_managed_lua_table_map(L);
                             
                             if (p_lua_storage->value.table_value == nullptr) {
-                                fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------");
+                                fc_ilog(fc::logger::get("stor_debug"), "----------GluaVM storage get_storage over-----------NULL");
                                 return null_storage;
                             }
                         }
