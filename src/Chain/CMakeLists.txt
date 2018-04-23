@@ -100,6 +100,7 @@ INCLUDE_DIRECTORIES(
         ${OPENSSL_INCLUDE_DIR}
         "libraries/include"
         "../../include"
+        "../../include/lin"
 )
 
 LINK_DIRECTORIES( 
