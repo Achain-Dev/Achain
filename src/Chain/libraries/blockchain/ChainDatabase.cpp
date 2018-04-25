@@ -47,7 +47,7 @@ namespace thinkyoung {
                     
                     if (produce_time - start_time >= fc::seconds(3))
                         break;
-                    
+                        
                     try {
                         TransactionEvaluationStatePtr eval_state = self->evaluate_transaction(trx, _relay_fee, false, true);
                         
@@ -2260,10 +2260,10 @@ namespace thinkyoung {
                         // Check block production time limit
                         const time_point produce_time = time_point::now();
                         
-                        if (produce_time - start_time >= fc::seconds(3)) {
+                        if (produce_time - start_time >= config.block_max_production_time) {
                             break;
                         }
-                            
+                        
                         const SignedTransaction& new_transaction = item->trx;
                         
                         try {
