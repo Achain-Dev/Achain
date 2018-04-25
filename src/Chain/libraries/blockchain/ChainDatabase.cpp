@@ -37,17 +37,12 @@ namespace thinkyoung {
                 _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                 unsigned num_pending_transaction_considered = 0;
                 auto itr = _pending_transaction_db.begin();
-                const time_point start_time = time_point::now();
                 
                 while (itr.valid()) {
                     SignedTransaction trx = itr.value();
                     const TransactionIdType trx_id = itr.key();
                     assert(trx_id == trx.id());
-                    const time_point produce_time = time_point::now();
                     
-                    if (produce_time - start_time >= fc::seconds(3))
-                        break;
-                        
                     try {
                         TransactionEvaluationStatePtr eval_state = self->evaluate_transaction(trx, _relay_fee, false, true);
                         
@@ -410,7 +405,9 @@ namespace thinkyoung {
                     // We skip this step if we are dealing with blocks prior to the last checkpointed block
                     if (_head_block_header.block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
                         if (!_revalidate_pending.valid() || _revalidate_pending.ready())
+                            _revalidate_pending = fc::async([=]() {
                             revalidate_pending();
+                        }, "revalidate_pending");
                     }
                 }
                 
@@ -2260,10 +2257,9 @@ namespace thinkyoung {
                         // Check block production time limit
                         const time_point produce_time = time_point::now();
                         
-                        if (produce_time - start_time >= fc::seconds(3)) {
+                        if (produce_time - start_time >= config.block_max_production_time)
                             break;
-                        }
-                        
+                            
                         const SignedTransaction& new_transaction = item->trx;
                         
                         try {
