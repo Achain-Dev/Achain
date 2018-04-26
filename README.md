@@ -21,7 +21,7 @@ Build Achain
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
-* [Linux](https://github.com/Achain-Dev/Achain_linux)
+* [Linux](https://github.com/Achain-Dev/Achain/blob/master/linux_readme.md)
 
 How to deploy a private chain
 -------------------------------------
