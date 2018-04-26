@@ -109,6 +109,11 @@ namespace fc
    void from_variant( const variant& var,  std::unordered_set<T>& vo );
 
    template<typename T>
+   void to_variant( const std::deque<T>& var,  variant& vo );
+   template<typename T>
+   void from_variant( const variant& var,  std::deque<T>& vo );
+
+   template<typename T>
    void to_variant( const fc::flat_set<T>& var,  variant& vo );
    template<typename T>
    void from_variant( const variant& var, fc::flat_set<T>& vo );
@@ -454,6 +459,27 @@ namespace fc
 
    /** @ingroup Serializable */
    template<typename T>
+   void from_variant( const variant& var, std::deque<T>& tmp )
+   {
+      const variants& vars = var.get_array();
+      tmp.clear();
+      for( auto itr = vars.begin(); itr != vars.end(); ++itr )
+         tmp.push_back( itr->as<T>() );
+   }
+
+   /** @ingroup Serializable */
+   template<typename T>
+   void to_variant( const std::deque<T>& t, variant& v )
+   {
+      std::vector<variant> vars(t.size());
+      for( size_t i = 0; i < t.size(); ++i )
+         vars[i] = variant(t[i]);
+      v = std::move(vars);
+   }
+
+
+   /** @ingroup Serializable */
+   template<typename T>
    void from_variant( const variant& var, std::vector<T>& tmp )
    {
       const variants& vars = var.get_array();
@@ -472,6 +498,8 @@ namespace fc
           vars[i] = variant(t[i]);
        v = std::move(vars);
    }
+
+
    /** @ingroup Serializable */
    template<typename A, typename B>
    void to_variant( const std::pair<A,B>& t, variant& v )
