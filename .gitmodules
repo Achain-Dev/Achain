@@ -1,4 +1,3 @@
 [submodule "lib"]
 	path = lib
 	url = https://github.com/Achain-Dev/lib.git
-	branch = lib2.0
