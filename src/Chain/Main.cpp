@@ -24,27 +24,22 @@
 #include <iostream>
 #include <iomanip>
 
-int main(int argc, char** argv)
-{
-    try
-    {
+int main(int argc, char** argv) {
+    try {
         thinkyoung::client::ClientPtr client = std::make_shared<thinkyoung::client::Client>("act_client");
         client->configure_from_command_line(argc, argv);
         client->start().wait();
-    }
-    catch (const fc::exception& e)
-    {
+        
+    } catch (const fc::exception& e) {
         std::cerr << "------------ error --------------\n"
-            << e.to_detail_string() << "\n";
+                  << e.to_detail_string() << "\n";
         wlog("${e}", ("e", e.to_detail_string()));
     }
-
+    
     /* We need to shut down all the threads and tasks we can, things don't usually work very well when
        we rely on global destructors to handle cleanup */
-	thinkyoung::blockchain::shutdown_ntp_time();
-
+    thinkyoung::blockchain::shutdown_ntp_time();
     // we should probably terminate the asio threads here
-
     ilog("Leaving main()");
     /*
      * We restore the initial logging config here in order to destroy all of the current

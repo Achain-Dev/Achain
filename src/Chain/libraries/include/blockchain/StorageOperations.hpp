@@ -5,32 +5,29 @@
 
 namespace thinkyoung {
     namespace blockchain {
-
-        struct StorageDataChangeType
-        {
+    
+        struct StorageDataChangeType {
             StorageDataType storage_before;
             StorageDataType storage_after;
         };
-
-        struct StorageOperation
-        {
+        
+        struct StorageOperation {
             static const OperationTypeEnum type;
-
-            StorageOperation(){}
-
+            
+            StorageOperation() {}
+            
             ContractIdType contract_id;
             std::map<std::string, StorageDataChangeType> contract_change_storages;
-
-            template<typename StorageBaseType, typename StorageContainerType>
-            void update_contract_map_storage(const StorageDataChangeType& change_storage, StorageDataType& storage)const;
-
-            //void update_contract_storages(const StorageDataChangeType& change_storage, StorageDataType& storage)const;
-            void update_contract_storages(const std::string storage_name, const StorageDataChangeType& change_storage,
-                std::map<std::string, StorageDataType>& contract_storages)const;
-
+            
+            template<typename StorageBaseType, typename StorageContainerType, typename StorageContainerBaseType>
+            void update_contract_value(const std::string storage_name, const StorageDataChangeType& change_storage, std::vector<ContractValueEntry>& value)const;
+            
+            void update_contract_storages_value(const std::string storage_name, const StorageDataChangeType& change_storage,
+                                                std::vector<ContractValueEntry>& contract_change_vector) const;
+                                                
             void evaluate(TransactionEvaluationState& eval_state)const;
         };
-
+        
     }
 } // thinkyoung::blockchain
 
