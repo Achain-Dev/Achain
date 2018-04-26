@@ -17,6 +17,7 @@ namespace thinkyoung {
             
         };
         
+        typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         class PendingChainState : public ChainInterface, public std::enable_shared_from_this < PendingChainState > {
           public:
             PendingChainState(ChainInterfacePtr prev_state = ChainInterfacePtr());
@@ -679,13 +680,12 @@ namespace thinkyoung {
                         storage change after Trx evaluate
             * @param    contract_id_remove set<ContractIdType> contract_remove_set
             */
-            void populate_undo_state_change(const PendingChainStatePtr& undo_state,
-                                            const ChainInterfacePtr &prev_state,
-                                            const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
-                                            unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
-                                            const unordered_set<ContractIdType>& contract_id_remove);
+            virtual void populate_undo_state_change(const PendingChainStatePtr& undo_state,
+                                                    const ChainInterfacePtr &prev_state,
+                                                    const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
+                                                    unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+                                                    const unordered_set<ContractIdType>& contract_id_remove);
         };
-        typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         
     }
 } // thinkyoung::blockchain
