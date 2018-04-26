@@ -36,12 +36,17 @@ namespace thinkyoung {
                 _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                 unsigned num_pending_transaction_considered = 0;
                 auto itr = _pending_transaction_db.begin();
+                const time_point start_time = time_point::now();
                 
                 while (itr.valid()) {
                     SignedTransaction trx = itr.value();
                     const TransactionIdType trx_id = itr.key();
                     assert(trx_id == trx.id());
+                    const time_point produce_time = time_point::now();
                     
+                    if (produce_time - start_time >= fc::seconds(3))
+                        break;
+                        
                     try {
                         TransactionEvaluationStatePtr eval_state = self->evaluate_transaction(trx, _relay_fee, false, true);
                         
@@ -149,8 +154,10 @@ namespace thinkyoung {
                     _account_name_to_id.open(data_dir / "index/account_name_to_id");
                     _account_address_to_id.open(data_dir / "index/account_address_to_id");
                     //contract db
+                    _value_map_index.open(data_dir / "index/value_map_index");
                     _contract_id_to_entry.open(data_dir / "index/contract_id_to_entry");
                     _contract_id_to_storage.open(data_dir / "index/contract_id_to_storage");
+                    _value_id_to_storage.open(data_dir / "index/value_id_to_storage");
                     _contract_name_to_id.open(data_dir / "index/contract_name_to_id");
                     _result_to_request_iddb.open(data_dir / "index/_result_to_request_id");
                     _asset_id_to_entry.open(data_dir / "index/asset_id_to_entry");
@@ -402,9 +409,7 @@ namespace thinkyoung {
                     // We skip this step if we are dealing with blocks prior to the last checkpointed block
                     if (_head_block_header.block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
                         if (!_revalidate_pending.valid() || _revalidate_pending.ready())
-                            _revalidate_pending = fc::async([=]() {
                             revalidate_pending();
-                        }, "revalidate_pending");
                     }
                 }
                 
@@ -528,7 +533,7 @@ namespace thinkyoung {
                     auto prev_itr = _fork_db.find(block_data.previous);
                     
                     if (prev_itr.valid()) { // we already know about its previous (note: we always know about genesis block)
-                        elog("           we already know about its previous: ${p}", ("p", block_data.previous));
+                        //elog("           we already know about its previous: ${p}", ("p", block_data.previous));
                         prev_fork_data = prev_itr.value();
                         
                     } else { //if we don't know about the previous block even as a placeholder, create a placeholder for the previous block (placeholder block defaults as unlinked)
@@ -838,6 +843,7 @@ namespace thinkyoung {
                         return;
                         
                     PendingChainStatePtr undo_state = std::make_shared<PendingChainState>(pending_state);
+                    // pending_state->get_storage_change(undo_state);
                     pending_state->get_undo_state(undo_state);
                     
                     if (block_num > ALP_BLOCKCHAIN_MAX_UNDO_HISTORY) {
@@ -1076,6 +1082,7 @@ namespace thinkyoung {
                     
                     try {
                         PublicKeyType block_signee;
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain start block_num:${block_num}", ("block_num", block_data.block_num));
                         
                         if (block_data.block_num > LAST_CHECKPOINT_BLOCK_NUM) {
                             block_signee = block_data.signee();
@@ -1104,6 +1111,7 @@ namespace thinkyoung {
                         
                         if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
                         
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain apply_transactions");
                         apply_transactions(block_data, pending_state);
                         summary.applied_changes->event_vector = pending_state->event_vector;
                         pay_delegate(block_id, block_signee, pending_state, block_entry);
@@ -1112,6 +1120,7 @@ namespace thinkyoung {
                         save_undo_state(block_data.block_num, block_id, pending_state);
                         self->store_extend_status(block_id, 1);
                         // TODO: Verify idempotency
+                        fc_ilog(fc::logger::get("stor_debug"), "extend_chain apply_changes");
                         pending_state->apply_changes();
                         mark_included(block_id, true);
                         update_head_block(block_data, block_id);
@@ -1220,7 +1229,7 @@ namespace thinkyoung {
                     const auto& undo_state = undo_iter->second;
                     thinkyoung::blockchain::PendingChainStatePtr undo_state_ptr = std::make_shared<thinkyoung::blockchain::PendingChainState>(undo_state);
                     undo_state_ptr->set_prev_state(self->shared_from_this());
-                    undo_state_ptr->apply_changes();
+                    undo_state_ptr->apply_changes_undo();
                     _head_block_id = previous_block_id;
                     
                     if (_head_block_id == BlockIdType())
@@ -1249,7 +1258,7 @@ namespace thinkyoung {
                     const auto& undo_state = undo_iter->second;
                     thinkyoung::blockchain::PendingChainStatePtr undo_state_ptr = std::make_shared<thinkyoung::blockchain::PendingChainState>(undo_state);
                     undo_state_ptr->set_prev_state(self->shared_from_this());
-                    undo_state_ptr->apply_changes();
+                    undo_state_ptr->apply_changes_undo();
                     _head_block_id = previous_block_id;
                     
                     if (_head_block_id == BlockIdType())
@@ -1377,6 +1386,7 @@ namespace thinkyoung {
                             //contract db related
                             my->_contract_id_to_entry.toggle_leveldb(enabled);
                             my->_contract_id_to_storage.toggle_leveldb(enabled);
+                            my->_value_id_to_storage.toggle_leveldb(enabled);
                             my->_contract_name_to_id.toggle_leveldb(enabled);
                             my->_result_to_request_iddb.toggle_leveldb(enabled);
                             my->_asset_id_to_entry.toggle_leveldb(enabled);
@@ -1531,6 +1541,7 @@ namespace thinkyoung {
                 my->_result_to_request_iddb.close();
                 my->_contract_name_to_id.close();
                 my->_contract_id_to_storage.close();
+                my->_value_id_to_storage.close();
                 my->_asset_id_to_entry.close();
                 my->_asset_symbol_to_id.close();
                 my->_slate_id_to_entry.close();
@@ -2238,6 +2249,7 @@ namespace thinkyoung {
                 // Initialize block
                 FullBlock new_block;
                 size_t block_size = new_block.block_size();
+                fc_ilog(fc::logger::get("stor_debug"), "generate_block start");
                 
                 if (config.block_max_transaction_count > 0 && config.block_max_size > block_size) {
                     // Evaluate pending transactions
@@ -2245,9 +2257,12 @@ namespace thinkyoung {
                     
                     for (const TransactionEvaluationStatePtr& item : pending_trx) {
                         // Check block production time limit
-                        if (time_point::now() - start_time >= config.block_max_production_time)
+                        const time_point produce_time = time_point::now();
+                        
+                        if (produce_time - start_time >= config.block_max_production_time) {
                             break;
-                            
+                        }
+                        
                         const SignedTransaction& new_transaction = item->trx;
                         
                         try {
@@ -2305,6 +2320,7 @@ namespace thinkyoung {
                                 trx_eval_state->_enforce_canonical_signatures = config.transaction_canonical_signatures_required;
                                 trx_eval_state->_skip_signature_check = true;
                                 trx_eval_state->skipexec = false;
+                                fc_ilog(fc::logger::get("stor_debug"), "generate_block new_transaction");
                                 trx_eval_state->evaluate(new_transaction);
                                 
                                 if (trx_eval_state->p_result_trx.operations.size() > 0) {
@@ -2313,6 +2329,7 @@ namespace thinkyoung {
                                     result_eval_state->_skip_signature_check = true;
                                     pending_trx_state = res_trx_state;
                                     result_eval_state->skipexec = true;
+                                    fc_ilog(fc::logger::get("stor_debug"), "generate_block evaluate p_result_trx");
                                     result_eval_state->evaluate(trx_eval_state->p_result_trx);
                                     const ImessageIdType iMessageLength = trx_eval_state->imessage_length;
                                     
@@ -2382,6 +2399,7 @@ namespace thinkyoung {
                                 continue;
                             }
                             
+                            fc_ilog(fc::logger::get("stor_debug"), "generate_block apply_changes");
                             pending_trx_state->apply_changes();
                             new_block.user_transactions.push_back(trx);
                             block_size += trx.data_size();
@@ -3709,6 +3727,55 @@ namespace thinkyoung {
             my->_contract_name_to_id.remove(name);
         }
         
+        oContractValue ChainDatabase::contract_lookup_value_by_valueid(const ContractValueIdType& id) const {
+            const auto iter = my->_value_id_to_storage.unordered_find(id);
+            
+            if (iter != my->_value_id_to_storage.unordered_end()) return iter->second;
+            
+            return oContractValue();
+        }
+        
+        void ChainDatabase::contract_store_value_by_valueid(const ContractValueIdType& id, const ContractValueEntry & value) {
+            my->_value_id_to_storage.store(id, value);
+        }
+        
+        void ChainDatabase::contract_erase_value_by_valueid(const ContractValueIdType& id) {
+            my->_value_id_to_storage.remove(id);
+        }
+        
+        oContractIndexSet ChainDatabase::contract_lookup_index_by_indexid(const ContractIndexIdType &index_id) const {
+            auto it = my->_value_map_index.unordered_find(index_id);
+            
+            if (it != my->_value_map_index.unordered_end()) {
+                return it->second;
+            }
+            
+            return oContractIndexSet();
+        }
+        
+        void ChainDatabase::contract_store_index_by_indexid(const ContractIndexIdType& index_id,
+                const ContractIndexSetEntry& value_id_set) {
+            my->_value_map_index.store(index_id, value_id_set);
+        }
+        
+        void ChainDatabase::contract_erase_index_by_indexid(const ContractIndexIdType& index_id) {
+            my->_value_map_index.remove(index_id);
+        }
+        
+        void ChainDatabase::contract_add_index_by_indexid(const ContractIndexIdType& index_id,
+                const ContractIndexSetEntry& value_id_set) {
+            auto it = my->_value_map_index.unordered_find(index_id);
+            
+            if (it != my->_value_map_index.unordered_end()) {
+                auto set = it->second;
+                set.index_set.insert(value_id_set.index_set.begin(), value_id_set.index_set.end());
+                my->_value_map_index.store(index_id, set);
+                
+            } else {
+                my->_value_map_index.store(index_id, value_id_set);
+            }
+        }
+        
         oResultTIdEntry thinkyoung::blockchain::ChainDatabase::contract_lookup_resultid_by_reqestid(const TransactionIdType & id) const {
             auto it = my->_request_to_result_iddb.unordered_find(id);
             
@@ -3776,6 +3843,8 @@ namespace thinkyoung {
         void thinkyoung::blockchain::ChainDatabase::contract_erase_contractid_by_trxid(const TransactionIdType & tid) {
             my->_trx_to_contract_iddb.remove(tid);
         }
+        
+        
         
         vector<ContractIdType> ChainDatabase::get_all_contract_entries() const {
             vector<ContractIdType> vec_contract;

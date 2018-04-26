@@ -674,7 +674,28 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((entry))
         }
+        oContractValue ChainInterface::get_contract_value(const ContractValueIdType& id) const {
+            try {
+                return lookup<ContractValueEntry>(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id))
+        }
+        void ChainInterface::remove_contract_value_entry(const ContractValueIdType& id) {
+            try {
+                return remove<ContractValueEntry>(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id))
+        }
         
+        void ChainInterface::store_contract_value_entry(const ContractValueEntry& entry) {
+            try {
+                store(entry.get_contract_value_id(), entry);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((entry))
+        }
         bool ChainInterface::is_destroyed_contract(const ContractState state) const {
             if (state == ContractState::deleted)
                 return true;

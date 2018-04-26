@@ -22,6 +22,7 @@ namespace thinkyoung {
             PendingChainState(ChainInterfacePtr prev_state = ChainInterfacePtr());
             PendingChainState&           operator = (const PendingChainState&) = default;
             
+            friend struct ContractStorageChangeEntry;
             /**
             * Set on a layer of data sources
             *
@@ -74,7 +75,18 @@ namespace thinkyoung {
             * @return void
             */
             virtual void                   apply_changes()const;
-            
+            /**
+            * apply changes from this pending state to the previous state
+            *
+            * @return void
+            */
+            virtual void                   apply_index_changes()const;
+            /**
+            * apply changes from this pending state to the previous state just for undo
+            *
+            * @return void
+            */
+            virtual void PendingChainState::apply_changes_undo()const;
             /** in sandbox evaluate the transaction and return the results.
             *
             * @param  trx  SignedTransaction
@@ -83,7 +95,22 @@ namespace thinkyoung {
             * @return TransactionEvaluationStatePtr
             */
             virtual TransactionEvaluationStatePtr   sandbox_evaluate_transaction(const SignedTransaction& trx, const ShareType required_fees = 0);
+            /**
+            * call T::store to Store an T type data into database according key
             
+            * @param key key used to find data
+            * @param entry entry to be stored
+            *
+            * @return void
+            */
+            template<typename T, typename U>
+            void store(const U& key, const T& entry) {
+                try {
+                    T::store(*this, key, entry);
+                }
+                
+                FC_CAPTURE_AND_RETHROW((key)(entry))
+            }
             /** populate undo state with everything that would be necessary to revert this
              * pending state to the previous state.
              */
@@ -152,6 +179,8 @@ namespace thinkyoung {
             virtual fc::time_point_sec     get_head_block_timestamp()const override;
             
             virtual BlockIdType               get_block_id(uint32_t block_num)const;
+            virtual void contract_add_index_by_indexid(const ContractIndexIdType& index_id,
+                    const ContractIndexSetEntry& value_id_set);
             map<PropertyIdType, PropertyEntry>                             _property_id_to_entry;
             set<PropertyIdType>                                              _property_id_remove;
             
@@ -181,8 +210,12 @@ namespace thinkyoung {
             
             unordered_map<ContractIdType, ContractEntry>                      _contract_id_to_entry;
             unordered_set<ContractIdType>                                     _contract_id_remove;
+            unordered_set<ContractValueIdType>                                     _value_id_remove;
             unordered_map<ContractName, ContractIdType>                       _contract_name_to_id;
             unordered_map<ContractIdType, ContractStorageEntry>                    _contract_id_to_storage;
+            unordered_map<ContractValueIdType, ContractValueEntry>                    _value_id_to_storage;
+            unordered_map<ContractIdType, ContractStorageChangeEntry>         _contract_to_storage_change;
+            
             unordered_map<TransactionIdType, ResultTIdEntry>                    _request_id_to_result_id;
             unordered_set<TransactionIdType>                                  _req_to_res_to_remove;
             unordered_map<TransactionIdType, RequestIdEntry>                    _result_id_to_request_id;
@@ -191,10 +224,12 @@ namespace thinkyoung {
             unordered_set<TransactionIdType>                    _trx_to_contract_id_remove;
             unordered_map<ContractIdType, ContractTrxEntry> _contract_to_trx_id;
             unordered_set<ContractIdType>                       _contract_to_trx_id_remove;
+            unordered_map<ContractIndexIdType, ContractIndexSetEntry>   _value_map_index;
             vector<EventOperation> event_vector;
             vector<thinkyoung::blockchain::SandboxAccountInfo>                     _vec_wallet_accounts;
             
           private:
+            void apply_storage_index_entrys(const ChainInterfacePtr& prev_state)const;
             // Not serialized
             std::weak_ptr<ChainInterface>                                     _prev_state;
             
@@ -619,12 +654,41 @@ namespace thinkyoung {
             virtual void contract_store_trxid_by_contractid(const ContractIdType& id, const ContractTrxEntry & res);
             virtual void contract_erase_trxid_by_contract_id(const ContractIdType&);
             virtual void contract_erase_contractid_by_trxid(const TransactionIdType&);
+            virtual oContractValue  contract_lookup_value_by_valueid(const ContractValueIdType&) const;
+            virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &);
+            virtual void contract_erase_value_by_valueid(const ContractValueIdType&);
+            oContractStorageChange contract_storage_change_lookup(const ContractIdType&) const;
+            void contract_storage_change_remove(const ContractIdType&);
+            void contract_storage_change_store(const ContractIdType&, const ContractStorageChangeEntry&);
+            
+            //new storage interface
+            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry &);
+            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&);
+            
+            
+            /**
+            * Get populate undo state change (storage change)
+            * @param    undo_state  PendingChainStatePtr
+                        ChainData PendingChainState
+            * @param    prev_state ChainInterfacePtr
+                        ChainData from DB
+            * @param    contract_id_to_storage map<ContractIdType, ContractStorageEntry>
+                        storage after Trx ops evaluate
+            * @param    contract_to_storage_contract map<ContractIdType, ContractStorageChangeEntry>
+                        storage change after Trx evaluate
+            * @param    contract_id_remove set<ContractIdType> contract_remove_set
+            */
+            void populate_undo_state_change(const PendingChainStatePtr& undo_state,
+                                            const ChainInterfacePtr &prev_state,
+                                            const unordered_map<ContractIdType, ContractStorageEntry>&   contract_id_to_storage,
+                                            unordered_map<ContractIdType, ContractStorageChangeEntry>&  contract_to_storage_change,
+                                            const unordered_set<ContractIdType>& contract_id_remove);
         };
         typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         
     }
 } // thinkyoung::blockchain
-
 
 FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_property_id_to_entry)
@@ -648,13 +712,13 @@ FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_slot_timestamp_to_delegate)
            (_contract_id_to_entry)
            (_contract_id_remove)
+           (_contract_to_storage_change)
            (_contract_name_to_id)
-           (_contract_id_to_storage)
            (_request_id_to_result_id)
            (_req_to_res_to_remove)
            (_result_id_to_request_id)
            (_res_to_req_to_remove)
            (_vec_wallet_accounts)
+           (_value_id_to_storage)
           )
-
 FC_REFLECT(thinkyoung::blockchain::SandboxAccountInfo, (id)(name)(delegate_info)(owner_address)(registration_date)(last_update)(owner_key))

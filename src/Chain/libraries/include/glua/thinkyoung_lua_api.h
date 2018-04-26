@@ -152,7 +152,27 @@ namespace thinkyoung {
                     return StorageValueTypes::storage_value_null;
             }
         }
-        
+        inline StorageValueTypes get_storage_table_type(StorageValueTypes type) {
+            switch (type) {
+                case StorageValueTypes::storage_value_bool:
+                    return StorageValueTypes::storage_value_bool_table;
+                    
+                case StorageValueTypes::storage_value_int:
+                    return StorageValueTypes::storage_value_int_table;
+                    
+                case StorageValueTypes::storage_value_number:
+                    return StorageValueTypes::storage_value_number_table;
+                    
+                case StorageValueTypes::storage_value_string:
+                    return StorageValueTypes::storage_value_string_table;
+                    
+                case StorageValueTypes::storage_value_stream:
+                    return StorageValueTypes::storage_value_stream_table;
+                    
+                default:
+                    return StorageValueTypes::storage_value_null;
+            }
+        }
         inline StorageValueTypes get_item_type_in_table_or_array(StorageValueTypes type) {
             switch (type) {
                 case StorageValueTypes::storage_value_int_table:
@@ -298,8 +318,9 @@ typedef struct GluaStorageValue {
     union GluaStorageValueUnion value;
     inline GluaStorageValue() {
         type = thinkyoung::blockchain::StorageValueTypes::storage_value_null;
+        value.table_value = nullptr;
     }
-    inline static GluaStorageValue from_int(int val) {
+    inline static GluaStorageValue from_int(LUA_INTEGER val) {
         GluaStorageValue sv;
         sv.type = thinkyoung::blockchain::StorageValueTypes::storage_value_int;
         sv.value.int_value = val;

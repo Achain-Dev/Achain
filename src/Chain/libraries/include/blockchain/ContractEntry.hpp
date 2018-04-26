@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <boost/uuid/sha1.hpp>
 
 
@@ -100,10 +101,17 @@ namespace thinkyoung {
         class ChainInterface;
         struct  ContractEntry;
         struct ContractStorageEntry;
+        struct ContractValueEntry;
+        struct ContractStorageChangeEntry;
+        struct ContractIndexSetEntry;
         //use fc optional to hold the return value
         typedef fc::optional<ContractEntry> oContractEntry;
         typedef fc::optional<ContractStorageEntry> oContractStorage;
+        typedef fc::optional<ContractStorageChangeEntry> oContractStorageChange;
+        typedef fc::optional<ContractValueEntry> oContractValue;
         typedef fc::optional<ContractIdType> oContractIdType;
+        typedef fc::optional<ContractValueIdType> oContractValueIdType;
+        typedef fc::optional<ContractIndexSetEntry> oContractIndexSet;
         
         
         //contract information
@@ -149,7 +157,16 @@ namespace thinkyoung {
                 owner(entry.owner), owner_address(entry.owner), state(entry.state), description(entry.description), code_printable(entry.code), reserved(entry.reserved),
                 trx_id(entry.trx_id) {}
         };
-        
+        class PendingChainState;
+        //contract storage
+        //only in PendingChainState
+        struct ContractStorageChangeEntry {
+            std::map<std::string, ContractStorageChangeItem> contract_change;
+            
+            static oContractStorageChange lookup(const PendingChainState&, const ContractIdType&);
+            static void store(PendingChainState&, const ContractIdType&, const ContractStorageChangeEntry&);
+            static void remove(PendingChainState&, const ContractIdType&);
+        };
         //contract storage
         struct ContractStorageEntry {
             //std::vector<ContractChar> contract_storage;
@@ -159,8 +176,32 @@ namespace thinkyoung {
             static oContractStorage lookup(const ChainInterface&, const ContractIdType&);
             static void store(ChainInterface&, const ContractIdType&, const ContractStorageEntry&);
             static void remove(ChainInterface&, const ContractIdType&);
-            
         };
+        struct ContractValueEntry {
+            //std::vector<ContractChar> contract_storage;
+            ContractIdType  id_; //contract address
+            std::string value_name_;//storage name
+            std::string index_; //index for map(array)
+            StorageDataType storage_value_;
+            
+            static oContractValue lookup(const ChainInterface&, const ContractValueIdType&);
+            static void store(ChainInterface&, const ContractValueIdType&, const ContractValueEntry&);
+            static void remove(ChainInterface&, const ContractValueIdType&);
+            
+            ContractValueIdType get_contract_value_id() const;
+            ContractIndexIdType get_contract_index_id() const;
+            bool is_map_value() const;
+            //ContractValueIdType
+        };
+        
+        struct ContractIndexSetEntry {
+            std::unordered_set<ContractIndexIdType> index_set;
+            static oContractIndexSet lookup(const ChainInterface&, const ContractIndexIdType&);
+            static void store(ChainInterface&, const ContractIndexIdType&, const ContractIndexSetEntry&);
+            static void remove(ChainInterface&, const ContractIndexIdType&);
+            //   static void add_index(ChainInterface&, const unordered_set<ContractValueEntry> index);
+        };
+        
         struct  ResultTIdEntry;
         typedef fc::optional<ResultTIdEntry> oResultTIdEntry;
         struct ResultTIdEntry {
@@ -206,10 +247,12 @@ namespace thinkyoung {
         
             friend struct ContractEntry;
             friend struct ContractStorageEntry;
+            friend struct ContractValueEntry;
             friend struct ResultTIdEntry;
             friend struct RequestIdEntry;
             friend struct ContractinTrxEntry;
             friend struct ContractTrxEntry;
+            friend struct ContractIndexSetEntry;
             //lookup related
             virtual  oContractEntry  contract_lookup_by_id(const ContractIdType&)const = 0;
             virtual  oContractEntry  contract_lookup_by_name(const ContractName&)const = 0;
@@ -236,6 +279,17 @@ namespace thinkyoung {
             virtual void contract_erase_trxid_by_contract_id(const ContractIdType&) = 0;
             virtual void contract_erase_contractid_by_trxid(const TransactionIdType& req) = 0;
             
+            
+            //new storage interface
+            virtual oContractValue  contract_lookup_value_by_valueid(const ContractValueIdType&) const = 0;
+            virtual void contract_store_value_by_valueid(const ContractValueIdType&, const ContractValueEntry &) = 0;
+            virtual void contract_erase_value_by_valueid(const ContractValueIdType&) = 0;
+            //virtual void contract_storage_diff(const ContractValueIdType&, const ) = 0;
+            
+            //new storage interface
+            virtual oContractIndexSet  contract_lookup_index_by_indexid(const ContractIndexIdType&) const = 0;
+            virtual void contract_store_index_by_indexid(const ContractIndexIdType&, const ContractIndexSetEntry &) = 0;
+            virtual void contract_erase_index_by_indexid(const ContractIndexIdType&) = 0;
         };
     }
 }
@@ -303,7 +357,11 @@ FC_REFLECT(thinkyoung::blockchain::ContractEntryPrintable,
           )
 
 FC_REFLECT(thinkyoung::blockchain::ContractStorageEntry, (id)(contract_storages))
+FC_REFLECT(thinkyoung::blockchain::ContractStorageChangeEntry, (contract_change))
+FC_REFLECT(thinkyoung::blockchain::ContractValueEntry, (id_)(value_name_)(index_)(storage_value_))
 FC_REFLECT(thinkyoung::blockchain::ResultTIdEntry, (res))
 FC_REFLECT(thinkyoung::blockchain::RequestIdEntry, (req))
 FC_REFLECT(thinkyoung::blockchain::ContractTrxEntry, (trx_id))
 FC_REFLECT(thinkyoung::blockchain::ContractinTrxEntry, (contract_id))
+FC_REFLECT(thinkyoung::blockchain::ContractIndexSetEntry, (index_set))
+

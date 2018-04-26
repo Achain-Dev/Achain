@@ -11,6 +11,7 @@
 #include <boost/uuid/sha1.hpp>
 
 #include <utilities/CommonApi.hpp>
+#include <blockchain/PendingChainState.hpp>
 
 using namespace thinkyoung::blockchain;
 
@@ -414,6 +415,108 @@ namespace thinkyoung {
         void ContractinTrxEntry::remove(ChainInterface &db, const TransactionIdType &id) {
             try {
                 db.contract_erase_contractid_by_trxid(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        oContractValue ContractValueEntry::lookup(const ChainInterface& db, const ContractValueIdType& id) {
+            try {
+                return db.contract_lookup_value_by_valueid(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        void ContractValueEntry::store(ChainInterface& db, const ContractValueIdType& id, const ContractValueEntry& value_entry) {
+            try {
+                db.contract_store_value_by_valueid(id, value_entry);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        void ContractValueEntry::remove(ChainInterface& db, const ContractValueIdType& id) {
+            try {
+                const oContractValue value = db.lookup<ContractValueEntry>(id);
+                
+                if (value.valid()) {
+                    db.contract_erase_value_by_valueid(id);
+                }
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        thinkyoung::blockchain::ContractValueIdType ContractValueEntry::get_contract_value_id() const {
+            ContractValueIdType value_id;
+            value_id = id_.AddressToString(contract_address) + value_name_ + index_;
+            return value_id;
+        }
+        
+        bool ContractValueEntry::is_map_value() const {
+            return index_.size() != 0;
+        }
+        
+        ContractIndexIdType ContractValueEntry::get_contract_index_id() const {
+            if (is_map_value()) {
+                ContractIndexIdType value_id;
+                value_id = id_.AddressToString(contract_address) + value_name_;
+                return value_id;
+            }
+            
+            return ContractIndexIdType();
+        }
+        
+        
+        oContractStorageChange ContractStorageChangeEntry::lookup(const PendingChainState& db, const ContractIdType& id) {
+            try {
+                return db.contract_storage_change_lookup(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        void ContractStorageChangeEntry::store(PendingChainState&db, const ContractIdType& id, const ContractStorageChangeEntry& entry) {
+            try {
+                db.contract_storage_change_store(id, entry);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        
+        void ContractStorageChangeEntry::remove(PendingChainState& db, const ContractIdType& id) {
+            try {
+                db.contract_storage_change_remove(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        oContractIndexSet ContractIndexSetEntry::lookup(const ChainInterface &db, const ContractIndexIdType &id) {
+            try {
+                return db.contract_lookup_index_by_indexid(id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        void ContractIndexSetEntry::store(ChainInterface &db, const ContractIndexIdType &id,
+                                          const ContractIndexSetEntry& value) {
+            try {
+                db.contract_store_index_by_indexid(id, value);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((id));
+        }
+        
+        void ContractIndexSetEntry::remove(ChainInterface &db, const ContractIndexIdType &id) {
+            try {
+                //    db.contract_storage_change_remove(id);
             }
             
             FC_CAPTURE_AND_RETHROW((id));

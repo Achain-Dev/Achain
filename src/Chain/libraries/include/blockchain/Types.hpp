@@ -43,6 +43,8 @@ namespace thinkyoung {
         //type define for contract
         typedef std::string                       ContractName;
         typedef Address                           ContractIdType;
+        typedef std::string                       ContractValueIdType;
+        typedef std::string                       ContractIndexIdType;
         typedef unsigned char                      ContractChar;
         
         using std::string;

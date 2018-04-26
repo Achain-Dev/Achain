@@ -293,6 +293,7 @@ namespace thinkyoung {
         
         void TransactionEvaluationState::evaluate(const SignedTransaction& trx_arg, bool ignore_state) {
             SignedTransaction result_trx;
+            fc_ilog(fc::logger::get("stor_debug"), "transaction operations");
             
             try {
                 trx = trx_arg;
@@ -364,7 +365,12 @@ namespace thinkyoung {
                         ++current_op_index;
                         
                         if (!skipexec) {
-                            //FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//进行operation对比
+                            /*
+                            if (is_contract_trxs_same(trx_arg, p_result_trx) == false) {
+                                fc_ilog(fc::logger::get("stor_debug"), "CON TRX ERROR: ${trx_arg} ${p_result_trx}", ("trx_arg", trx_arg)("p_result_trx", p_result_trx));
+                            }
+                            */
+                            //进行operation对比
                             FC_ASSERT(trx_arg.result_trx_id == p_result_trx.id());
                         }
                         
@@ -708,11 +714,21 @@ namespace thinkyoung {
                 fc::raw::pack(r_enc, rr_op);
                 r_hash = fc::ripemd160::hash(r_enc.result());
                 
-                if (l_hash == r_hash)
+                if (l_hash == r_hash) {
                     return true;
                     
-                else
-                    return false;
+                } else {
+                    if (l_op.type == storage_op_type) {
+                        StorageOperation l_trx_op = l_op.as<StorageOperation>();
+                        StorageOperation r_trx_op = r_op.as<StorageOperation>();
+                        
+                    } else if (l_op.type == event_op_type) {
+                        EventOperation l_trx_op = l_op.as<EventOperation>();
+                        EventOperation r_trx_op = r_op.as<EventOperation>();
+                        
+                    } else
+                        return false;
+                }
             }
             
             FC_CAPTURE_AND_RETHROW()

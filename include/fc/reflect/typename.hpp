@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <fc/string.hpp>
 #include <fc/optional.hpp>
 
@@ -112,6 +113,12 @@ namespace fc {
     template<typename T> struct get_typename < std::set<T> > {
         static const char* name()  {
             static std::string n = std::string("std::set<") + get_typename<T>::name() + ">";
+            return n.c_str();
+        }
+    };
+    template<typename T> struct get_typename < std::unordered_set<T> > {
+        static const char* name() {
+            static std::string n = std::string("std::unordered_set<") + get_typename<T>::name() + ">";
             return n.c_str();
         }
     };

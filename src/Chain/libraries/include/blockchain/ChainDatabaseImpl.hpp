@@ -364,9 +364,6 @@ namespace thinkyoung {
                 set<UniqueTransactionKey>                                                 _unique_transactions;
                 thinkyoung::db::LevelMap<Address, unordered_set<TransactionIdType>>             _address_to_transaction_ids;
                 
-                
-                
-                
                 thinkyoung::db::LevelMap<SlotIndex, SlotEntry>                                 _slot_index_to_entry;
                 thinkyoung::db::LevelMap<time_point_sec, AccountIdType>                         _slot_timestamp_to_delegate;
                 
@@ -379,11 +376,13 @@ namespace thinkyoung {
                 // contract related db
                 thinkyoung::db::fast_level_map<ContractIdType, ContractEntry>                  _contract_id_to_entry;
                 thinkyoung::db::fast_level_map<ContractIdType, ContractStorageEntry>               _contract_id_to_storage;
+                thinkyoung::db::fast_level_map<ContractValueIdType, ContractValueEntry>            _value_id_to_storage;
                 thinkyoung::db::fast_level_map<ContractName, ContractIdType>                  _contract_name_to_id;
                 thinkyoung::db::fast_level_map<TransactionIdType, ResultTIdEntry>         _request_to_result_iddb;
                 thinkyoung::db::fast_level_map<TransactionIdType, RequestIdEntry>         _result_to_request_iddb;
                 thinkyoung::db::fast_level_map<TransactionIdType, ContractinTrxEntry>         _trx_to_contract_iddb;
                 thinkyoung::db::fast_level_map<ContractIdType, ContractTrxEntry>       _contract_to_trx_iddb;
+                thinkyoung::db::fast_level_map<ContractIndexIdType, ContractIndexSetEntry >   _value_map_index;
                 // sandbox contract related
                 PendingChainStatePtr    _sandbox_pending_state = nullptr;
                 bool                    _is_in_sandbox = false;

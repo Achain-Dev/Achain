@@ -883,6 +883,8 @@ namespace thinkyoung {
                                                    const BlockIdType& block_id,
                                                    bool sync_mode) {
                 try {
+                    fc_ilog(fc::logger::get("stor_debug"), "on_new_block start");
+                    
                     // delay until we want to accept the block
                     while ((this->_debug_stop_before_block_num >= 1) &&
                             (block.block_num >= this->_debug_stop_before_block_num)) {
