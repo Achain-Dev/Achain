@@ -12,7 +12,7 @@ For more information about Achain, please read following document:
 ## Supported Operating Systems
 Achain currently supports the following operating systems:  
 1. Windows 7 and higher version
-2. CentOS/RHEL 7.2.1511 / 7.3.1611 /7.4
+2. CentOS / RHEL / Oracle Linux 7.2.1511 / 7.3.1611 / 7.4
 3. Ubuntu 16.04 / 17.10
 4. MacOS Darwin 10.13
 5. Fedora 27 / 25
