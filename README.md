@@ -14,14 +14,14 @@ Achain currently supports the following operating systems:
 1. Windows 7 and higher version
 2. CentOS/RHEL 7.2.1511 / 7.3.1611 /7.4
 3. Ubuntu 16.04 / 17.10
-4. Mac Os
+4. MacOS Darwin 10.13
 5. Fedora 27 / 25
 
 Build Achain
 --------
 Different platforms have different build instructions:
 * [Windows](https://github.com/Achain-Dev/Achain/blob/master/BUILD_WIN32.md)
-* [Linux](https://github.com/Achain-Dev/Achain_linux)
+* [Linux](https://github.com/Achain-Dev/Achain/blob/master/linux_readme.md)
 
 How to deploy a private chain
 -------------------------------------
