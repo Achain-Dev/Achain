@@ -59,11 +59,7 @@ namespace thinkyoung {
                         
                 return results;
             }
-            
-            // void detail::client_impl::network_set_allowed_peers(const vector<thinkyoung::net::node_id_t>& allowed_peers)
-            // {
-            //    _p2p_node->set_allowed_peers( allowed_peers );
-            // }
+
             
             void detail::ClientImpl::network_set_advanced_node_parameters(const fc::variant_object& params) {
                 // set limit in  sandbox state
@@ -135,10 +131,6 @@ namespace thinkyoung {
                 return _p2p_node->network_get_info();
             }
             
-            // fc::variant_object client_impl::network_get_usage_stats() const
-            // {
-            //    return _p2p_node->network_get_usage_stats();
-            // }
             
             vector<thinkyoung::net::PotentialPeerEntry> ClientImpl::network_list_potential_peers()const {
                 return _p2p_node->get_potential_peers();

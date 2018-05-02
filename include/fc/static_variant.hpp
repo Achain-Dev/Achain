@@ -365,21 +365,67 @@ struct visitor {
       }
    };
 
+   struct variant_from_static_variant
+   {
+      variant& var;
+      variant_from_static_variant( variant& dv ):var(dv){}
+
+      typedef void result_type;
+      template<typename Ta> void operator()( const Ta& v )const
+      {
+         auto name = fc::get_typename<Ta>::name();
+         var = variant( std::make_pair(name,var) );
+      }
+   };
 
    template<typename... T> void to_variant( const fc::static_variant<T...>& s, fc::variant& v )
    {
+      s.visit( variant_from_static_variant( v ) );
+      /*
       variant tmp;
       variants vars(2);
       vars[0] = s.which();
       s.visit( from_static_variant(vars[1]) );
       v = std::move(vars);
+      */
    }
+   struct get_tag_name
+   {
+      string& name;
+      get_tag_name( string& dv ):name(dv){}
+
+      typedef void result_type;
+      template<typename Ta> void operator()( const Ta& v )const
+      {
+         name = fc::get_typename<Ta>::name();
+      }
+   };
+
    template<typename... T> void from_variant( const fc::variant& v, fc::static_variant<T...>& s )
    {
+      static std::map<string,uint32_t> to_tag = [&](){
+         std::map<string,uint32_t> name_map;
+         for( int i = 0; i < s.count(); ++i ) {
+            s.set_which(i);
+            string n;
+            s.visit( get_tag_name(n) );
+            name_map[n] = i;
+         }
+         idump((name_map));
+         return name_map;
+      }();
+
       auto ar = v.get_array();
       if( ar.size() < 2 ) return;
-      s.set_which( ar[0].as_uint64() );
-      s.visit( to_static_variant(ar[1]) );
+      if( ar[0].is_uint64() )
+         s.set_which( ar[0].as_uint64() );
+      else 
+      {
+         auto itr = to_tag.find(ar[0].as_string());
+         FC_ASSERT( itr != to_tag.end(), "Invalid operation name: ${n}", ("n", ar[0]) );
+         s.set_which( to_tag[ar[0].as_string()] );
+      }
+      s.visit( fc::to_static_variant( ar[1] ) ); 
    }
 
   template<typename... T> struct get_typename<T...>  { static const char* name()   { return typeid(static_variant<T...>).name();   } };
