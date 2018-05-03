@@ -260,6 +260,7 @@ namespace thinkyoung {
             std::vector<std::string> list_event_handler(const std::string& contract_id_str, const std::string& event_type) override;
             void add_event_handler(const std::string& contract_id_str, const std::string& event_type, const std::string& script_id, uint32_t index) override;
             void delete_event_handler(const std::string& contract_id_str, const std::string& event_type, const std::string& script_id) override;
+            void set_local_pending_num(const uint32_t local_pending_num) override;
         };
 
     }

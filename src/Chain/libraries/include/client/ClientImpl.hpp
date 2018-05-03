@@ -144,10 +144,9 @@ namespace thinkyoung {
                     _connection_count_always_notify_threshold(5),
                     _connection_count_last_value_displayed(0),
                     _blockchain_synopsis_size_limit((unsigned)(log2(ALP_BLOCKCHAIN_BLOCKS_PER_YEAR * 20))),
-                    _debug_last_wait_block(0)
-                {
-                    try
-                    {
+                    _debug_last_wait_block(0),
+                    _local_pending_num(30) {
+                    try {
                         if (thinkyoung::lua::api::global_glua_chain_api == nullptr)
                             thinkyoung::lua::api::global_glua_chain_api = new thinkyoung::lua::api::GluaChainApi;
 
@@ -240,6 +239,7 @@ namespace thinkyoung {
                 }
                 
                 uint32_t get_pending_contract_trx_size();
+                void set_local_pending_num(const uint32_t local_pending_num);
                 
                 /* Implement node_delegate */
                 // @{
@@ -338,7 +338,7 @@ namespace thinkyoung {
 
                 uint32_t                                                _debug_last_wait_block;
                 uint32_t                                                _debug_stop_before_block_num;
-
+                uint32_t                                                _local_pending_num;
                 void wallet_http_callback(const string& url, const LedgerEntry& e);
                 int save_code_to_file(const string& name, GluaModuleByteStream *stream, char* err_msg) const;
                 Address get_contract_address(const string& contract, ChainInterfacePtr db=nullptr) const;

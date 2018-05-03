@@ -6999,6 +6999,38 @@ namespace thinkyoung {
             }
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
-
+        
+        void CommonApiClient::set_local_pending_num(const uint32_t local_pending_num) {
+            ilog("received RPC call: set_local_pending_num(${local_pending_num})", ("local_pending_num", local_pending_num));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            
+            if( glog != NULL ) {
+                args.push_back( fc::variant(local_pending_num) );
+                call_id = glog->log_call_started( this, "local_pending_num", args );
+            }
+            
+            struct scope_exit {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() {
+                    dlog("RPC call set_local_pending_num finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000));
+                }
+            } execution_time_logger;
+            
+            try {
+                std::nullptr_t result = nullptr;
+                get_impl()->set_local_pending_num(local_pending_num);
+                
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "local_pending_num", args, fc::variant(result) );
+                    
+                return;
+            }
+            
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+        
     }
 } // end namespace thinkyoung::rpc_stubs

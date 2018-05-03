@@ -1995,6 +1995,8 @@ namespace thinkyoung {
              * @param script_id id of local script want to delete with (string, required)
              */
             virtual void delete_event_handler(const std::string& contract_id_str, const std::string& event_type, const std::string& script_id) = 0;
+            
+            virtual void set_local_pending_num(const uint32_t local_pending_num) = 0;
         };
 
     }
