@@ -503,6 +503,7 @@ namespace thinkyoung {
             fc::variant add_event_handler_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant delete_event_handler_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant delete_event_handler_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant set_local_pending_num_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
         };
 
     }
