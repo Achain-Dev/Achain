@@ -24,10 +24,12 @@ namespace thinkyoung {
                 if (current_account.valid())
                     FC_CAPTURE_AND_THROW(account_already_registered, (name));
 
+                //owner_key
                 current_account = eval_state._current_state->get_account_entry(this->owner_key);
                 if (current_account.valid())
                     FC_CAPTURE_AND_THROW(account_key_in_use, (this->owner_key)(current_account));
 
+                //active_key
                 current_account = eval_state._current_state->get_account_entry(this->active_key);
                 if (current_account.valid())
                     FC_CAPTURE_AND_THROW(account_key_in_use, (this->active_key)(current_account));
@@ -44,6 +46,8 @@ namespace thinkyoung {
                 new_entry.last_update = now;
                 new_entry.meta_data = this->meta_data;
 
+                //titan_account:genesis delegates are not titan_account, they are public_account
+                //registed accounts via register op are titan_account by default
                 if (!new_entry.meta_data.valid())
                     new_entry.meta_data = AccountMetaInfo(titan_account);
 
@@ -66,6 +70,7 @@ namespace thinkyoung {
             return this->active_key.valid() && *this->active_key == PublicKeyType();
         }
 
+        //ordinary account is uint(-1)  > 100
         bool UpdateAccountOperation::is_delegate()const
         {
             return delegate_pay_rate <= 100;
