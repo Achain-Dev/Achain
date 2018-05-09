@@ -376,7 +376,6 @@ namespace thinkyoung {
                             ++current_op_index;
                         }
                         
-                        //如果块中有的不完整的结果交易，也需要记录下来
                         if (trx_arg.result_trx_type == ResultTransactionType::incomplete_result_transaction) {
                             trx = trx_arg;
                             _current_state->store_transaction(trx.id(), TransactionEntry(TransactionLocation(), *this));
