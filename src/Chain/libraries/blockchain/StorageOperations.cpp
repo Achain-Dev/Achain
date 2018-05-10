@@ -113,6 +113,7 @@ namespace thinkyoung {
                     undo_state->store(value.get_contract_value_id(), value);
                     
                     if (value.is_map_value()) {
+                        //if set is no change. emplace is NULL
                         auto& undo_set = undo_state->_value_map_index[value.get_contract_index_id()];
                         undo_set.index_set.emplace(value.get_contract_value_id());
                         fc_ilog(fc::logger::get("stor_debug"), "storage operation evaluate index_set emplace:${value_id}", ("value_id", value.get_contract_index_id()));
