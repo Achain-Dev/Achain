@@ -103,6 +103,9 @@ namespace thinkyoung {
             void open(const fc::path& data_dir, const fc::optional<fc::path>& genesis_file, const bool statistics_enabled,
                       const std::function<void(float)> replay_status_callback = std::function<void(float)>());
                       
+                      
+            bool convert_storage_database(const fc::path& data_dir);
+            
             /**  Close leveldb file
             *
             *

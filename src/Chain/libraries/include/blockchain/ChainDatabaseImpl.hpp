@@ -48,6 +48,8 @@ namespace thinkyoung {
                 * @return bool
                 */
                 bool                                        replay_required(const fc::path& data_dir);
+                bool convert_storage_database(const fc::path& path);
+                
                 /**
                 * load database from specified directory
                 * @param  data_dir    path of database
@@ -331,6 +333,7 @@ namespace thinkyoung {
                 ShareType                                                           _block_per_account_reword_amount = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
                 thinkyoung::db::LevelMap<BlockIdType, FullBlock>                               _block_id_to_full_block;
                 thinkyoung::db::fast_level_map<BlockIdType, PendingChainState>                 _block_id_to_undo_state;
+                thinkyoung::db::fast_level_map<BlockIdType, PendingChainStateNoValue>                 _block_id_to_undo_state_no_value_db;
                 
                 thinkyoung::db::LevelMap<uint32_t, vector<BlockIdType>>                         _fork_number_db; // All siblings
                 thinkyoung::db::LevelMap<BlockIdType, BlockForkData>                          _fork_db;

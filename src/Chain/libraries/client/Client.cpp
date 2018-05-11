@@ -1493,6 +1493,11 @@ namespace thinkyoung {
                 try {
                     if (my->_config.statistics_enabled) ulog("Additional blockchain statistics enabled");
                     
+                    if (my->_chain_db->convert_storage_database(data_dir / "chain")) {
+                        my->_config.storage_db_version = "VALUE_DB_VERSION";
+                        fc::json::save_to_file(my->_config, data_dir / "config.json");
+                    }
+                    
                     my->_chain_db->open(data_dir / "chain", genesis_file_path, my->_config.statistics_enabled, replay_status_callback);
                     
                 } catch (const db::level_map_open_failure& e) {

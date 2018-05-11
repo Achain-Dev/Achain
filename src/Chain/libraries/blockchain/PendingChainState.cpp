@@ -15,6 +15,37 @@ namespace thinkyoung {
             _prev_state = prev_state;
         }
         
+        void PendingChainState::copy_from_no_value_pending(const PendingChainStateNoValue & pending) {
+            _property_id_to_entry = pending._property_id_to_entry;
+            _property_id_remove = pending._property_id_remove;
+            _account_id_to_entry = pending._account_id_to_entry;
+            _account_id_remove = pending._account_id_remove;
+            _account_name_to_id = pending.  _account_name_to_id;
+            _account_address_to_id = pending.  _account_address_to_id;
+            _asset_id_to_entry = pending.  _asset_id_to_entry;
+            _asset_id_remove= pending._asset_id_remove;
+            _asset_symbol_to_id= pending.  _asset_symbol_to_id;
+            _slate_id_to_entry= pending.  _slate_id_to_entry;
+            _slate_id_remove= pending.  _slate_id_remove;
+            _balance_id_to_entry= pending.  _balance_id_to_entry;
+            _balance_id_remove= pending.  _balance_id_remove;
+            _transaction_id_to_entry= pending.  _transaction_id_to_entry;
+            _transaction_id_remove= pending.  _transaction_id_remove;
+            _transaction_digests= pending.  _transaction_digests;
+            _slot_index_to_entry= pending.  _slot_index_to_entry;
+            _slot_index_remove= pending.  _slot_index_remove;
+            _slot_timestamp_to_delegate= pending.  _slot_timestamp_to_delegate;
+            _contract_id_to_entry= pending.  _contract_id_to_entry;
+            _contract_id_remove = pending._contract_id_remove;
+            _contract_to_storage_change = pending._contract_to_storage_change;
+            _contract_name_to_id = pending._contract_name_to_id;
+            _request_id_to_result_id = pending._request_id_to_result_id;
+            _req_to_res_to_remove = pending._req_to_res_to_remove;
+            _result_id_to_request_id = pending._result_id_to_request_id;
+            _res_to_req_to_remove = pending._res_to_req_to_remove;
+            _vec_wallet_accounts = pending._vec_wallet_accounts;
+        }
+        
         uint32_t PendingChainState::get_head_block_num()const {
             const ChainInterfacePtr prev_state = _prev_state.lock();
             

@@ -16,6 +16,53 @@ namespace thinkyoung {
             PublicKeyType                   owner_key;
             
         };
+        class PendingChainStateNoValue {
+          public:
+            map<PropertyIdType, PropertyEntry>                             _property_id_to_entry;
+            set<PropertyIdType>                                              _property_id_remove;
+            
+            unordered_map<AccountIdType, AccountEntry>                     _account_id_to_entry;
+            unordered_set<AccountIdType>                                     _account_id_remove;
+            unordered_map<string, AccountIdType>                             _account_name_to_id;
+            unordered_map<Address, AccountIdType>                            _account_address_to_id;
+            
+            unordered_map<AssetIdType, AssetEntry>                         _asset_id_to_entry;
+            unordered_set<AssetIdType>                                       _asset_id_remove;
+            unordered_map<string, AssetIdType>                               _asset_symbol_to_id;
+            
+            unordered_map<SlateIdType, SlateEntry>                         _slate_id_to_entry;
+            unordered_set<SlateIdType>                                       _slate_id_remove;
+            
+            unordered_map<BalanceIdType, BalanceEntry>                     _balance_id_to_entry;
+            unordered_set<BalanceIdType>                                     _balance_id_remove;
+            
+            unordered_map<TransactionIdType, TransactionEntry>             _transaction_id_to_entry;
+            unordered_set<TransactionIdType>                                 _transaction_id_remove;
+            unordered_set<DigestType>                                         _transaction_digests;
+            
+            
+            map<SlotIndex, SlotEntry>                                       _slot_index_to_entry;
+            set<SlotIndex>                                                    _slot_index_remove;
+            map<time_point_sec, AccountIdType>                               _slot_timestamp_to_delegate;
+            
+            unordered_map<ContractIdType, ContractEntry>                      _contract_id_to_entry;
+            unordered_set<ContractIdType>                                     _contract_id_remove;
+            unordered_set<ContractValueIdType>                                     _value_id_remove;
+            unordered_map<ContractName, ContractIdType>                       _contract_name_to_id;
+            unordered_map<ContractIdType, ContractStorageEntry>                    _contract_id_to_storage;
+            unordered_map<ContractIdType, ContractStorageChangeEntry>         _contract_to_storage_change;
+            
+            unordered_map<TransactionIdType, ResultTIdEntry>                    _request_id_to_result_id;
+            unordered_set<TransactionIdType>                                  _req_to_res_to_remove;
+            unordered_map<TransactionIdType, RequestIdEntry>                    _result_id_to_request_id;
+            unordered_set<TransactionIdType>                                  _res_to_req_to_remove;
+            unordered_map<TransactionIdType, ContractinTrxEntry>                      _trx_to_contract_id;
+            unordered_set<TransactionIdType>                    _trx_to_contract_id_remove;
+            unordered_map<ContractIdType, ContractTrxEntry> _contract_to_trx_id;
+            unordered_set<ContractIdType>                       _contract_to_trx_id_remove;
+            vector<EventOperation> event_vector;
+            vector<thinkyoung::blockchain::SandboxAccountInfo>                     _vec_wallet_accounts;
+        };
         
         typedef std::shared_ptr<PendingChainState> PendingChainStatePtr;
         class PendingChainState : public ChainInterface, public std::enable_shared_from_this < PendingChainState > {
@@ -32,6 +79,8 @@ namespace thinkyoung {
             * @return void
             */
             void                           set_prev_state(ChainInterfacePtr prev_state);
+            
+            void copy_from_no_value_pending(const PendingChainStateNoValue& pending);
             
             
             /**
@@ -689,7 +738,36 @@ namespace thinkyoung {
         
     }
 } // thinkyoung::blockchain
-
+FC_REFLECT(thinkyoung::blockchain::PendingChainStateNoValue,
+           (_property_id_to_entry)
+           (_property_id_remove)
+           (_account_id_to_entry)
+           (_account_id_remove)
+           (_account_name_to_id)
+           (_account_address_to_id)
+           (_asset_id_to_entry)
+           (_asset_id_remove)
+           (_asset_symbol_to_id)
+           (_slate_id_to_entry)
+           (_slate_id_remove)
+           (_balance_id_to_entry)
+           (_balance_id_remove)
+           (_transaction_id_to_entry)
+           (_transaction_id_remove)
+           (_transaction_digests)
+           (_slot_index_to_entry)
+           (_slot_index_remove)
+           (_slot_timestamp_to_delegate)
+           (_contract_id_to_entry)
+           (_contract_id_remove)
+           (_contract_to_storage_change)
+           (_contract_name_to_id)
+           (_request_id_to_result_id)
+           (_req_to_res_to_remove)
+           (_result_id_to_request_id)
+           (_res_to_req_to_remove)
+           (_vec_wallet_accounts)
+          )
 FC_REFLECT(thinkyoung::blockchain::PendingChainState,
            (_property_id_to_entry)
            (_property_id_remove)
