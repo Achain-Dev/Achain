@@ -326,7 +326,7 @@ namespace thinkyoung {
                 contract_address = get_contract_address(contract);
                 auto entry = _wallet->call_contract(caller_name, contract_address, function_name, params, asset_symbol, *call_limit);
                 
-                if (get_pending_contract_trx_size() > ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE) {
+                if (get_pending_contract_trx_size() > _local_pending_num) {
                     _local_entry_list.push_back(entry);
                     
                 } else {

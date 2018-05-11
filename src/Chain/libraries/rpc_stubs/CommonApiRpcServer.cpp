@@ -7601,9 +7601,24 @@ namespace thinkyoung {
             get_client()->delete_event_handler(contract_id_str, event_type, script_id);
             return fc::variant();
         }
-
-        void CommonApiRpcServer::register_common_api_methods(const fc::rpc::json_connection_ptr& json_connection)
-        {
+        
+        fc::variant CommonApiRpcServer::set_local_pending_num_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters) {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            verify_wallet_is_unlocked();
+            
+            // done checking prerequisites
+            if(parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (event_type)");
+                
+            uint32_t local_pending_num = parameters[0].as<uint32_t>();
+            get_client()->set_local_pending_num(local_pending_num);
+            return fc::variant();
+        }
+        
+        void CommonApiRpcServer::register_common_api_methods(const fc::rpc::json_connection_ptr& json_connection) 
+		{
             fc::rpc::json_connection::method bound_positional_method;
             fc::rpc::json_connection::named_param_method bound_named_method;
             auto capture_con = json_connection.get();
@@ -13073,7 +13088,19 @@ namespace thinkyoung {
                     /* aliases */ {}, false};
                 store_method_metadata(delete_event_handler_method_metadata);
             }
-
+            {
+                // register method set_local_pending_num
+                thinkyoung::api::MethodData set_local_pending_num_method_metadata{ "set_local_pending_num", nullptr,
+                        /* description */ "drop the relation with a script to the specified contract id and event type",
+                        /* returns */ "void",
+                /* params: */{
+                    {"local_pending_num", "uint32_t", thinkyoung::api::required_positional, fc::ovariant()}
+                },
+                /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 1,
+                /* detailed description */ "set the local pending num\n\nReturns:\n  void\n",
+                /* aliases */ {}, false};
+                store_method_metadata(set_local_pending_num_method_metadata);
+            }
         }
 
         fc::variant CommonApiRpcServer::direct_invoke_positional_method(const std::string& method_name, const fc::variants& parameters)
@@ -13544,6 +13571,10 @@ namespace thinkyoung {
                 return add_event_handler_positional(nullptr, parameters);
             if (method_name == "delete_event_handler")
                 return delete_event_handler_positional(nullptr, parameters);
+                
+            if(method_name == "set_local_pending_num")
+                return set_local_pending_num_positional(nullptr, parameters);
+                
             FC_ASSERT(false, "shouldn't happen");
         }
 
