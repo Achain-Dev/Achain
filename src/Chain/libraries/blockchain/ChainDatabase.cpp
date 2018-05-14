@@ -128,6 +128,185 @@ namespace thinkyoung {
                 
                 FC_CAPTURE_AND_RETHROW((data_dir))
             }
+            bool create_value_db(const ContractIdType& contract_id, const std::string& name,
+                                 thinkyoung::db::fast_level_map<ContractValueIdType, ContractValueEntry>& value_id_to_storage,
+                                 thinkyoung::db::fast_level_map<ContractValueIdType, ContractIndexSetEntry>& value_index,
+                                 std::unordered_map<std::string, StorageDataType>& value_map_db) {
+                const auto& index_entry = value_index.unordered_find(contract_id.AddressToString(contract_address) + name);
+                
+                if (index_entry == value_index.unordered_end()) {
+                    return false;
+                }
+                
+                for (const auto& index : index_entry->second.index_set) {
+                    auto& value = value_id_to_storage.unordered_find(index);
+                    
+                    if (value != value_id_to_storage.unordered_end()) {
+                        const StorageDataType& storage = value->second.storage_value_;
+                        value_map_db[index] = storage;
+                        
+                    } else {
+                        return false;
+                    }
+                }
+                
+                return true;
+            }
+            bool verify_storage_convert(thinkyoung::db::fast_level_map<ContractIdType, ContractStorageEntry>& storage_database,
+                                        thinkyoung::db::fast_level_map<ContractValueIdType, ContractValueEntry>& value_id_to_storage,
+                                        thinkyoung::db::fast_level_map<ContractValueIdType, ContractIndexSetEntry>& value_index,
+                                        thinkyoung::db::fast_level_map<ContractIdType, ContractEntry>& contract_id_to_entry) {
+                bool verify_success = true;
+                
+                for (auto itr = storage_database.unordered_begin(); itr != storage_database.unordered_end(); itr++) {
+                    auto& contract_storage = itr->second.contract_storages;
+                    const auto& contract_id = itr->first;
+                    
+                    for (const auto& item : contract_storage) {
+                        const auto& storage = item.second;
+                        const auto& name = item.first;
+                        
+                        if (thinkyoung::blockchain::is_any_array_storage_value_type(storage.storage_type)
+                                || thinkyoung::blockchain::is_any_table_storage_value_type(storage.storage_type)) {
+                            if (storage.storage_type == StorageValueTypes::storage_value_int_table ||
+                                    storage.storage_type == StorageValueTypes::storage_value_int_array) {
+                                std::map<std::string, LUA_INTEGER> int_table;
+                                
+                                if (storage.storage_type == StorageValueTypes::storage_value_int_table)
+                                    int_table = storage.as<StorageIntTableType>().raw_storage_map;
+                                    
+                                else if (storage.storage_type == StorageValueTypes::storage_value_int_array)
+                                    int_table = storage.as<StorageIntArrayType>().raw_storage_map;
+                                    
+                                std::unordered_map<std::string, StorageDataType> value_map_db;
+                                
+                                if (!create_value_db(contract_id, name, value_id_to_storage, value_index, value_map_db)) {
+                                    return false;
+                                }
+                                
+                                for (const auto& int_item : int_table) {
+                                    StorageDataType stor(StorageIntType(int_item.second));
+                                    auto itr = value_map_db.find(contract_id.AddressToString(contract_address) + name + int_item.first);
+                                    
+                                    if (itr == value_map_db.end()) {
+                                        return false;
+                                    }
+                                    
+                                    if (!stor.equals(itr->second)) {
+                                        return false;
+                                    }
+                                }
+                                
+                            } else if (storage.storage_type == StorageValueTypes::storage_value_number_table ||
+                                       storage.storage_type == StorageValueTypes::storage_value_number_array) {
+                                std::map<std::string, double> double_table;
+                                
+                                if (storage.storage_type == StorageValueTypes::storage_value_number_table)
+                                    double_table = storage.as<StorageNumberTableType>().raw_storage_map;
+                                    
+                                else if (storage.storage_type == StorageValueTypes::storage_value_number_array)
+                                    double_table = storage.as<StorageNumberArrayType>().raw_storage_map;
+                                    
+                                std::unordered_map<std::string, StorageDataType> value_map_db;
+                                
+                                if (!create_value_db(contract_id, name, value_id_to_storage, value_index, value_map_db)) {
+                                    return false;
+                                }
+                                
+                                for (const auto& double_item : double_table) {
+                                    StorageDataType stor(StorageNumberType(double_item.second));
+                                    auto itr = value_map_db.find(contract_id.AddressToString(contract_address) + name + double_item.first);
+                                    
+                                    if (itr == value_map_db.end()) {
+                                        return false;
+                                    }
+                                    
+                                    if (!stor.equals(itr->second)) {
+                                        return false;
+                                    }
+                                }
+                                
+                            } else if (storage.storage_type == StorageValueTypes::storage_value_bool_table ||
+                                       storage.storage_type == StorageValueTypes::storage_value_bool_array) {
+                                std::map<std::string, bool> bool_table;
+                                
+                                if (storage.storage_type == StorageValueTypes::storage_value_bool_table)
+                                    bool_table = storage.as<StorageBoolTableType>().raw_storage_map;
+                                    
+                                else if (storage.storage_type == StorageValueTypes::storage_value_bool_array)
+                                    bool_table = storage.as<StorageBoolArrayType>().raw_storage_map;
+                                    
+                                std::unordered_map<std::string, StorageDataType> value_map_db;
+                                
+                                if (!create_value_db(contract_id, name, value_id_to_storage, value_index, value_map_db)) {
+                                    return false;
+                                }
+                                
+                                for (const auto& bool_item : bool_table) {
+                                    StorageDataType stor(StorageBoolType(bool_item.second));
+                                    auto itr = value_map_db.find(contract_id.AddressToString(contract_address) + name + bool_item.first);
+                                    
+                                    if (itr == value_map_db.end()) {
+                                        return false;
+                                    }
+                                    
+                                    if (!stor.equals(itr->second)) {
+                                        return false;
+                                    }
+                                }
+                                
+                            } else if (storage.storage_type == StorageValueTypes::storage_value_string_table ||
+                                       storage.storage_type == StorageValueTypes::storage_value_string_array) {
+                                std::map<std::string, string> string_table;
+                                
+                                if (storage.storage_type == StorageValueTypes::storage_value_string_table)
+                                    string_table = storage.as<StorageStringTableType>().raw_storage_map;
+                                    
+                                else if (storage.storage_type == StorageValueTypes::storage_value_string_array)
+                                    string_table = storage.as<StorageStringArrayType>().raw_storage_map;
+                                    
+                                std::unordered_map<std::string, StorageDataType> value_map_db;
+                                
+                                if (!create_value_db(contract_id, name, value_id_to_storage, value_index, value_map_db)) {
+                                    return false;
+                                }
+                                
+                                for (const auto& string_item : string_table) {
+                                    StorageDataType stor(StorageStringType(string_item.second));
+                                    auto itr = value_map_db.find(contract_id.AddressToString(contract_address) + name + string_item.first);
+                                    
+                                    if (itr == value_map_db.end()) {
+                                        return false;
+                                    }
+                                    
+                                    if (!stor.equals(itr->second)) {
+                                        return false;
+                                    }
+                                }
+                            }
+                            
+                            if (verify_success == false) {
+                                break;
+                            }
+                            
+                        } else {
+                            const auto& value = value_id_to_storage.unordered_find(itr->first.AddressToString(contract_address) + item.first);
+                            
+                            if (value == value_id_to_storage.unordered_end()) {
+                                verify_success = false;
+                                break;
+                            }
+                            
+                            if (!item.second.equals(value->second.storage_value_)) {
+                                verify_success = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                return verify_success;
+            }
             
             bool ChainDatabaseImpl::replay_required(const fc::path& data_dir) {
                 try {
@@ -138,6 +317,157 @@ namespace thinkyoung {
                 }
                 
                 FC_CAPTURE_AND_RETHROW((data_dir))
+            }
+            void storage_to_value(const ContractIdType& contract_id, const std::string& name,
+                                  const StorageDataType& storage, ContractValueEntry& value_entry) {
+                value_entry.id_ = contract_id;
+                value_entry.value_name_ = name;
+                value_entry.storage_value_ = storage;
+            }
+            void storage_to_value_map(const ContractIdType& contract_id, const std::string& name, const StorageDataType& storage,
+                                      std::vector<ContractValueEntry>& value_set, ContractIndexSetEntry& value_index) {
+                if (thinkyoung::blockchain::is_any_array_storage_value_type(storage.storage_type)
+                        || thinkyoung::blockchain::is_any_table_storage_value_type(storage.storage_type)) {
+                    if (storage.storage_type == StorageValueTypes::storage_value_int_table ||
+                            storage.storage_type == StorageValueTypes::storage_value_int_array) {
+                        std::map<std::string, LUA_INTEGER> int_table;
+                        
+                        if (storage.storage_type == StorageValueTypes::storage_value_int_table)
+                            int_table = storage.as<StorageIntTableType>().raw_storage_map;
+                            
+                        else if (storage.storage_type == StorageValueTypes::storage_value_int_array)
+                            int_table = storage.as<StorageIntArrayType>().raw_storage_map;
+                            
+                        for (const auto& item : int_table) {
+                            ContractValueEntry value_entry;
+                            value_entry.id_ = contract_id;
+                            value_entry.value_name_ = name;
+                            value_entry.index_ = item.first;
+                            value_entry.storage_value_ = StorageDataType(StorageIntType(item.second));
+                            value_set.push_back(value_entry);
+                            value_index.index_set.insert(value_entry.get_contract_value_id());
+                        }
+                        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_number_table ||
+                               storage.storage_type == StorageValueTypes::storage_value_number_array) {
+                        std::map<std::string, double> double_table;
+                        
+                        if (storage.storage_type == StorageValueTypes::storage_value_number_table)
+                            double_table = storage.as<StorageNumberTableType>().raw_storage_map;
+                            
+                        else if (storage.storage_type == StorageValueTypes::storage_value_number_array)
+                            double_table = storage.as<StorageNumberArrayType>().raw_storage_map;
+                            
+                        for (const auto& item : double_table) {
+                            ContractValueEntry value_entry;
+                            value_entry.id_ = contract_id;
+                            value_entry.value_name_ = name;
+                            value_entry.index_ = item.first;
+                            value_entry.storage_value_ = StorageDataType(StorageNumberType(item.second));
+                            value_set.push_back(value_entry);
+                            value_index.index_set.insert(value_entry.get_contract_value_id());
+                        }
+                        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_bool_table ||
+                               storage.storage_type == StorageValueTypes::storage_value_bool_array) {
+                        std::map<std::string, bool> bool_table;
+                        
+                        if (storage.storage_type == StorageValueTypes::storage_value_bool_table)
+                            bool_table = storage.as<StorageBoolTableType>().raw_storage_map;
+                            
+                        else if (storage.storage_type == StorageValueTypes::storage_value_bool_array)
+                            bool_table = storage.as<StorageBoolArrayType>().raw_storage_map;
+                            
+                        for (const auto& item : bool_table) {
+                            ContractValueEntry value_entry;
+                            value_entry.id_ = contract_id;
+                            value_entry.value_name_ = name;
+                            value_entry.index_ = item.first;
+                            value_entry.storage_value_ = StorageDataType(StorageBoolType(item.second));
+                            value_set.push_back(value_entry);
+                            value_index.index_set.insert(value_entry.get_contract_value_id());
+                        }
+                        
+                    } else if (storage.storage_type == StorageValueTypes::storage_value_string_table ||
+                               storage.storage_type == StorageValueTypes::storage_value_string_array) {
+                        std::map<std::string, string> string_table;
+                        
+                        if (storage.storage_type == StorageValueTypes::storage_value_string_table)
+                            string_table = storage.as<StorageStringTableType>().raw_storage_map;
+                            
+                        else if (storage.storage_type == StorageValueTypes::storage_value_string_array)
+                            string_table = storage.as<StorageStringArrayType>().raw_storage_map;
+                            
+                        for (const auto& item : string_table) {
+                            ContractValueEntry value_entry;
+                            value_entry.id_ = contract_id;
+                            value_entry.value_name_ = name;
+                            value_entry.index_ = item.first;
+                            value_entry.storage_value_ = StorageDataType(StorageStringType(item.second));
+                            value_set.push_back(value_entry);
+                            value_index.index_set.insert(value_entry.get_contract_value_id());
+                        }
+                    }
+                }
+            }
+            bool ChainDatabaseImpl::convert_storage_database(const fc::path & path) {
+                thinkyoung::db::fast_level_map<ContractValueIdType, ContractValueEntry> value_id_to_storage;
+                thinkyoung::db::fast_level_map<ContractValueIdType, ContractIndexSetEntry> value_map_index;
+                thinkyoung::db::fast_level_map<ContractIdType, ContractStorageEntry> storage_database;
+                thinkyoung::db::fast_level_map<ContractIdType, ContractEntry> contract_id_to_entry;
+                thinkyoung::db::fast_level_map<ContractIdType, PendingChainStateNoValue> pending_chain_state_no_value;
+                thinkyoung::db::fast_level_map<ContractIdType, PendingChainState> pending_chain_state;
+                std::unordered_map<ContractIdType, PendingChainState> pending_chain_state_map;
+                value_id_to_storage.open(path / "index/value_id_to_storage");
+                value_map_index.open(path / "index/value_map_index");
+                storage_database.open(path / "index/contract_id_to_storage");
+                contract_id_to_entry.open(path / "index/contract_id_to_entry");
+                pending_chain_state_no_value.open(path / "index/block_id_to_undo_state");
+                
+                for (auto itr = pending_chain_state_no_value.unordered_begin(); itr != pending_chain_state_no_value.unordered_end(); itr++) {
+                    PendingChainState pending;
+                    pending.copy_from_no_value_pending(itr->second);
+                    pending_chain_state_map[itr->first] = pending;
+                }
+                
+                for (const auto& item : pending_chain_state_map) {
+                    pending_chain_state_no_value.remove(item.first);
+                }
+                
+                pending_chain_state_no_value.close();
+                pending_chain_state.open(path / "index/block_id_to_undo_state");
+                
+                for (auto itr = storage_database.unordered_begin(); itr != storage_database.unordered_end(); itr++) {
+                    auto& contract_storage = itr->second.contract_storages;
+                    
+                    for (const auto& item : contract_storage) {
+                        if (thinkyoung::blockchain::is_any_array_storage_value_type(item.second.storage_type)
+                                || thinkyoung::blockchain::is_any_table_storage_value_type(item.second.storage_type)) {
+                            std::vector<ContractValueEntry> value_entry_set;
+                            ContractIndexSetEntry value_index_entry;
+                            storage_to_value_map(itr->first, item.first, item.second, value_entry_set, value_index_entry);
+                            
+                            for (const auto& value_entry : value_entry_set) {
+                                value_id_to_storage.store(value_entry.get_contract_value_id(), value_entry);
+                            }
+                            
+                            value_map_index.store(itr->first.AddressToString(contract_address) + item.first, value_index_entry);
+                            
+                        } else {
+                            ContractValueEntry value_entry;
+                            storage_to_value(itr->first, item.first, item.second, value_entry);
+                            value_id_to_storage.store(value_entry.get_contract_value_id(), value_entry);
+                        }
+                    }
+                }
+                
+                if (!verify_storage_convert(storage_database, value_id_to_storage, value_map_index, contract_id_to_entry)) {
+                    return false;
+                    
+                } else {
+                    //set_storage_convert_finished(path);
+                    return true;
+                }
             }
             
             void ChainDatabaseImpl::open_database(const fc::path& data_dir) {
@@ -1520,6 +1850,10 @@ namespace thinkyoung {
             }
             
             FC_CAPTURE_AND_RETHROW((data_dir))
+        }
+        
+        bool ChainDatabase::convert_storage_database(const fc::path& data_dir) {
+            return my->convert_storage_database(data_dir);
         }
         
         void ChainDatabase::close() {
