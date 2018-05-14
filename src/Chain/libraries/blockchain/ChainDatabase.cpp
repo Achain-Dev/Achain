@@ -1618,16 +1618,17 @@ namespace thinkyoung {
                 
                 if (skip_signature_check)
                     trx_eval_state->_skip_signature_check = skip_signature_check;
-                    
-                trx_eval_state->skipexec = !generating_block; //to check ! evaluate_transaction,基本只在store pending的时候被调用，此时如果是代理就需要执行代码，不是则不用执行
                 
-                //如果普通节点打开了VM开关
+                //if it's the node of generating block, will start virtual machine and execute contract 
+                trx_eval_state->skipexec = !generating_block; 
+                
+                //if it's a ordinary node and the configuration(property_id_to_entry) vm enabled, will start virtual machine and will execute the contract  
                 if (trx_eval_state->skipexec)
                     trx_eval_state->skipexec = !get_node_vm_enabled();
                     
                 trx_eval_state->throw_exec_exception = throw_exec_exception;
                 
-                //钱包创建交易首次本地验证，执行一次解释器
+                //the local machine which create a contract transaction, will start virtual machine and will execute the contract  
                 if (trx_eval_state->skipexec && contract_vm_exec)
                     trx_eval_state->skipexec = !contract_vm_exec;
                     
@@ -1644,7 +1645,7 @@ namespace thinkyoung {
                     no_check_required_fee = true;
                 }
                 
-                //如果有结果交易，就不将原始请求在此处写入DB了，原始请求会在evaluate结果交易时被保存
+                //if there's result trx,the origin trx will not write to db here.
                 if (trx_eval_state->p_result_trx.operations.size() > 0)
                     trx_eval_state->_current_state->remove<TransactionEntry>(trx.id());
                     
@@ -1656,21 +1657,12 @@ namespace thinkyoung {
                 }
                 
                 // apply changes from this transaction to _pending_trx_state
-                //在store_pending的过程中如果没有结果交易，就直接保存,(结果交易evaluate首个交易op后产生的result在交易evalute过程中被移除)
-                //有结果交易则，取消evaluate方法中缓存的改动(在有结果交易时，原始请求并不需要修改缓存)
                 if (trx_eval_state->p_result_trx.operations.size() < 1) {
                     pend_state->apply_changes();
                     
                 } else {
-                    //验证下结果交易是否可行
+                    //verify the result trx.
                     TransactionEvaluationStatePtr trx_eval_state_res = std::make_shared<TransactionEvaluationState>(pend_state_res.get());
-                    //  trx_eval_state_res->skipexec = !generating_block;
-                    //  if (trx_eval_state_res->skipexec)
-                    //      trx_eval_state_res->skipexec = !get_node_vm_enabled();
-                    //
-                    //  //钱包创建交易首次本地验证，执行一次解释器
-                    //  if (trx_eval_state_res->skipexec && contract_vm_exec)
-                    //      trx_eval_state_res->skipexec = !contract_vm_exec;
                     trx_eval_state_res->skipexec = true;
                     trx_eval_state->throw_exec_exception = throw_exec_exception;
                     trx_eval_state_res->evaluate(trx_eval_state->p_result_trx);
