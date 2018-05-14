@@ -283,13 +283,6 @@ namespace thinkyoung {
                             return Address(raw_address);
                             
                         } catch (const fc::exception&) {
-                            //for( const string& prefix : alp_prefixes )
-                            //{
-                            // if( raw_address.find( prefix ) == 0 )
-                            //  {
-                            //  return address( ALP_ADDRESS_PREFIX + raw_address.substr( prefix.size() ) );
-                            // }
-                            //}
                         }
                         
                         FC_THROW_EXCEPTION(invalid_pts_address, "Invalid raw address format!", ("raw_address", raw_address));
@@ -789,8 +782,6 @@ namespace thinkyoung {
                                                  const PendingChainStatePtr& pending_state,
                                                  oBlockEntry& entry)const {
                 try {
-                    // if( pending_state->get_head_block_num() < ALP_V0_6_0_FORK_BLOCK_NUM )
-                    // return pay_delegate_v2( block_id, block_signee, pending_state, entry );
                     oAssetEntry base_asset_entry = pending_state->get_asset_entry(AssetIdType(0));
                     FC_ASSERT(base_asset_entry.valid(), "Invalid asset");
                     oAccountEntry delegate_entry = self->get_account_entry(Address(block_signee));
@@ -996,9 +987,7 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::update_active_delegate_list(const uint32_t block_num,
                     const PendingChainStatePtr& pending_state)const {
-                try {//todo remove????
-                    // if( pending_state->get_head_block_num() < ALP_V0_7_0_FORK_BLOCK_NUM )
-                    // return update_active_delegate_list_v1( block_num, pending_state );
+                try {
                     if (block_num % ALP_BLOCKCHAIN_NUM_DELEGATES != 0)
                         return;
                         
@@ -2903,7 +2892,7 @@ namespace thinkyoung {
                 for (auto iter = my->_balance_id_to_entry.unordered_begin();
                         iter != my->_balance_id_to_entry.unordered_end(); ++iter) {
                     const BalanceEntry& entry = iter->second;
-
+                    
                     if (entry.asset_id() != 0) continue;
                     
                     GenesisBalance balance;
@@ -3404,320 +3393,258 @@ namespace thinkyoung {
         void ChainDatabase::dump_state(const fc::path& path, const fc::string& ldbname)const {
             try {
                 const auto dir = fc::absolute(path);
-                if (!fc::exists(dir))
-                {
+                
+                if (!fc::exists(dir)) {
                     fc::create_directories(dir);
                 }
-
-                if ("ALL" == ldbname)
-                { 
+                
+                if ("ALL" == ldbname) {
                     fc::path next_path;
                     ulog("This will take a while...");
                     next_path = dir / "_block_extend_status.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_extend_status.export_to_json(next_path);
-
                     next_path = dir / "block_id_to_block_data_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_full_block.export_to_json(next_path);
-
                     next_path = dir / "block_id_to_undo_state.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_undo_state.export_to_json(next_path);
-
                     next_path = dir / "fork_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_fork_db.export_to_json(next_path);
-
                     next_path = dir / "future_blocks_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_revalidatable_future_blocks_db.export_to_json(next_path);
-
                     next_path = dir / "block_num_to_id_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_num_to_id_db.export_to_json(next_path);
-
                     next_path = dir / "block_id_to_block_entry_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_block_entry_db.export_to_json(next_path);
-
                     next_path = dir / "property_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_property_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "account_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "account_name_to_id.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_name_to_id.export_to_json(next_path);
-
                     next_path = dir / "account_address_to_id.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_address_to_id.export_to_json(next_path);
-
                     next_path = dir / "asset_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_asset_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "asset_symbol_to_id.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_asset_symbol_to_id.export_to_json(next_path);
-
                     next_path = dir / "slate_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slate_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "balance_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_balance_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "transaction_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_transaction_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "address_to_transaction_ids.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_address_to_transaction_ids.export_to_json(next_path);
-
                     next_path = dir / "slot_index_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slot_index_to_entry.export_to_json(next_path);
-
                     next_path = dir / "slot_timestamp_to_delegate.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slot_timestamp_to_delegate.export_to_json(next_path);
-
                     next_path = dir / "fork_number_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_fork_number_db.export_to_json(next_path);
-
                     next_path = dir / "_alp_input_balance_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_alp_input_balance_entry.export_to_json(next_path);
-
                     next_path = dir / "contract_id_to_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_id_to_entry.export_to_json(next_path);
-
                     next_path = dir / "contract_id_to_storage.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_id_to_storage.export_to_json(next_path);
-
                     next_path = dir / "contract_name_to_id.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_name_to_id.export_to_json(next_path);
-
                     next_path = dir / "_result_to_request_id.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_result_to_request_iddb.export_to_json(next_path);
-
                     next_path = dir / "_request_to_result_iddb.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_request_to_result_iddb.export_to_json(next_path);
-
                     next_path = dir / "_trx_to_contract_iddb.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_trx_to_contract_iddb.export_to_json(next_path);
-
                     next_path = dir / "_contract_to_trx_iddb.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_to_trx_iddb.export_to_json(next_path);
-
                     next_path = dir / "_alp_full_entry.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_alp_full_entry.export_to_json(next_path);
-
                     next_path = dir / "pending_transaction_db.json";
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_pending_transaction_db.export_to_json(next_path);
-                }
-                else if ("block_num_to_id_db" == ldbname)
-                {
+                    
+                } else if ("block_num_to_id_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_num_to_id_db.export_to_json(next_path);
-                }
-                else if ("block_id_to_block_data_db" == ldbname)
-                {
+                    
+                } else if ("block_id_to_block_data_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_full_block.export_to_json(next_path);
-                }
-                else if ("_alp_full_entry" == ldbname)
-                {
+                    
+                } else if ("_alp_full_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_alp_full_entry.export_to_json(next_path);
-                }
-                else if ("_alp_input_balance_entry" == ldbname)
-                {
+                    
+                } else if ("_alp_input_balance_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_alp_input_balance_entry.export_to_json(next_path);
-                }
-                else if ("_block_extend_status" == ldbname)
-                {
+                    
+                } else if ("_block_extend_status" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_extend_status.export_to_json(next_path);
-                }
-                else if ("_contract_to_trx_iddb" == ldbname)
-                {
+                    
+                } else if ("_contract_to_trx_iddb" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_to_trx_iddb.export_to_json(next_path);
-                }
-                else if ("_request_to_result_iddb" == ldbname)
-                {
+                    
+                } else if ("_request_to_result_iddb" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_request_to_result_iddb.export_to_json(next_path);
-                }
-                else if ("_result_to_request_id" == ldbname)
-                {
+                    
+                } else if ("_result_to_request_id" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_result_to_request_iddb.export_to_json(next_path);
-                }
-                else if ("_trx_to_contract_iddb" == ldbname)
-                {
+                    
+                } else if ("_trx_to_contract_iddb" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_trx_to_contract_iddb.export_to_json(next_path);
-                }
-                else if ("account_address_to_id" == ldbname)
-                {
+                    
+                } else if ("account_address_to_id" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_address_to_id.export_to_json(next_path);
-                }
-                else if ("account_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("account_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_id_to_entry.export_to_json(next_path);
-                }
-                else if ("account_name_to_id" == ldbname)
-                {
+                    
+                } else if ("account_name_to_id" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_account_name_to_id.export_to_json(next_path);
-                }
-                else if ("address_to_transaction_ids" == ldbname)
-                {
+                    
+                } else if ("address_to_transaction_ids" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_address_to_transaction_ids.export_to_json(next_path);
-                }
-                else if ("asset_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("asset_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_asset_id_to_entry.export_to_json(next_path);
-                }
-                else if ("asset_symbol_to_id" == ldbname)
-                {
+                    
+                } else if ("asset_symbol_to_id" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_asset_symbol_to_id.export_to_json(next_path);
-                }
-                else if ("balance_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("balance_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_balance_id_to_entry.export_to_json(next_path);
-                }
-                else if ("block_id_to_block_entry_db" == ldbname)
-                {
+                    
+                } else if ("block_id_to_block_entry_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_block_entry_db.export_to_json(next_path);
-                }
-                else if ("block_id_to_undo_state" == ldbname)
-                {
+                    
+                } else if ("block_id_to_undo_state" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_block_id_to_undo_state.export_to_json(next_path);
-                }
-                else if ("contract_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("contract_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_id_to_entry.export_to_json(next_path);
-                }
-                else if ("contract_id_to_storage" == ldbname)
-                {
+                    
+                } else if ("contract_id_to_storage" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_id_to_storage.export_to_json(next_path);
-                }
-                else if ("contract_name_to_id" == ldbname)
-                {
+                    
+                } else if ("contract_name_to_id" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_contract_name_to_id.export_to_json(next_path);
-                }
-                else if ("fork_db" == ldbname)
-                {
+                    
+                } else if ("fork_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_fork_db.export_to_json(next_path);
-                }
-                else if ("fork_number_db" == ldbname)
-                {
+                    
+                } else if ("fork_number_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_fork_number_db.export_to_json(next_path);
-                }
-                else if ("future_blocks_db" == ldbname)
-                {
+                    
+                } else if ("future_blocks_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_revalidatable_future_blocks_db.export_to_json(next_path);
-                }
-                else if ("pending_transaction_db" == ldbname)
-                {
+                    
+                } else if ("pending_transaction_db" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_pending_transaction_db.export_to_json(next_path);
-                }
-                else if ("property_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("property_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_property_id_to_entry.export_to_json(next_path);
-                }
-                else if ("slate_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("slate_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slate_id_to_entry.export_to_json(next_path);
-                }
-                else if ("slot_index_to_entry" == ldbname)
-                {
+                    
+                } else if ("slot_index_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slot_index_to_entry.export_to_json(next_path);
-                }
-                else if ("slot_timestamp_to_delegate" == ldbname)
-                {
+                    
+                } else if ("slot_timestamp_to_delegate" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_slot_timestamp_to_delegate.export_to_json(next_path);
-                }
-                else if ("transaction_id_to_entry" == ldbname)
-                {
+                    
+                } else if ("transaction_id_to_entry" == ldbname) {
                     fc::path next_path = dir / (ldbname + ".json");
                     FC_ASSERT(!fc::exists(next_path), "File ${n} already exsits!", ("n", next_path));
                     my->_transaction_id_to_entry.export_to_json(next_path);
-                }
-                else
-                {
+                    
+                } else {
                     FC_ASSERT(false, "File ${n} doesn't exsits!", ("n", ldbname));
                 }
-
             }
             
             FC_CAPTURE_AND_RETHROW((path))
