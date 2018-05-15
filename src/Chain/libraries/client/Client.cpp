@@ -1493,9 +1493,18 @@ namespace thinkyoung {
                 try {
                     if (my->_config.statistics_enabled) ulog("Additional blockchain statistics enabled");
                     
-                    if (my->_chain_db->convert_storage_database(data_dir / "chain")) {
-                        my->_config.storage_db_version = "VALUE_DB_VERSION";
-                        fc::json::save_to_file(my->_config, data_dir / "config.json");
+                    if (my->_config.storage_db_version != "VALUE_DB_VERSION") {
+                        if (my->_chain_db->convert_storage_database(data_dir / "chain")) {
+                            my->_config.storage_db_version = "VALUE_DB_VERSION";
+                            fc::json::save_to_file(my->_config, data_dir / "config.json");
+                            std::cout << "CONVERT SUCCESS" << "VALUE_DB_VERSION" << std::endl;
+                            
+                        } else {
+                            std::cout << "CONVERT FAILED RESTART" << std::endl;
+                        }
+                        
+                    } else {
+                        std::cout << "CONVERTED" << "VALUE_DB_VERSION" << std::endl;
                     }
                     
                     my->_chain_db->open(data_dir / "chain", genesis_file_path, my->_config.statistics_enabled, replay_status_callback);

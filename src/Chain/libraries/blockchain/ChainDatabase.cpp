@@ -33,7 +33,6 @@ namespace thinkyoung {
                 _pending_fee_index.clear();
                 int count = 0;
                 vector<TransactionIdType> trx_to_discard;
-                _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                 unsigned num_pending_transaction_considered = 0;
                 auto itr = _pending_transaction_db.begin();
                 const time_point start_time = time_point::now();
@@ -462,10 +461,20 @@ namespace thinkyoung {
                 }
                 
                 if (!verify_storage_convert(storage_database, value_id_to_storage, value_map_index, contract_id_to_entry)) {
+                    value_id_to_storage.close();
+                    value_map_index.close();
+                    storage_database.close();
+                    contract_id_to_entry.close();
+                    pending_chain_state.close();
                     return false;
                     
                 } else {
                     //set_storage_convert_finished(path);
+                    value_id_to_storage.close();
+                    value_map_index.close();
+                    storage_database.close();
+                    contract_id_to_entry.close();
+                    pending_chain_state.close();
                     return true;
                 }
             }
@@ -739,7 +748,9 @@ namespace thinkyoung {
                     // We skip this step if we are dealing with blocks prior to the last checkpointed block
                     if (_head_block_header.block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
                         if (!_revalidate_pending.valid() || _revalidate_pending.ready())
+                            _revalidate_pending = fc::async([=]() {
                             revalidate_pending();
+                        }, "revalidate_pending");
                     }
                 }
                 
