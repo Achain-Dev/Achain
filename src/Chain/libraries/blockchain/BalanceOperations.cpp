@@ -83,10 +83,6 @@ namespace thinkyoung {
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
                 
-                // if( eval_state._current_state->get_head_block_num() >= ALP_V0_6_0_FORK_BLOCK_NUM )
-                //{
-                //FC_ASSERT( !eval_state._current_state->is_fraudulent_asset( *asset_rec ) );
-                //}
                 if (asset_rec->is_restricted()) {
                     for (const auto& owner : cur_entry->owners()) {
                         // TODO

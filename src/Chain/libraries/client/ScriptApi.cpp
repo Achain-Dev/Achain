@@ -139,6 +139,10 @@ namespace thinkyoung {
 			{
 				return _wallet->get_events_bound(script_id);
 			}
+            void ClientImpl::set_local_pending_num(const uint32_t local_pending_num) 
+			{
+                _local_pending_num = local_pending_num;
+            }
         }
     }
 }
