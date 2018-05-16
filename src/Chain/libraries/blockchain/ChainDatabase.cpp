@@ -2221,8 +2221,6 @@ namespace thinkyoung {
             try {
                 const time_point start_time = time_point::now();
                 const PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(shared_from_this());
-                //if( pending_state->get_head_block_num() >= ALP_V0_4_9_FORK_BLOCK_NUM )
-                // my->execute_markets( block_timestamp, pending_state );
                 const SignedBlockHeader head_block = get_head_block();
                 // Initialize block
                 FullBlock new_block;
@@ -2394,8 +2392,6 @@ namespace thinkyoung {
                 new_block.block_num = head_block.block_num + 1;
                 new_block.timestamp = block_timestamp;
                 new_block.transaction_digest = DigestBlock(new_block).calculate_transaction_digest();
-                // if( new_block.block_num < ALP_V0_7_0_FORK_BLOCK_NUM )
-                // new_block.transaction_digest = digest_type( "c8cf12fe3180ed901a58a0697a522f1217de72d04529bd255627a4ad6164f0f0" );
                 return new_block;
             }
             
