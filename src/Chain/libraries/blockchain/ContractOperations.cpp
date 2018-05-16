@@ -8,6 +8,7 @@
 #include "blockchain/BalanceOperations.hpp"
 #include <sstream>
 #include <blockchain/TransactionOperations.hpp>
+#include <algorithm>
 
 #define  CLOSE_REGISTER_CONTRACT 0
 namespace thinkyoung

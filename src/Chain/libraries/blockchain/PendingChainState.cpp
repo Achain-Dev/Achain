@@ -70,14 +70,6 @@ namespace thinkyoung {
             return prev_state->now();
         }
         
-        /*  check????
-        oprice pending_chain_state::get_active_feed_price( const asset_id_type quote_id, const asset_id_type base_id )const
-        {
-        const chain_interface_ptr prev_state = _prev_state.lock();
-        FC_ASSERT( prev_state );
-        return prev_state->get_active_feed_price( quote_id, base_id );
-        }*/
-        
         /** Apply changes from this pending state to the previous state */
         void PendingChainState::apply_changes_undo()const {
             ChainInterfacePtr prev_state = _prev_state.lock();
@@ -555,7 +547,7 @@ namespace thinkyoung {
             
             if (!prev_state) return oContractStorage();
             
-            const oContractStorage entry = prev_state->lookup<ContractStorageEntry>(id);
+            oContractStorage entry = prev_state->lookup<ContractStorageEntry>(id);
             
             if (entry.valid() && _contract_id_remove.count(id) == 0) return entry;
             

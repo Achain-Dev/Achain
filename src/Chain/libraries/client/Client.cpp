@@ -753,14 +753,14 @@ namespace thinkyoung {
                     try {
                         int size = get_pending_contract_trx_size();
                         
-                        if (size <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_entry_list.empty()) {
+                        if (size <= _local_pending_num && !_local_entry_list.empty()) {
                             auto iter = _local_entry_list.begin()   ;
                             _wallet->cache_transaction(*iter, false);
                             network_broadcast_transaction(iter->trx);
                             _local_entry_list.erase(iter);
                         }
                         
-                        if (size <= ALP_BLOCKCHAIN_LOCAL_CRITICAL_PENDING_QUEUE_SIZE && !_local_pending_list.empty()) {
+                        if (size <= _local_pending_num && !_local_pending_list.empty()) {
                             auto iter = _local_pending_list.begin();
                             network_broadcast_transaction(*iter);
                             _local_pending_list.erase(iter);
@@ -1493,9 +1493,18 @@ namespace thinkyoung {
                 try {
                     if (my->_config.statistics_enabled) ulog("Additional blockchain statistics enabled");
                     
-                    if (my->_chain_db->convert_storage_database(data_dir / "chain")) {
-                        my->_config.storage_db_version = "VALUE_DB_VERSION";
-                        fc::json::save_to_file(my->_config, data_dir / "config.json");
+                    if (my->_config.storage_db_version != "VALUE_DB_VERSION") {
+                        if (my->_chain_db->convert_storage_database(data_dir / "chain")) {
+                            my->_config.storage_db_version = "VALUE_DB_VERSION";
+                            fc::json::save_to_file(my->_config, data_dir / "config.json");
+                            std::cout << "CONVERT SUCCESS" << "VALUE_DB_VERSION" << std::endl;
+                            
+                        } else {
+                            std::cout << "CONVERT FAILED RESTART" << std::endl;
+                        }
+                        
+                    } else {
+                        std::cout << "CONVERTED" << "VALUE_DB_VERSION" << std::endl;
                     }
                     
                     my->_chain_db->open(data_dir / "chain", genesis_file_path, my->_config.statistics_enabled, replay_status_callback);

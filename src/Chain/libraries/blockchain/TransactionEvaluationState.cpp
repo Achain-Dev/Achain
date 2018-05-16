@@ -114,9 +114,12 @@ namespace thinkyoung {
         }
         
         /**
-         *  Process all fees and update the asset entrys.
-         */
+        *  Process all fees and update the asset entrys.
+        */
         void TransactionEvaluationState::post_evaluate() {
+            /*
+            *  Process all fees and update the asset entrys.
+            */
             try {
                 for (const auto& item : withdraws) {
                     auto asset_rec = _current_state->get_asset_entry(item.first);
@@ -153,9 +156,9 @@ namespace thinkyoung {
                 }
                 
                 for (const auto& item : this->withdrawed_contract_balance) {
-                    auto entry=_current_state->get_balance_entry(item);
+                    auto entry = _current_state->get_balance_entry(item);
                     
-                    if(!(entry.valid()&&entry->balance>=0))
+                    if (!(entry.valid() && entry->balance >= 0))
                         FC_CAPTURE_AND_THROW(insufficient_funds, (entry->balance));
                 }
                 
@@ -173,7 +176,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
         bool TransactionEvaluationState::transaction_entry_analy(const SignedTransaction& trx_arg, std::vector<BalanceEntry>& all_balances, std::vector<AccountEntry>& all_account) {
             for (const auto& op : trx.operations) {
                 if (op.type.value == withdraw_op_type) {
@@ -236,7 +238,6 @@ namespace thinkyoung {
             
             return true;
         }
-        
         bool TransactionEvaluationState::transaction_signature_check(const SignedTransaction& trx_arg, const std::vector<BalanceEntry> all_balances, const std::vector<AccountEntry> all_account) {
             const auto trx_digest = trx_arg.digest(_current_state->get_chain_id());
             
@@ -290,7 +291,6 @@ namespace thinkyoung {
             
             return true;
         }
-        
         void TransactionEvaluationState::evaluate(const SignedTransaction& trx_arg, bool ignore_state) {
             SignedTransaction result_trx;
             fc_ilog(fc::logger::get("stor_debug"), "transaction operations");
@@ -305,7 +305,7 @@ namespace thinkyoung {
                         FC_CAPTURE_AND_THROW(expired_transaction, (trx_arg)(_current_state->now())(expired_by_sec));
                     }
                     
-                    // 因为 current_state->now 获取的是slot time，slot_time加上expiration_time很有可能小于交易中的expiration，因此加上一个slot区间
+                    // 鍥犱负 current_state->now 鑾峰彇鐨勬槸slot time锛宻lot_time鍔犱笂expiration_time寰堟湁鍙兘灏忎簬浜ゆ槗涓殑expiration锛屽洜姝ゅ姞涓婁竴涓猻lot鍖洪棿
                     if ((_current_state->now() + ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC + ALP_BLOCKCHAIN_MAX_TRANSACTION_EXPIRATION_SEC) < trx_arg.expiration)
                         FC_CAPTURE_AND_THROW(invalid_transaction_expiration, (trx_arg)(_current_state->now()));
                         
@@ -341,11 +341,11 @@ namespace thinkyoung {
                         const auto trx_digest = trx_arg.digest(_current_state->get_chain_id());
                         set<fc::ecc::compact_signature> sig_set;
                         
-                        for (const auto& sig : trx_arg.signatures) { //避免对相同的签名做重复解签，可以算是某种优化，但是大部分情况下都没有意义
+                        for (const auto& sig : trx_arg.signatures) { //閬垮厤瀵圭浉鍚岀殑绛惧悕鍋氶噸澶嶈В绛撅紝鍙互绠楁槸鏌愮浼樺寲锛屼絾鏄ぇ閮ㄥ垎鎯呭喌涓嬮兘娌℃湁鎰忎箟
                             sig_set.insert(sig);
                         }
                         
-                        for(const auto& sig:sig_set) {
+                        for (const auto& sig : sig_set) {
                             const auto key = fc::ecc::public_key(sig, trx_digest, _enforce_canonical_signatures).serialize();
                             signed_keys.insert(Address(key));
                             signed_keys.insert(Address(PtsAddress(key, false, 56)));
@@ -365,12 +365,7 @@ namespace thinkyoung {
                         ++current_op_index;
                         
                         if (!skipexec) {
-                            /*
-                            if (is_contract_trxs_same(trx_arg, p_result_trx) == false) {
-                                fc_ilog(fc::logger::get("stor_debug"), "CON TRX ERROR: ${trx_arg} ${p_result_trx}", ("trx_arg", trx_arg)("p_result_trx", p_result_trx));
-                            }
-                            */
-                            //进行operation对比
+                            //FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//杩涜operation瀵规瘮
                             FC_ASSERT(trx_arg.result_trx_id == p_result_trx.id());
                         }
                         
@@ -382,7 +377,6 @@ namespace thinkyoung {
                             ++current_op_index;
                         }
                         
-                        //如果块中有的不完整的结果交易，也需要记录下来
                         if (trx_arg.result_trx_type == ResultTransactionType::incomplete_result_transaction) {
                             trx = trx_arg;
                             _current_state->store_transaction(trx.id(), TransactionEntry(TransactionLocation(), *this));
@@ -403,7 +397,7 @@ namespace thinkyoung {
                     
                     int signum_to_charge = num_of_signature - ALP_BLOCKCHAIN_FREESIGNATURE_LIMIT;
                     
-                    if (signum_to_charge>=0) {
+                    if (signum_to_charge >= 0) {
                         required_fees.amount += signum_to_charge*ALP_BLOCKCHAIN_EXTRA_SIGNATURE_FEE;
                     }
                     
@@ -428,7 +422,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((result_trx))
         }
-        
         SignedTransaction TransactionEvaluationState::sandbox_evaluate(const SignedTransaction &trx_arg, bool& ignore_check_required_fee) {
             try {
                 trx = trx_arg;
@@ -476,7 +469,7 @@ namespace thinkyoung {
                         ++current_op_index;
                         
                         if (!skipexec) {
-                            FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//进行operation对比
+                            FC_ASSERT(is_contract_trxs_same(trx_arg, p_result_trx));//杩涜operation瀵规瘮
                         }
                         
                         evaluate_contract_result = true;
@@ -517,7 +510,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((trx_arg))
         }
-        
         void TransactionEvaluationState::evaluate_operation(const Operation& op) {
             try {
                 OperationFactory::instance().evaluate(*this, op);
@@ -525,7 +517,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((op))
         }
-        
         void TransactionEvaluationState::adjust_vote(const SlateIdType slate_id, const ShareType amount) {
             try {
                 if (slate_id == 0 || _skip_vote_adjustment)
@@ -550,7 +541,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((slate_id)(amount))
         }
-        
         ShareType TransactionEvaluationState::get_fees(AssetIdType id)const {
             try {
                 auto itr = balance.find(id);
@@ -563,7 +553,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((id))
         }
-        
         void TransactionEvaluationState::sub_balance(const BalanceIdType& balance_id, const Asset& amount) {
             try {
                 fc::safe<ShareType> balance_t = balance[amount.asset_id];
@@ -579,7 +568,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((balance_id)(amount))
         }
-        
         void TransactionEvaluationState::add_balance(const Asset& amount) {
             try {
                 fc::safe<ShareType> balance_t = balance[amount.asset_id];
@@ -595,10 +583,9 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((amount))
         }
-        
         /**
-         *  Throws if the asset is not known to the blockchain.
-         */
+        *  Throws if the asset is not known to the blockchain.
+        */
         void TransactionEvaluationState::validate_asset(const Asset& asset_to_validate)const {
             try {
                 auto asset_rec = _current_state->get_asset_entry(asset_to_validate.asset_id);
@@ -609,7 +596,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((asset_to_validate))
         }
-        
         bool TransactionEvaluationState::scan_deltas(const uint32_t op_index, const function<bool(const Asset&)> callback)const {
             try {
                 bool ret = false;
@@ -630,7 +616,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((op_index))
         }
-        
         void TransactionEvaluationState::scan_addresses(const ChainInterface& chain,
                 const function<void(const Address&)> callback)const {
             try {
@@ -667,8 +652,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
-        
         bool TransactionEvaluationState::is_contract_trxs_same(const SignedTransaction& l_trx, const SignedTransaction& r_trx)const {
             try {
                 if (l_trx.operations.size() != r_trx.operations.size())
@@ -686,7 +669,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
         bool TransactionEvaluationState::is_contract_op_same(const Operation& l_op, const Operation& r_op)const {
             try {
                 if (l_op.type != r_op.type)
@@ -714,26 +696,15 @@ namespace thinkyoung {
                 fc::raw::pack(r_enc, rr_op);
                 r_hash = fc::ripemd160::hash(r_enc.result());
                 
-                if (l_hash == r_hash) {
+                if (l_hash == r_hash)
                     return true;
                     
-                } else {
-                    if (l_op.type == storage_op_type) {
-                        StorageOperation l_trx_op = l_op.as<StorageOperation>();
-                        StorageOperation r_trx_op = r_op.as<StorageOperation>();
-                        
-                    } else if (l_op.type == event_op_type) {
-                        EventOperation l_trx_op = l_op.as<EventOperation>();
-                        EventOperation r_trx_op = r_op.as<EventOperation>();
-                        
-                    } else
-                        return false;
-                }
+                else
+                    return false;
             }
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
         bool TransactionEvaluationState::transfer_asset_from_contract(ShareType real_amount_to_transfer, const string& amount_to_transfer_symbol, const Address& from_contract_address, const string& to_account_name) {
             try {
                 SignedTransaction trx = _current_state->transfer_asset_from_contract(real_amount_to_transfer, amount_to_transfer_symbol, from_contract_address, to_account_name, p_result_trx);
@@ -742,7 +713,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
         bool TransactionEvaluationState::transfer_asset_from_contract(ShareType real_amount_to_transfer, const string& amount_to_transfer_symbol, const Address& from_contract_address, const Address& to_account_address) {
             try {
                 SignedTransaction trx = _current_state->transfer_asset_from_contract(real_amount_to_transfer, amount_to_transfer_symbol, from_contract_address, to_account_address, p_result_trx);
@@ -751,7 +721,6 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
         bool TransactionEvaluationState::is_contract_op(const thinkyoung::blockchain::OperationTypeEnum& op_type)const {
             if (op_type >= thinkyoung::blockchain::OperationTypeEnum::register_contract_op_type
                     && op_type <= thinkyoung::blockchain::OperationTypeEnum::transfer_contract_op_type)
@@ -759,7 +728,6 @@ namespace thinkyoung {
                 
             return false;
         }
-        
         bool TransactionEvaluationState::origin_trx_basic_verify(const SignedTransaction& trx)const {
             bool has_contract_op = false;
             
@@ -778,6 +746,5 @@ namespace thinkyoung {
                 
             return true;
         }
-        
     }
 } // thinkyoung::blockchain

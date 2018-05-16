@@ -33,7 +33,6 @@ namespace thinkyoung {
                 _pending_fee_index.clear();
                 int count = 0;
                 vector<TransactionIdType> trx_to_discard;
-                _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                 unsigned num_pending_transaction_considered = 0;
                 auto itr = _pending_transaction_db.begin();
                 const time_point start_time = time_point::now();
@@ -462,10 +461,20 @@ namespace thinkyoung {
                 }
                 
                 if (!verify_storage_convert(storage_database, value_id_to_storage, value_map_index, contract_id_to_entry)) {
+                    value_id_to_storage.close();
+                    value_map_index.close();
+                    storage_database.close();
+                    contract_id_to_entry.close();
+                    pending_chain_state.close();
                     return false;
                     
                 } else {
                     //set_storage_convert_finished(path);
+                    value_id_to_storage.close();
+                    value_map_index.close();
+                    storage_database.close();
+                    contract_id_to_entry.close();
+                    pending_chain_state.close();
                     return true;
                 }
             }
@@ -620,13 +629,6 @@ namespace thinkyoung {
                             return Address(raw_address);
                             
                         } catch (const fc::exception&) {
-                            //for( const string& prefix : alp_prefixes )
-                            //{
-                            // if( raw_address.find( prefix ) == 0 )
-                            //  {
-                            //  return address( ALP_ADDRESS_PREFIX + raw_address.substr( prefix.size() ) );
-                            // }
-                            //}
                         }
                         
                         FC_THROW_EXCEPTION(invalid_pts_address, "Invalid raw address format!", ("raw_address", raw_address));
@@ -739,7 +741,9 @@ namespace thinkyoung {
                     // We skip this step if we are dealing with blocks prior to the last checkpointed block
                     if (_head_block_header.block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
                         if (!_revalidate_pending.valid() || _revalidate_pending.ready())
+                            _revalidate_pending = fc::async([=]() {
                             revalidate_pending();
+                        }, "revalidate_pending");
                     }
                 }
                 
@@ -1124,8 +1128,6 @@ namespace thinkyoung {
                                                  const PendingChainStatePtr& pending_state,
                                                  oBlockEntry& entry)const {
                 try {
-                    // if( pending_state->get_head_block_num() < ALP_V0_6_0_FORK_BLOCK_NUM )
-                    // return pay_delegate_v2( block_id, block_signee, pending_state, entry );
                     oAssetEntry base_asset_entry = pending_state->get_asset_entry(AssetIdType(0));
                     FC_ASSERT(base_asset_entry.valid(), "Invalid asset");
                     oAccountEntry delegate_entry = self->get_account_entry(Address(block_signee));
@@ -1332,9 +1334,7 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::update_active_delegate_list(const uint32_t block_num,
                     const PendingChainStatePtr& pending_state)const {
-                try {//todo remove????
-                    // if( pending_state->get_head_block_num() < ALP_V0_7_0_FORK_BLOCK_NUM )
-                    // return update_active_delegate_list_v1( block_num, pending_state );
+                try {
                     if (block_num % ALP_BLOCKCHAIN_NUM_DELEGATES != 0)
                         return;
                         
