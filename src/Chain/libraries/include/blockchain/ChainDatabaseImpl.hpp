@@ -5,6 +5,7 @@
 #include <db/FastLevelMap.hpp>
 #include <fc/thread/mutex.hpp>
 #include <utilities/ThreadPool.hpp>
+#include "mysql/MysqlHand.h"
 
 namespace thinkyoung {
     namespace blockchain {
@@ -92,6 +93,11 @@ namespace thinkyoung {
                 * @return std::pair<BlockIdType,
                 */
                 std::pair<BlockIdType, BlockForkData>   store_and_index(const BlockIdType& id, const FullBlock& blk);
+
+                bool  write_to_mysql(BlockIdType& id, BlockEntry& blk);
+                template<class T>
+                void  write_to_mysqls(T& en);
+
 
                 /**  clear_pending
                 * Remove transactions which are contained in specified block and start a revalidating procedure

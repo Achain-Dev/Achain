@@ -478,6 +478,21 @@ namespace thinkyoung {
              *  in the fork which contains the new block, in all of the above cases where the new block is linked;
              *  otherwise, returns the block id and fork data of the new block
              */
+            bool  ChainDatabaseImpl::write_to_mysql( BlockIdType& id, BlockEntry& blk)
+            {
+
+                blk.compose_insert_sql();
+                return true;
+            }
+            template<class T >
+            void  write_to_mysqls(T& en)
+            {
+                if (!MysqlHandSingleton::get_instance()->run_insert_sql(en.compose_insert_sql()))
+                {
+                    assert(false);
+                }
+            }
+
             std::pair<BlockIdType, BlockForkData> ChainDatabaseImpl::store_and_index(const BlockIdType& block_id,
                     const FullBlock& block_data) {
                 try {
@@ -509,6 +524,12 @@ namespace thinkyoung {
                         entry.block_size = block_data.block_size();
                         entry.latency = blockchain::now() - block_data.timestamp;
                         _block_id_to_block_entry_db.store(block_id, entry);
+
+                        //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
+                        fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");//return type void   parm type void
+                        //fc::async([&block_id, &entry](BlockEntry ety){return 0; }(entry), "write_block_entry_to_mysql");
+                        //fc::async([](BlockIdType bldk_id,BlockEntry ety){ }, "write_block_entry_to_mysql");
+                        //int m = [](int x) { return [](int y) { return y * 2; }(x)+6; }(5);
                     }
                     
                     // update the parallel block list (fork_number_db):

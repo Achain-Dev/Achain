@@ -16,7 +16,16 @@ namespace thinkyoung {
             fc::ripemd160       random_seed;
 
             fc::microseconds    processing_time; /* Time taken for extend_chain to run */
+
+            std::string  compose_insert_sql();
         };
+        std::string BlockEntry::compose_insert_sql()
+        {
+            std::string str = "insert to block_entry";
+            uint64_t bn = block_num;
+            return str;
+        }
+
         typedef optional<BlockEntry> oBlockEntry;
 
     }

@@ -456,6 +456,9 @@
     <ClCompile Include="libraries\utilities\CommonApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="libraries\mysql\MysqlHand.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libraries\include\api\ApiMetadata.hpp">
@@ -999,6 +1002,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="libraries\include\lua\thinkyoung_lutil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\mysql\MysqlHand.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="libraries\include\mysql\MysqlBlockEntry.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

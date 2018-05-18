@@ -172,7 +172,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\include;..\..\include\win;.\libraries\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\include;..\..\include\win;.\libraries\include;$(MysqlPath)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUGWIN32;_CONSOLE;NDEBUG;NOMINMAX;_WIN32_WINNT=0x0501;_CRT_SECURE_NO_WARNINGS;_SCL_SERCURE_NO_WARNINGS;BOOST_ALL_NO_LIB;CMAKE_INTDIR="Release";ALP_GLOBAL_API_LOG=1;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -180,8 +180,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
       <OptimizeReferences>false</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\lib\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;bts_db.lib;leveldb.lib;easylzma_static.lib;udt.lib;ssleay32MD.lib;libeay32MD.lib;Rpcrt4.lib;crypt32.lib;shlwapi.lib;miniupnpc.lib;WS2_32.Lib;Userenv.lib;IPHlpApi.Lib;fc.lib;secp256k1.lib;libboost_thread-vc120-mt-1_59.lib;libboost_date_time-vc120-mt-1_59.lib;libboost_system-vc120-mt-1_59.lib;libboost_filesystem-vc120-mt-1_59.lib;libboost_program_options-vc120-mt-1_59.lib;libboost_signals-vc120-mt-1_59.lib;libboost_serialization-vc120-mt-1_59.lib;libboost_chrono-vc120-mt-1_59.lib;libboost_unit_test_framework-vc120-mt-1_59.lib;libboost_context-vc120-mt-1_59.lib;libboost_locale-vc120-mt-1_59.lib;libboost_iostreams-vc120-mt-1_59.lib;libboost_coroutine-vc120-mt-1_59.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\lib\$(Configuration);$(MysqlPath)\lib;$(MysqlPath)\bin</AdditionalLibraryDirectories>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;bts_db.lib;leveldb.lib;easylzma_static.lib;udt.lib;ssleay32MD.lib;libeay32MD.lib;Rpcrt4.lib;crypt32.lib;shlwapi.lib;miniupnpc.lib;WS2_32.Lib;Userenv.lib;IPHlpApi.Lib;fc.lib;secp256k1.lib;libboost_thread-vc120-mt-1_59.lib;libboost_date_time-vc120-mt-1_59.lib;libboost_system-vc120-mt-1_59.lib;libboost_filesystem-vc120-mt-1_59.lib;libboost_program_options-vc120-mt-1_59.lib;libboost_signals-vc120-mt-1_59.lib;libboost_serialization-vc120-mt-1_59.lib;libboost_chrono-vc120-mt-1_59.lib;libboost_unit_test_framework-vc120-mt-1_59.lib;libboost_context-vc120-mt-1_59.lib;libboost_locale-vc120-mt-1_59.lib;libboost_iostreams-vc120-mt-1_59.lib;libboost_coroutine-vc120-mt-1_59.lib;libmysql.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -305,6 +305,7 @@
     <ClCompile Include="libraries\glua\lutf8lib.cpp" />
     <ClCompile Include="libraries\glua\lvm.cpp" />
     <ClCompile Include="libraries\glua\lzio.cpp" />
+    <ClCompile Include="libraries\mysql\MysqlHand.cpp" />
     <ClCompile Include="libraries\net\ChainDownloader.cpp" />
     <ClCompile Include="libraries\net\ChainServer.cpp" />
     <ClCompile Include="libraries\net\CoreMessages.cpp" />
@@ -443,6 +444,8 @@
     <ClInclude Include="libraries\include\lua\lundump.h" />
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
+    <ClInclude Include="libraries\include\mysql\MysqlBlockEntry.h" />
+    <ClInclude Include="libraries\include\mysql\MysqlHand.h" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />
     <ClInclude Include="libraries\include\net\ChainDownloader.hpp" />
     <ClInclude Include="libraries\include\net\ChainMessages.hpp" />
