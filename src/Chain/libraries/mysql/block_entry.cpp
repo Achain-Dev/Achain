@@ -12,8 +12,8 @@ std::string BlockEntry::compose_insert_sql()
 	sqlss << block_entry_sqlstr_beging;
 	sqlss << "(";
 	sqlss << block_num << ",'";
-	sqlss << id << "','";  // blokc_id
-	sqlss << previous << "',";
+	sqlss << id.str() << "','";  // blokc_id
+	sqlss << previous.str() << "',";
 
 	sqlss << "STR_TO_DATE('" << timestamp.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";
 	
@@ -27,6 +27,6 @@ std::string BlockEntry::compose_insert_sql()
 	sqlss << block_entry_sqlstr_ending;
 
 	//write log
-
+	auto tmp_string = sqlss.str();
 	return sqlss.str();
 }
