@@ -1,5 +1,6 @@
 #include <blockchain/ChainInterface.hpp>
 #include <blockchain/TransactionEntry.hpp>
+#include <sstream>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -39,6 +40,20 @@ namespace thinkyoung {
                 }
             } FC_CAPTURE_AND_RETHROW((id))
         }
+		std::string TransactionEntry::compose_insert_sql()
+		{
+			std::stringstream sqlss;
 
+
+			return sqlss.str();
+
+		}
+		std::string TransactionEntry::compose_delete_sql()
+		{
+			std::stringstream sqlss;
+
+
+			return sqlss.str();
+		}
     }
 } // thinkyoung::blockchain

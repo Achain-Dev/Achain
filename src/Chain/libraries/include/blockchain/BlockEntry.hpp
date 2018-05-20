@@ -19,12 +19,7 @@ namespace thinkyoung {
 
             std::string  compose_insert_sql();
         };
-        std::string BlockEntry::compose_insert_sql()
-        {
-            std::string str = "insert to block_entry";
-            uint64_t bn = block_num;
-            return str;
-        }
+
 
         typedef optional<BlockEntry> oBlockEntry;
 

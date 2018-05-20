@@ -305,6 +305,7 @@
     <ClCompile Include="libraries\glua\lutf8lib.cpp" />
     <ClCompile Include="libraries\glua\lvm.cpp" />
     <ClCompile Include="libraries\glua\lzio.cpp" />
+    <ClCompile Include="libraries\mysql\block_entry.cpp" />
     <ClCompile Include="libraries\mysql\MysqlHand.cpp" />
     <ClCompile Include="libraries\net\ChainDownloader.cpp" />
     <ClCompile Include="libraries\net\ChainServer.cpp" />
@@ -445,6 +446,7 @@
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
     <ClInclude Include="libraries\include\mysql\MysqlBlockEntry.h" />
+    <ClInclude Include="libraries\include\mysql\mysqlconst.h" />
     <ClInclude Include="libraries\include\mysql\MysqlHand.h" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />
     <ClInclude Include="libraries\include\net\ChainDownloader.hpp" />
