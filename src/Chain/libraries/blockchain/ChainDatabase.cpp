@@ -515,7 +515,7 @@ namespace thinkyoung {
 
                         //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
                         fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");
-						//return type void   parm type void
+                        //return type void   parm type void
                         //fc::async([&block_id, &entry](BlockEntry ety){return 0; }(entry), "write_block_entry_to_mysql");
                         //fc::async([](BlockIdType bldk_id,BlockEntry ety){ }, "write_block_entry_to_mysql");
                         //int m = [](int x) { return [](int y) { return y * 2; }(x)+6; }(5);
@@ -3286,7 +3286,8 @@ namespace thinkyoung {
         
         void ChainDatabase::transaction_insert_into_id_map(const TransactionIdType& id, const TransactionEntry& entry) {
             my->_transaction_id_to_entry.store(id, entry);
-            
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_block_entry_to_mysql");
+
             if (get_statistics_enabled()) {
                 const auto scan_address = [&](const Address& addr) {
                     auto ids = my->_address_to_transaction_ids.fetch_optional(addr);

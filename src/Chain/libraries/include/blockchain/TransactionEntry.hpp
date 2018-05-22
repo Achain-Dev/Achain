@@ -41,9 +41,9 @@ namespace thinkyoung {
             static oTransactionEntry lookup(const ChainInterface& db, const TransactionIdType&);
             static void store(ChainInterface& db, const TransactionIdType&, const TransactionEntry&);
             static void remove(ChainInterface& db, const TransactionIdType&);
-			std::string compose_insert_sql();
-			std::string compose_delete_sql();
-		};
+            std::string compose_insert_sql();
+            std::string compose_delete_sql();
+        };
 
         class TransactionDbInterface
         {

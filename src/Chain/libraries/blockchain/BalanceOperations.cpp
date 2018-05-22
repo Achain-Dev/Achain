@@ -89,7 +89,7 @@ namespace thinkyoung {
                         //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
                     }
                 }
-                
+                eval_state.deposit_balance_id = condition.get_address();//deposit   balance_id
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
             
@@ -169,7 +169,7 @@ namespace thinkyoung {
                         FC_CAPTURE_AND_THROW(too_much_balances_withdraw_not_used_up, (*owner));
                     #endif
                 }
-                
+                eval_state.withdraw_balance_id = balance_id;
                 current_balance_entry->last_update = eval_state._current_state->now();
                 eval_state._current_state->store_balance_entry(*current_balance_entry);
             }
@@ -202,13 +202,13 @@ namespace thinkyoung {
                     balance_entry.last_update = eval_state._current_state->now();
                     current_balance_entry = balance_entry;
                 }
-                
                 FC_ASSERT(current_balance_entry->condition.asset_id == 0, "Invalid balance_id, asset type should be ALP");
                 auto asset_rec = eval_state._current_state->get_asset_entry(current_balance_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
                 current_balance_entry->balance -= this->amount;
                 eval_state.add_balance(Asset(this->amount, current_balance_entry->condition.asset_id));
                 current_balance_entry->last_update = eval_state._current_state->now();
+                eval_state.withdraw_balance_id = balance_id;
                 eval_state._current_state->store_balance_entry(*current_balance_entry);
                 eval_state.withdrawed_contract_balance.push_back(balance_id);
             }
@@ -449,7 +449,7 @@ namespace thinkyoung {
                         //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
                     }
                 }
-                
+                eval_state.deposit_balance_id = condition.get_address();
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
             
