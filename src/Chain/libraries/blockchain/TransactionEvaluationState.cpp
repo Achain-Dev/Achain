@@ -380,6 +380,7 @@ namespace thinkyoung {
                     if (trx_arg.operations.size() > 0 && trx_arg.operations.front().type == OperationTypeEnum::transaction_op_type) {
                         std::vector<Operation>::const_iterator opit = trx_arg.operations.begin();
                         evaluate_operation(*opit);
+                        operations.push_back(*opit);
                         ++opit;
                         ++current_op_index;
 
@@ -392,6 +393,7 @@ namespace thinkyoung {
 
                         while (opit != trx_arg.operations.end()) {
                             evaluate_operation(*opit);
+                            operations.push_back(*opit);
                             ++opit;
                             ++current_op_index;
                         }
@@ -411,6 +413,7 @@ namespace thinkyoung {
                     else {
                         for (const auto& op : trx_arg.operations) {
                             evaluate_operation(op);
+                            operations.push_back(op);
                             ++current_op_index;
                         }
                     }
@@ -537,7 +540,6 @@ namespace thinkyoung {
 
         void TransactionEvaluationState::evaluate_operation(const Operation& op) {
             try {
-                operations.push_back(op);
                 OperationFactory::instance().evaluate(*this, op);
             }
 
@@ -864,7 +866,7 @@ namespace thinkyoung {
                 }
                 if (op.type == thinkyoung::blockchain::OperationTypeEnum::call_contract_op_type)
                 {
-                    has_transfer_contract_op_type = true;
+                    has_call_contract_op_type = true;
                     break;      //one op is enough to decide the trx_type
                 }
                 if (op.type == thinkyoung::blockchain::OperationTypeEnum::transaction_op_type)

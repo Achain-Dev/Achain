@@ -74,17 +74,33 @@ namespace thinkyoung {
               sqlss << trx_entry_sqlstr_beging << "('";
               sqlss << trx.id().str() << "',";                              //trx_id   
               sqlss << static_cast<uint32_t>(trx_type) << ",'";       //trx_type 
-              sqlss << deposit_balance_id.AddressToString() << "',";  //deposit_balance_id 
+              
+              if (deposit_balance_id != Address())
+              {
+                  sqlss << deposit_balance_id.AddressToString() << "',";  //deposit_balance_id 
+              }
+              else
+              {
+                  sqlss << "',";  
+              }
 
               int64_t deposit_amount = 0;
               for (auto depst : deposits)
               {
                   deposit_amount += depst.second;
               }
-              sqlss << deposit_amount << ",'";                         //deposit_amount
-              sqlss << withdraw_balance_id.AddressToString() << "',";  //withdraw_balance_id 
+              sqlss << deposit_amount << ",'";                //deposit_amount
 
-              int64_t withdraw_amount = 0;                                 
+              if (withdraw_balance_id != Address())
+              {
+                  sqlss << withdraw_balance_id.AddressToString() << "',";  //withdraw_balance_id 
+              }
+              else
+              {
+                  sqlss << "',";   
+              }
+
+              int64_t withdraw_amount = 0;
               for (auto wthd : withdraws)
               {
                   withdraw_amount += wthd.second;
@@ -112,8 +128,17 @@ namespace thinkyoung {
               {
                   opsss << op.type << ",";
               }
+
               sqlss << opsss.str()<<"','"; //operations
-              sqlss << contract_id.AddressToString()<<"','";  //contract_id
+              if (contract_id != Address())
+              {
+                  sqlss << contract_id.AddressToString() << "','";  //contract_id
+              }
+              else
+              {
+                  sqlss <<  "','";  //contract_id    
+              }
+
               sqlss << contract_method << "','";
               sqlss << contract_args << "','";
               sqlss << event_type << "','";
@@ -124,16 +149,16 @@ namespace thinkyoung {
               sqlss << "now())";
               sqlss << trx_entry_sqlstr_ending;
 
-              std::string debugstr = sqlss.str();  //__debug
-               return sqlss.str();
+              return sqlss.str();
 
           }
-          std::string TransactionEntry::compose_delete_sql()
-          {
-               std::stringstream sqlss;
+
+        std::string TransactionEntry::compose_delete_sql()
+        {
+            std::stringstream sqlss;
 
 
-               return sqlss.str();
-          }
+            return sqlss.str();
+        }
     }
 } // thinkyoung::blockchain

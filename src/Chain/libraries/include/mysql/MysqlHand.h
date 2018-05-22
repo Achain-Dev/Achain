@@ -23,7 +23,7 @@ public:
     ~MysqlHandSingleton();
     bool connect_to_mysql();
     void free_connect();
-    bool run_insert_sql(std::string&  sqlss);
+    bool run_insert_sql(std::string&  sqlstr);
     long max_block_num();
 private:
     const std::string mysql_user = "root";             //  username

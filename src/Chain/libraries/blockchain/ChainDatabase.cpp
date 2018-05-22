@@ -511,11 +511,12 @@ namespace thinkyoung {
                         entry.id = block_id;
                         entry.block_size = block_data.block_size();
                         entry.latency = blockchain::now() - block_data.timestamp;
+                        entry.syc_timestamp = blockchain::now();
                         _block_id_to_block_entry_db.store(block_id, entry);
 
-                        //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
                         fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");
                         //return type void   parm type void
+                        //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
                         //fc::async([&block_id, &entry](BlockEntry ety){return 0; }(entry), "write_block_entry_to_mysql");
                         //fc::async([](BlockIdType bldk_id,BlockEntry ety){ }, "write_block_entry_to_mysql");
                         //int m = [](int x) { return [](int y) { return y * 2; }(x)+6; }(5);
@@ -1120,6 +1121,7 @@ namespace thinkyoung {
                         if (block_entry.valid()) {
                             block_entry->processing_time = time_point::now() - start_time;
                             _block_id_to_block_entry_db.store(block_id, *block_entry);
+                            fc::async([=](){ this->write_to_mysqls(*block_entry); }, "write_block_entry_to_mysql2");
                         }
                         
                         self->store_extend_status(block_id, 2);

@@ -73,7 +73,10 @@ void MysqlHandSingleton::free_connect()
 bool MysqlHandSingleton::run_insert_sql(std::string&  sql_str)
 {
 
-
+    if (sql_str == "xxx")
+    {
+        return true;   //jump
+    }
     //std::cout << sql_str << std::endl;
     if (mysql_query(&myConnect, sql_str.c_str()))
     {

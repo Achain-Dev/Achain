@@ -14,6 +14,7 @@ namespace thinkyoung {
             ShareType          signee_fees_collected = 0;
             ShareType          signee_fees_destroyed = 0;
             fc::ripemd160       random_seed;
+            fc::time_point_sec  syc_timestamp;
 
             fc::microseconds    processing_time; /* Time taken for extend_chain to run */
 

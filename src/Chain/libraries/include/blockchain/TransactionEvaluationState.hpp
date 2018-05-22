@@ -39,7 +39,7 @@ namespace thinkyoung {
                 trx_type_contract_recharge = 23,
                 trx_type_destroy_contract = 24,
                 trx_type_call_contract = 25,
-                trx_type_contract_transfer = 16,
+                trx_type_contract_transfer = 26,
 
                 trx_type_register_contract_result = 31,
                 trx_type_upgrade_contract_result = 32,
