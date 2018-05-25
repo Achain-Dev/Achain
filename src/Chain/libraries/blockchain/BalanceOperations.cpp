@@ -280,6 +280,8 @@ namespace thinkyoung {
                     eval_state.add_balance(Asset(it->second, current_balance_entry->condition.asset_id));
                     current_balance_entry->last_update = eval_state._current_state->now();
                     eval_state._current_state->store_balance_entry(*current_balance_entry);
+                    //for mysql
+                    eval_state.withdraw_balance_id = current_balance_entry->id();
                     ++it;
                 }
             }

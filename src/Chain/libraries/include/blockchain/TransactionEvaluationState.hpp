@@ -116,6 +116,8 @@ namespace thinkyoung {
             bool origin_trx_basic_verify(const SignedTransaction& trx)const;
 
             void set_trx_type();
+            void set_trx_amount();
+            void clear_afer_store();
 
 
             TransactionIdType                             trx_id;
@@ -125,17 +127,17 @@ namespace thinkyoung {
             BalanceIdType                                 withdraw_balance_id;
             //Address                                       initiator;
             //Address                                       recipient;
-            ShareType                                     trx_amount;
+            double                                        trx_amount;
             AssetIdType                                   asset_id;
             vector<Operation>                             operations;
             uint32_t                                      op_count;
             Asset                                         transaction_fee;
-            Asset                                         commission_charge;
             ContractIdType                                contract_id; //contract address
             fc::string                                    contract_method;
             fc::string                                    contract_args;
             fc::string                                    event_type;
             fc::string                                    event_args;
+            fc::string                                    memo_message;
 
 
             set<Address>                                   signed_keys;

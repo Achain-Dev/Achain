@@ -19,6 +19,7 @@ namespace thinkyoung {
                 auto fee = Asset(eval_state._current_state->get_imessage_need_fee(imessage), 0);
                 eval_state.imessage_length = imessage.size();
                 eval_state.required_fees += fee;
+                eval_state.memo_message = imessage;
             } FC_CAPTURE_AND_RETHROW((*this))
         }
     }

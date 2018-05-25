@@ -445,7 +445,6 @@
     <ClInclude Include="libraries\include\lua\lundump.h" />
     <ClInclude Include="libraries\include\lua\lvm.h" />
     <ClInclude Include="libraries\include\lua\lzio.h" />
-    <ClInclude Include="libraries\include\mysql\MysqlBlockEntry.h" />
     <ClInclude Include="libraries\include\mysql\mysqlconst.h" />
     <ClInclude Include="libraries\include\mysql\MysqlHand.h" />
     <ClInclude Include="libraries\include\net\ChainConnection.hpp" />

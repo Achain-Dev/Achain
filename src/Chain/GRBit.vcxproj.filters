@@ -1010,9 +1010,6 @@
     <ClInclude Include="libraries\include\mysql\MysqlHand.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="libraries\include\mysql\MysqlBlockEntry.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="libraries\include\mysql\mysqlconst.h">
       <Filter>头文件</Filter>
     </ClInclude>

@@ -1,7 +1,9 @@
+#include "fc/log/logger.hpp"
 #include "mysql/MysqlHand.h"
 #include <assert.h>
 #include <sstream>
 
+#define myssqllogger "mysql"
 
 MysqlHandSingleton * MysqlHandSingleton::_instance_ptr = nullptr;
 //static private member must be initialized before using;
@@ -42,15 +44,16 @@ bool MysqlHandSingleton::connect_to_mysql()
     if (mysql_real_connect(&myConnect, mysql_host.c_str(), mysql_user.c_str(), mysql_pswd.c_str(),
         mysql_database.c_str(), mysql_port, NULL, 0))
     {
-        std::cout << " user     :  " << mysql_user << std::endl;
-        std::cout << " host     :  " << mysql_host << std::endl;
-        std::cout << " port     :  " << mysql_port << std::endl;
-        std::cout << " database :  " << mysql_database << std::endl;
-        std::cout << " Database connected successfully!" << std::endl;
+        fc_ilog(fc::logger::get("mysql"), " user     : ${u}", ("u", mysql_user));
+        fc_ilog(fc::logger::get("mysql"), " host     : ${u}", ("u", mysql_user));
+        fc_ilog(fc::logger::get("mysql"), " port     : ${u}", ("u", mysql_user));
+        fc_ilog(fc::logger::get("mysql"), " database : ${u}", ("u", mysql_user));
+        fc_ilog(fc::logger::get("mysql"), " Database connected successfully!");
+
     }
     else
     {
-        std::cout << "Database connect failure !" << mysql_error(&myConnect) << std::endl;
+        fc_elog(fc::logger::get("mysql"), " Database connect failure ! Error info: ${err} ", ("err", mysql_error(&myConnect)));
     }
 
     //mysql_query(&myConnect, "set names gbk");
@@ -73,17 +76,17 @@ void MysqlHandSingleton::free_connect()
 bool MysqlHandSingleton::run_insert_sql(std::string&  sql_str)
 {
 
-    if (sql_str == "xxx")
+    if (sql_str == "NOEXECUTEMARK")
     {
         return true;   //jump
     }
     //std::cout << sql_str << std::endl;
     if (mysql_query(&myConnect, sql_str.c_str()))
     {
-        std::cout << "Insert into block_entry failed, " << mysql_error(&myConnect) << std::endl;
+        fc_elog(fc::logger::get("mysql"), " Run insert sql failed ! Error info: ${err} ", ("err", mysql_error(&myConnect)));
         if (sql_str.size() < 1000)
         {
-            std::cout << "The sqlstr :  " << sql_str << std::endl;
+            fc_elog(fc::logger::get("mysql"), " The sqlstr : ${s} ", ("s", sql_str));
         }
         //mysql_sqlstate(&myConnect);
         return false;
@@ -103,16 +106,16 @@ long MysqlHandSingleton::max_block_num()
 
     if (mysql_query(&myConnect, querySqlStr.c_str()))
     {
-        std::cout << "Insert into block_entry failed, " << mysql_error(&myConnect) << std::endl;
-        std::cout << "The sqlstr :  " << querySqlStr << std::endl;
+        fc_elog(fc::logger::get("mysql"), " Run max_block_num sql failed ! Error info: ${err} ", ("err", mysql_error(&myConnect)));
+        fc_elog(fc::logger::get("mysql"), " The sqlstr : ${s} ", ("s", querySqlStr));
         //mysql_sqlstate(&myConnect);
         return -1;
     }
 
     if (!(result = mysql_store_result(&myConnect)))
     {
-        std::cout << "Couldn't get the query result, " << mysql_error(&myConnect) << std::endl;
-        std::cout << "The sqlstr :  " << querySqlStr << std::endl;
+        fc_elog(fc::logger::get("mysql"), " Run max_block_num sql failed ! Error info: ${err} ", ("err", mysql_error(&myConnect)));
+        fc_elog(fc::logger::get("mysql"), " The sqlstr : ${s} ", ("s", querySqlStr));
         return -1;
     }
 

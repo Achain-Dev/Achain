@@ -511,10 +511,11 @@ namespace thinkyoung {
                         entry.id = block_id;
                         entry.block_size = block_data.block_size();
                         entry.latency = blockchain::now() - block_data.timestamp;
-                        entry.syc_timestamp = blockchain::now();
+                        entry.syc_timestamp = fc::time_point::now();
                         _block_id_to_block_entry_db.store(block_id, entry);
 
-                        fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");
+                        //wirte to mysql after extend_chains
+                        //fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");
                         //return type void   parm type void
                         //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
                         //fc::async([&block_id, &entry](BlockEntry ety){return 0; }(entry), "write_block_entry_to_mysql");
@@ -1121,6 +1122,7 @@ namespace thinkyoung {
                         if (block_entry.valid()) {
                             block_entry->processing_time = time_point::now() - start_time;
                             _block_id_to_block_entry_db.store(block_id, *block_entry);
+                            //formysql
                             fc::async([=](){ this->write_to_mysqls(*block_entry); }, "write_block_entry_to_mysql2");
                         }
                         
@@ -1266,15 +1268,15 @@ namespace thinkyoung {
                 FC_CAPTURE_AND_RETHROW()
             }
 
-			template<class T >
-			void  ChainDatabaseImpl::write_to_mysqls(T en)
-			{
-				//std::string sqlstr = en.compose_insert_sql();
-				if (!MysqlHandSingleton::get_instance()->run_insert_sql( en.compose_insert_sql()) )
-				{
-					assert(false);
-				}
-			}
+            template<class T >
+            void  ChainDatabaseImpl::write_to_mysqls(T en)
+            {
+                //std::string sqlstr = en.compose_insert_sql();
+                if (!MysqlHandSingleton::get_instance()->run_insert_sql( en.compose_insert_sql()) )
+                {
+                    assert(false);
+                }
+            }
 
 
 
@@ -3288,7 +3290,7 @@ namespace thinkyoung {
         
         void ChainDatabase::transaction_insert_into_id_map(const TransactionIdType& id, const TransactionEntry& entry) {
             my->_transaction_id_to_entry.store(id, entry);
-            fc::async([=](){ my->write_to_mysqls(entry); }, "write_block_entry_to_mysql");
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_trx_entry_to_mysql");
 
             if (get_statistics_enabled()) {
                 const auto scan_address = [&](const Address& addr) {
@@ -3351,6 +3353,8 @@ namespace thinkyoung {
         
         void ChainDatabase::slot_insert_into_index_map(const SlotIndex index, const SlotEntry& entry) {
             my->_slot_index_to_entry.store(index, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_slot_entry_to_mysql");
+
         }
         
         void ChainDatabase::slot_insert_into_timestamp_map(const time_point_sec timestamp, const AccountIdType delegate_id) {
@@ -3723,6 +3727,7 @@ namespace thinkyoung {
         
         void thinkyoung::blockchain::ChainDatabase::contract_store_resultid_by_reqestid(const TransactionIdType & req, const ResultTIdEntry & res) {
             my->_request_to_result_iddb.store(req, res);
+            fc::async([=](){ my->write_to_mysqls(res); }, "write_result_to_origin_trx_id_to_mysql");
         }
         
         void thinkyoung::blockchain::ChainDatabase::contract_erase_resultid_by_reqestid(const TransactionIdType & req) {

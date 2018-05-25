@@ -12,6 +12,8 @@
 
 #include <utilities/CommonApi.hpp>
 
+#include <sstream>
+
 using namespace thinkyoung::blockchain;
 
 
@@ -332,6 +334,9 @@ namespace thinkyoung {
         ResultTIdEntry::ResultTIdEntry(const TransactionIdType & id) :res(id)
         {
         }
+        ResultTIdEntry::ResultTIdEntry(const TransactionIdType & id, const TransactionIdType & reqid) : res(id), req(reqid)
+        {
+        }
 
         oResultTIdEntry ResultTIdEntry::lookup(const ChainInterface &db, const TransactionIdType &req)
         {
@@ -356,6 +361,25 @@ namespace thinkyoung {
                 db.contract_erase_resultid_by_reqestid(req);
             }FC_CAPTURE_AND_RETHROW((req))
         }
+
+        std::string ResultTIdEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO result_to_origin_trx_id VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " origin_trx_id=values(origin_trx_id),";
+            sqlstr_ending += " last_update_timestamp=values(last_update_timestamp);";
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "('";
+            sqlss << res.str() << "',";
+            sqlss << req.str() << ",";
+            sqlss << "now())";
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+        }
+
+
+
 
 		RequestIdEntry::RequestIdEntry()
 		{

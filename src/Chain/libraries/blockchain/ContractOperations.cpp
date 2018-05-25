@@ -997,7 +997,7 @@ namespace thinkyoung
 
                 eval_state.transaction_fee = transaction_fee;
                 eval_state.contract_id = contract_id;  
-                eval_state.trx_amount= transfer_amount.amount;//formysql
+                eval_state.trx_amount= transfer_amount.amount/100000;//formysql
 
                 if (!has_on_deposit)
                 {

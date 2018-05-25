@@ -8,6 +8,7 @@
 
 #include <blockchain/ForkBlocks.hpp>
 #include "wallet/Wallet.hpp"
+#include <sstream>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -22,7 +23,6 @@ namespace thinkyoung {
             , asset_id(0)
             , op_count(0)
             , transaction_fee(Asset())
-            , commission_charge(Asset())
             , contract_id(Address())
             , contract_method("")
             , contract_args("")
@@ -432,7 +432,7 @@ namespace thinkyoung {
 
                     trx = result_trx;
                     _current_state->store_transaction(trx.id(), TransactionEntry(TransactionLocation(), *this));
-
+                    clear_afer_store();
                     if (!ignore_state && ignore_check_required_fee)
                         FC_CAPTURE_AND_THROW(ignore_check_required_fee_state, (ignore_check_required_fee));
 
@@ -969,5 +969,69 @@ namespace thinkyoung {
                 trx_type = trx_type_undefined;
             }
         }
+
+        void TransactionEvaluationState::set_trx_amount()
+        {
+            if (trx_type == TransactionEvaluationState::trx_type_asset_transfer)
+            {
+                for (auto dpst : deposits)
+                {
+                    trx_amount += dpst.second;
+                    trx_amount /= 100000;   //precision
+                }
+            }
+            else if (TransactionEvaluationState::trx_type_contract_transfer)
+            {
+                std::string amount_str;
+                //get trx_amount string
+                if (contract_args.find("|") == std::string::npos)
+                {
+                    fc_elog(fc::logger::get("mysql"), " The contract args are not corrct ${arg} ", ("arg", contract_args));
+                    return;
+                }
+                amount_str = contract_args.substr(contract_args.find("|") + 1);
+
+                if (amount_str.find("|") != std::string::npos)
+                {
+                    amount_str = amount_str.substr(0, amount_str.find("|"));
+                }
+                //change trx_amount string to double
+                std::stringstream amount_ss(amount_str);
+                amount_ss >> trx_amount;                          
+
+            }
+        }
+        //
+        void TransactionEvaluationState::clear_afer_store()
+        {
+
+            trx_type = TransactionEvaluationState::trx_type_undefined;
+            deposit_balance_id = Address();
+            withdraw_balance_id = Address();
+            transaction_fee = Asset();
+            operations.clear();
+            event_type.clear();
+            event_args.clear();
+
+            //TrxTypeEnum                                   trx_type;
+            //SignedTransaction                             trx;
+            //BalanceIdType                                 deposit_balance_id;
+            //BalanceIdType                                 withdraw_balance_id;
+            ////Address                                       initiator;
+            ////Address                                       recipient;
+            //ShareType                                     trx_amount;
+            //AssetIdType                                   asset_id;
+            //vector<Operation>                             operations;
+            //uint32_t                                      op_count;
+            //Asset                                         transaction_fee;
+            //Asset                                         commission_charge;
+            //ContractIdType                                contract_id; //contract address
+            //fc::string                                    contract_method;
+            //fc::string                                    contract_args;
+            //fc::string                                    event_type;
+            //fc::string                                    event_args;
+
+        }
+
     } // thinkyoung::blockchain
 }

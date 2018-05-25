@@ -1,7 +1,7 @@
 #pragma once
 #include <blockchain/Types.hpp>
 #include <fc/time.hpp>
-
+#include <string>
 namespace thinkyoung {
     namespace blockchain {
 
@@ -44,6 +44,7 @@ namespace thinkyoung {
             static oSlotEntry lookup(const ChainInterface&, const time_point_sec);
             static void store(ChainInterface&, const SlotIndex, const SlotEntry&);
             static void remove(ChainInterface&, const SlotIndex);
+            std::string compose_insert_sql();
         };
 
         class SlotDbInterface
