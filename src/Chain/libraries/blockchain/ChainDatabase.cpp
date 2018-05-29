@@ -1811,11 +1811,22 @@ namespace thinkyoung {
                             if (!fc::is_directory(data_dir / "raw_chain/block_id_to_data_original"))
                                 fc::rename(data_dir / "raw_chain/block_id_to_block_data_db", data_dir / "raw_chain/block_id_to_data_original");
                         }
+
+                        if (fc::is_directory(data_dir / "raw_chain/block_id_to_block_data_db_v2")) {
+                            if (!fc::is_directory(data_dir / "raw_chain/block_id_to_data_original_v2"))
+                                fc::rename(data_dir / "raw_chain/block_id_to_block_data_db_v2", data_dir / "raw_chain/block_id_to_data_original_v2");
+                        }
+
                         
                         // During replay we implement stop-and-copy garbage collection on the raw blocks
                         decltype(my->_block_id_to_full_block) block_id_to_data_original;
                         block_id_to_data_original.open(data_dir / "raw_chain/block_id_to_data_original");
-                        const size_t original_size = fc::directory_size(data_dir / "raw_chain/block_id_to_data_original");
+                        size_t original_size = fc::directory_size(data_dir / "raw_chain/block_id_to_data_original");
+
+                        decltype(my->_block_id_to_full_block_v2) block_id_to_data_original_v2;
+                        block_id_to_data_original_v2.open(data_dir / "raw_chain/block_id_to_data_original_v2");
+                        original_size += fc::directory_size(data_dir / "raw_chain/block_id_to_data_original_v2");
+
                         my->open_database(data_dir);
                         store_property_entry(PropertyIdType::database_version, variant(ALP_BLOCKCHAIN_DATABASE_VERSION));
                         const auto toggle_leveldb = [this](const bool enabled) {
@@ -1899,6 +1910,9 @@ namespace thinkyoung {
                             if (num_to_id.empty()) {
                                 for (auto block_itr = block_id_to_data_original.begin(); block_itr.valid(); ++block_itr)
                                     insert_block(block_itr.value());
+
+                                for (auto block_itr = block_id_to_data_original_v2.begin(); block_itr.valid(); ++block_itr)
+                                    insert_block(block_itr.value());
                                     
                             } else {
                                 const uint32_t last_known_block_num = num_to_id.crbegin()->first;
@@ -1907,15 +1921,27 @@ namespace thinkyoung {
                                     my->_min_undo_block = last_known_block_num - ALP_BLOCKCHAIN_MAX_UNDO_HISTORY;
                                     
                                 for (const auto& num_id : num_to_id) {
-                                    const auto oblock = block_id_to_data_original.fetch_optional(num_id.second);
-                                    
-                                    if (oblock.valid()) insert_block(*oblock);
+
+                                    if (num_id.first < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                                    {
+                                        const auto oblock = block_id_to_data_original.fetch_optional(num_id.second);
+
+                                        if (oblock.valid()) insert_block(*oblock);
+                                    }
+                                    else
+                                    {
+                                        const auto oblock = block_id_to_data_original_v2.fetch_optional(num_id.second);
+
+                                        if (oblock.valid()) insert_block(*oblock);
+                                    }
                                 }
                             }
                             
                         } catch (thinkyoung::blockchain::store_and_index_a_seen_block&  e) {
                             block_id_to_data_original.close();
                             fc::remove_all(data_dir / "raw_chain/block_id_to_data_original");
+                            block_id_to_data_original_v2.close();
+                            fc::remove_all(data_dir / "raw_chain/block_id_to_data_original_v2");
                             fc::remove_all(data_dir / "index");
                             exit(0);
                         }
@@ -1924,7 +1950,10 @@ namespace thinkyoung {
                         toggle_leveldb(true);
                         block_id_to_data_original.close();
                         fc::remove_all(data_dir / "raw_chain/block_id_to_data_original");
-                        const size_t final_size = fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db");
+                        block_id_to_data_original_v2.close();
+                        fc::remove_all(data_dir / "raw_chain/block_id_to_data_original_v2");
+                        const size_t final_size = fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db")
+                            + fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db_v2");
                         std::cout << "\rSuccessfully replayed " << blocks_indexed << " blocks in "
                                   << (blockchain::now() - start_time).to_seconds() << " seconds.                          "
                                   "\nBlockchain size changed from "
