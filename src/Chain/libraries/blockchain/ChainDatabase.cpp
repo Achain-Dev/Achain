@@ -511,7 +511,7 @@ namespace thinkyoung {
                         entry.id = block_id;
                         entry.block_size = block_data.block_size();
                         entry.latency = blockchain::now() - block_data.timestamp;
-                        entry.syc_timestamp = fc::time_point::now();
+                        entry.syc_timestamp = blockchain::now();
                         _block_id_to_block_entry_db.store(block_id, entry);
 
                         //wirte to mysql after extend_chains
@@ -3181,6 +3181,8 @@ namespace thinkyoung {
         
         void ChainDatabase::account_insert_into_id_map(const AccountIdType id, const AccountEntry& entry) {
             my->_account_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_account_entry_to_mysql");
+
         }
         
         void ChainDatabase::account_insert_into_name_map(const string& name, const AccountIdType id) {
@@ -3229,6 +3231,7 @@ namespace thinkyoung {
         
         void ChainDatabase::asset_insert_into_id_map(const AssetIdType id, const AssetEntry& entry) {
             my->_asset_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_asset_entry_to_mysql");
         }
         
         void ChainDatabase::asset_insert_into_symbol_map(const string& symbol, const AssetIdType id) {
@@ -3269,6 +3272,8 @@ namespace thinkyoung {
         
         void ChainDatabase::balance_insert_into_id_map(const BalanceIdType& id, const BalanceEntry& entry) {
             my->_balance_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_balance_entry_to_mysql");
+
         }
         
         void ChainDatabase::balance_erase_from_id_map(const BalanceIdType& id) {
@@ -3694,6 +3699,8 @@ namespace thinkyoung {
         
         void ChainDatabase::contract_insert_into_id_map(const ContractIdType& id, const ContractEntry& info) {
             my->_contract_id_to_entry.store(id, info);
+            fc::async([=](){ my->write_to_mysqls(info); }, "write_contract_entry_to_mysql");
+
         }
         
         void ChainDatabase::contractstorage_insert_into_id_map(const ContractIdType& id, const ContractStorageEntry& storage) {

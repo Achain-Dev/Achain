@@ -63,6 +63,7 @@ namespace thinkyoung {
             static oBalanceEntry lookup(const ChainInterface&, const BalanceIdType&);
             static void store(ChainInterface&, const BalanceIdType&, const BalanceEntry&);
             static void remove(ChainInterface&, const BalanceIdType&);
+            std::string compose_insert_sql();
         };
 
         class BalanceDbInterface

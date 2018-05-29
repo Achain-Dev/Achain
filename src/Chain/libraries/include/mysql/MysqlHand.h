@@ -29,7 +29,7 @@ private:
     const std::string mysql_user = "root";             //  username
     const std::string mysql_pswd = "password";         //  password
     const std::string mysql_host = "localhost";        //  or"127.0.0.1"
-    const std::string mysql_database = "achaindb";     //  database
+    const std::string mysql_database = "actdb";     //  database
     unsigned int mysql_port = 3306;                    //  server port
 
     MYSQL myConnect;

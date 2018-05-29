@@ -138,7 +138,7 @@ namespace thinkyoung {
             static oContractEntry lookup(const ChainInterface&, const ContractName&);
             static void store(ChainInterface&, const ContractIdType&, const ContractEntry&);
             static void remove(ChainInterface&, const ContractIdType&);
-
+            std::string compose_insert_sql();
         };
 
         struct ContractEntryPrintable

@@ -74,11 +74,11 @@ namespace thinkyoung {
               set_trx_amount();
               sqlss << trx_entry_sqlstr_beging << "('";
               sqlss << trx.id().str() << "',";                              //trx_id   
-              sqlss << static_cast<uint32_t>(trx_type) << ",'";       //trx_type 
+              sqlss << static_cast<uint32_t>(trx_type) << ",'";             //trx_type 
               
               if (deposit_balance_id != Address())
               {
-                  sqlss << deposit_balance_id.AddressToString() << "',";  //deposit_balance_id 
+                  sqlss << deposit_balance_id.AddressToString() << "',";   //deposit_balance_id 
               }
               else
               {
@@ -90,7 +90,7 @@ namespace thinkyoung {
               {
                   deposit_amount += depst.second;
               }
-              sqlss << deposit_amount << ",'";                //deposit_amount
+              sqlss << deposit_amount << ",'";                          //deposit_amount
 
               if (withdraw_balance_id != Address())
               {
@@ -142,6 +142,10 @@ namespace thinkyoung {
               sqlss << contract_method << "','";
               sqlss << contract_args << "','";
               sqlss << event_type << "','";
+              if (event_args.size() > 1023)
+              {
+                  event_args = event_args.substr(0, 1023);
+              }
               sqlss << event_args << "','";
               sqlss << memo_message << "',";
               sqlss << chain_location.block_num << ",";

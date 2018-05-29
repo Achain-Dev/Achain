@@ -59,14 +59,15 @@ namespace thinkyoung {
         {
             std::string sqlstr_beging = "INSERT INTO slot_entry VALUES ";
             std::string sqlstr_ending = " on duplicate key update ";
-            sqlstr_ending += " delegate_id=values(delegate_id);";
+            sqlstr_ending += " delegate_id=values(delegate_id),";
+            sqlstr_ending += " slot_timestamp=values(slot_timestamp);";
 
             std::stringstream sqlss;
             sqlss << sqlstr_beging << "('";
             sqlss << block_id->str() << "',";
             sqlss << index.delegate_id << ",";
 
-            sqlss << "STR_TO_DATE('" << index.timestamp.to_iso_string() << "','%Y-%m-%d T %H:%i:%s')";//expiration
+            sqlss << "STR_TO_DATE('" << index.timestamp.to_iso_string() << "','%Y-%m-%d T %H:%i:%s') )";//expiration
 
             sqlss << sqlstr_ending;
             return sqlss.str();

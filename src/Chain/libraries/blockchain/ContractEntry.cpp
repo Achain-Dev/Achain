@@ -158,6 +158,35 @@ namespace thinkyoung {
             }FC_CAPTURE_AND_RETHROW((id))
         }
 
+        std::string ContractEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO contract_entry VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " contract_name=values(contract_name),";
+            sqlstr_ending += " level=values(level),";
+            sqlstr_ending += " owner=values(owner),";
+            sqlstr_ending += " description=values(description),";
+            sqlstr_ending += " trx_id=values(trx_id);";
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "('";
+            sqlss << id.AddressToString() << "','";
+            sqlss << contract_name<< "',";
+            sqlss << level.value << ",'";
+            sqlss << std::string(owner) << "','";
+            sqlss << description << "','";
+            for (auto abi_itr : code.abi)
+            {
+                sqlss << abi_itr << ",";
+            }
+            sqlss << "','";
+            sqlss << trx_id.str() << "',";
+            sqlss << "now() )";
+
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+
+        }
 
         oContractStorage ContractStorageEntry::lookup(const ChainInterface& db, const ContractIdType& id)
         {

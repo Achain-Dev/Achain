@@ -1,6 +1,7 @@
 #include <blockchain/AssetOperations.hpp>
 #include <blockchain/AssetEntry.hpp>
 #include <blockchain/ChainInterface.hpp>
+#include <sstream>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -126,6 +127,39 @@ namespace thinkyoung {
                     db.asset_erase_from_symbol_map(prev_entry->symbol);
                 }
             } FC_CAPTURE_AND_RETHROW((id))
+        }
+        std::string AssetEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO asset_entry VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " registration_date=values(registration_date),";
+            sqlstr_ending += " last_update=values(last_update),";
+            sqlstr_ending += " maximum_share_supply=values(maximum_share_supply),";
+            sqlstr_ending += " current_share_supply=values(current_share_supply),";
+            sqlstr_ending += " collected_fees=values(collected_fees);";
+
+
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "(";
+            sqlss << id << ",'";
+            sqlss << symbol << "','";
+            sqlss << name << "','";
+            sqlss << description << "','";
+            sqlss << public_data.as_string() << "','";
+            sqlss << issuer_account_id << "',";
+            sqlss << precision << ",";
+            sqlss << "STR_TO_DATE('" << registration_date.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";
+            sqlss << "STR_TO_DATE('" << last_update.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";
+            sqlss << maximum_share_supply << ",";
+            sqlss << current_share_supply << ",";
+            sqlss << collected_fees << ",";
+            sqlss << flags << ",";
+            sqlss << issuer_permissions << " )";
+
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+
         }
 
     }
