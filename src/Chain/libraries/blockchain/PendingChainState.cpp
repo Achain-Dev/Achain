@@ -598,11 +598,11 @@ namespace thinkyoung {
             return BlockIdType();
         }
 
-        thinkyoung::blockchain::SignedBlockHeader PendingChainState::get_block_header(const BlockIdType& id) const
+        thinkyoung::blockchain::SignedBlockHeader_v2 PendingChainState::get_block_header_v2(const BlockIdType& id) const
         {
             const ChainInterfacePtr prev_state = _prev_state.lock();
-            if (prev_state) return prev_state->get_block_header(id);
-            return SignedBlockHeader();
+            if (prev_state) return prev_state->get_block_header_v2(id);
+            return SignedBlockHeader_v2();
         }
 
     }

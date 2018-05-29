@@ -293,10 +293,10 @@ namespace thinkyoung {
         
         void TransactionEvaluationState::evaluate(const SignedTransaction& trx_arg, bool ignore_state) {
             SignedTransaction result_trx;
-            
             try {
                 trx = trx_arg;
                 bool ignore_check_required_fee = false;
+                
                 
                 try {
                     if (_current_state->now() >= trx_arg.expiration) {
@@ -335,7 +335,7 @@ namespace thinkyoung {
                     if (num_of_signature > ALP_BLOCKCHAIN_MAX_SIGNAGTURE_NUM) {
                         FC_CAPTURE_AND_THROW(too_much_signature, (ALP_BLOCKCHAIN_MAX_SIGNAGTURE_NUM)(num_of_signature));
                     }
-                    
+   
                     if (!_skip_signature_check) {
                         const auto trx_digest = trx_arg.digest(_current_state->get_chain_id());
                         set<fc::ecc::compact_signature> sig_set;
@@ -353,11 +353,11 @@ namespace thinkyoung {
                             signed_keys.insert(Address(PtsAddress(key, true, 0)));
                         }
                     }
-                    
                     current_op_index = 0;
                     result_trx = trx_arg;
                     
-                    if (trx_arg.operations.size() > 0 && trx_arg.operations.front().type == OperationTypeEnum::transaction_op_type) {
+                    if (trx_arg.operations.size() > 0 && trx_arg.operations.front().type == OperationTypeEnum::transaction_op_type) 
+                    {
                         std::vector<Operation>::const_iterator opit = trx_arg.operations.begin();
                         evaluate_operation(*opit);
                         ++opit;
@@ -375,8 +375,8 @@ namespace thinkyoung {
                             ++opit;
                             ++current_op_index;
                         }
-                        
                         //如果块中有的不完整的结果交易，也需要记录下来
+
                         if (trx_arg.result_trx_type == ResultTransactionType::incomplete_result_transaction) {
                             trx = trx_arg;
                             _current_state->store_transaction(trx.id(), TransactionEntry(TransactionLocation(), *this));
@@ -394,7 +394,6 @@ namespace thinkyoung {
                             ++current_op_index;
                         }
                     }
-                    
                     int signum_to_charge = num_of_signature - ALP_BLOCKCHAIN_FREESIGNATURE_LIMIT;
                     
                     if (signum_to_charge >= 0) {
@@ -418,9 +417,8 @@ namespace thinkyoung {
                     validation_error = e;
                     throw;
                 }
-            }
-            
-            FC_CAPTURE_AND_RETHROW((result_trx))
+                
+            }FC_CAPTURE_AND_RETHROW((result_trx))
         }
         
         SignedTransaction TransactionEvaluationState::sandbox_evaluate(const SignedTransaction &trx_arg, bool& ignore_check_required_fee) {
@@ -507,9 +505,7 @@ namespace thinkyoung {
                 }
                 
                 return p_result_trx;
-            }
-            
-            FC_CAPTURE_AND_RETHROW((trx_arg))
+            }FC_CAPTURE_AND_RETHROW((trx_arg))
         }
         
         void TransactionEvaluationState::evaluate_operation(const Operation& op) {

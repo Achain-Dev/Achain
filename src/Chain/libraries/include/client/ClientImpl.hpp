@@ -205,6 +205,7 @@ namespace thinkyoung {
                 void start_delegate_loop();
                 void cancel_delegate_loop();
                 void delegate_loop();
+                bool is_my_delegate(const AccountIdType account_id, const vector<WalletAccountEntry>& my_delegates) const;
                 void set_target_connections(uint32_t target);
 				thinkyoung::blockchain::TransactionIdType network_broadcast_transactions(const std::vector<thinkyoung::blockchain::SignedTransaction>& transactions_to_broadcast);
                 void start_rebroadcast_pending_loop();
@@ -225,10 +226,24 @@ namespace thinkyoung {
                 void configure_chain_server(Config& cfg,
                     const program_options::variables_map& option_variables);
 
-                BlockForkData on_new_block(const FullBlock& block,
+				void update_sync_status(bool is_include);
+
+                BlockForkData on_new_block(const FullBlock_v2& block,
                     const BlockIdType& block_id,
                     bool sync_mode);
 
+				//v2
+				#if 0
+				BlockForkData on_new_block_v2(const FullBlock_v2& block,
+                    const BlockIdType& block_id,
+                    bool sync_mode);
+				#endif
+
+                bool get_next_block_maker(const time_point_sec& now,
+                    optional<time_point_sec>& next_time,
+                    AccountEntry& delegate_entry,
+                    uint32_t& pos)const;
+				
                 bool on_new_transaction(const SignedTransaction& trx);
                 void blocks_too_old_monitor_task();
                 void cancel_blocks_too_old_monitor_task();

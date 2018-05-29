@@ -78,7 +78,7 @@ void WalletImpl::scan_balances()
 void WalletImpl::scan_block(uint32_t block_num)
 {
     try {
-        const SignedBlockHeader block_header = _blockchain->get_block_header(block_num);
+        const SignedBlockHeader_v2 block_header = _blockchain->get_block_header_v2(block_num);
         const vector<TransactionEntry> transaction_entrys = _blockchain->get_transactions_for_block(block_header.id());
         fc::async([=]
         {
@@ -1377,7 +1377,7 @@ WalletTransactionEntry Wallet::scan_all_transaction(bool overwrite_existing)
 
 
             const auto block_num = transaction_entry->chain_location.block_num;
-            const auto block = my->_blockchain->get_block_header(block_num);
+            const auto block = my->_blockchain->get_block_header_v2(block_num);
             const auto entry = my->scan_transaction(transaction_entry->trx, block_num, block.timestamp, overwrite_existing, true);
         }
         if (my->_dirty_balances) my->scan_balances_experimental();
@@ -1406,7 +1406,7 @@ WalletTransactionEntry Wallet::scan_transaction(const string& transaction_id_pre
 		my->scan_contracts();
 
         const auto block_num = transaction_entry->chain_location.block_num;
-        const auto block = my->_blockchain->get_block_header(block_num);
+        const auto block = my->_blockchain->get_block_header_v2(block_num);
         const auto entry = my->scan_transaction(transaction_entry->trx, block_num, block.timestamp, overwrite_existing, true);
 
         if (my->_dirty_balances) my->scan_balances_experimental();
@@ -2193,7 +2193,7 @@ PrettyTransaction		Wallet::to_pretty_trx(const thinkyoung::blockchain::Transacti
     auto block_num = trx_entry.chain_location.block_num;
     auto block_position = trx_entry.chain_location.trx_num;
     auto trx = trx_entry.trx;
-    auto block_healder = my->_blockchain->get_block_header(block_num);
+    auto block_healder = my->_blockchain->get_block_header_v2(block_num);
 
     pretty_trx.is_virtual = false;
     pretty_trx.is_confirmed = true;
@@ -2520,7 +2520,7 @@ PrettyContractTransaction		Wallet::to_pretty_contract_trx(const thinkyoung::bloc
 
     uint32_t block_num = trx_entry.chain_location.block_num;
     uint32_t block_position = trx_entry.chain_location.trx_num;
-    auto block_healder = my->_blockchain->get_block_header(block_num);
+    auto block_healder = my->_blockchain->get_block_header_v2(block_num);
 
     pretty_trx.block_num = block_num;
     pretty_trx.block_position = block_position;

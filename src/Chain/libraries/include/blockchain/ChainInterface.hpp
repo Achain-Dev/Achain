@@ -159,7 +159,7 @@ namespace thinkyoung {
                 const string& quote_symbol,
                 bool do_precision_dance = true)const;
 
-            virtual SignedBlockHeader         get_block_header(const BlockIdType&)const = 0;
+            virtual SignedBlockHeader_v2         get_block_header_v2(const BlockIdType&)const = 0;
             /**  set_chain_id
             * Store id into property database as chain id
             * @param  id  DigestType

@@ -850,14 +850,14 @@ namespace thinkyoung {
                     if (cur_state->get_head_block_num() < num)
                         return -1;
                     BlockIdType id = cur_state->get_block_id(num);
-                    BlockHeader _header = cur_state->get_block_header(id);
+                    BlockHeader _header = cur_state->get_block_header_v2(id);
                     SecretHashType _hash = _header.previous_secret;
                     auto default_id = BlockIdType();
                     for (int i = 0; i < 50; i++)
                     {
                         if ((id = _header.previous) == default_id)
                             break;
-                        _header = cur_state->get_block_header(id);
+                        _header = cur_state->get_block_header_v2(id);
                         _hash = _hash.hash(_header.previous_secret);
                     }
                     return _hash._hash[3] % (1 << 31 - 1);
