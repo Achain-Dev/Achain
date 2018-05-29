@@ -66,21 +66,27 @@ namespace thinkyoung {
                     return vector<string>();
                     
                 vector<string> delegates;
-                const auto this_block = _chain_db->get_block_header(block_num);
-                const auto prev_block = _chain_db->get_block_header(block_num - 1);
-                auto timestamp = prev_block.timestamp;
-                timestamp += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
+				fc::time_point_sec this_time;
+				fc::time_point_sec prev_time;
+
+				const auto this_block = _chain_db->get_block_header_v2(block_num);
+				const auto prev_block = _chain_db->get_block_header_v2(block_num - 1);
+
+				this_time = this_block.timestamp;
+				prev_time = prev_block.timestamp;
+
+                prev_time += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
                 
-                while (timestamp != this_block.timestamp)
+                while (prev_time != this_time)
                     // if time interval between prev_block and this block greater than ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC,
                     // it shows maybe something wrong happened and delegate did not product block.
                 {
-                    const auto slot_entry = _chain_db->get_slot_entry(timestamp);
+                    const auto slot_entry = _chain_db->get_slot_entry(prev_time);
                     FC_ASSERT(slot_entry.valid(), "Invalid slot entry");
                     const auto delegate_entry = _chain_db->get_account_entry(slot_entry->index.delegate_id);
                     FC_ASSERT(delegate_entry.valid(), "No such account entry with the account id in slot entry");
                     delegates.push_back(delegate_entry->name);
-                    timestamp += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
+                    prev_time += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
                 }
                 
                 return delegates;
@@ -99,37 +105,61 @@ namespace thinkyoung {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
                     FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
-                    
+
                 try {
                     FC_ASSERT(max_block_num > 0, "Max_block_num should bigger than 0");
                     FC_ASSERT(limit > 0, "Limit should bigger than 0");
                     const uint32_t head_block_num = _chain_db->get_head_block_num();
                     uint32_t start_block_num = head_block_num;
-                    
+                    uint32_t block_num = 0;
+
                     if (max_block_num <= head_block_num) {
                         start_block_num = max_block_num;
-                        
-                    } else {
+
+                    }
+                    else {
                         //FC_ASSERT( -max_block_num <= head_block_num );
                         start_block_num = head_block_num + max_block_num + 1;
                     }
-                    
+
                     const uint32_t count = std::min(limit, start_block_num);
                     vector<BlockEntry> entrys;
                     entrys.reserve(count);
-                    
-                    for (uint32_t block_num = start_block_num; block_num > 0; --block_num) {
-                        oBlockEntry entry = _chain_db->get_block_entry(block_num);
-                        
-                        if (entry.valid()) entrys.push_back(std::move(*entry));
-                        
-                        if (entrys.size() >= count) break;
+
+                    if (start_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    {
+                        for (block_num = start_block_num; block_num > 0; --block_num) {
+                            oBlockEntry entry = _chain_db->get_block_entry(block_num);
+
+                            if (entry.valid()) entrys.push_back(std::move(*entry));
+
+                            if (entrys.size() >= count) break;
+                        }
                     }
-                    
-                    return entrys;
-                }
-                
-                FC_CAPTURE_AND_RETHROW((max_block_num)(limit))
+                    else
+                    {
+                        for (block_num = start_block_num; block_num >= ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM; --block_num) {
+                            oBlockEntry_v2 entry_v2 = _chain_db->get_block_entry_v2(block_num);
+
+                            if (entry_v2.valid()) entrys.push_back(std::move(*entry_v2));
+
+                            if (entrys.size() >= count) break;
+                        }
+
+                        if (entrys.size() < count)
+                        {
+                            for (; block_num > 0; --block_num) {
+                                oBlockEntry entry = _chain_db->get_block_entry(block_num);
+
+                                if (entry.valid()) entrys.push_back(std::move(*entry));
+
+                                if (entrys.size() >= count) break;
+                            }
+                        }
+
+                        return entrys;
+                    }
+                }FC_CAPTURE_AND_RETHROW((max_block_num)(limit))
             }
             
             std::vector<std::pair<thinkyoung::blockchain::TransactionIdType, thinkyoung::blockchain::SignedTransaction>>  ClientImpl::blockchain_list_pending_transactions() const {
@@ -372,9 +402,26 @@ namespace thinkyoung {
                             return _chain_db->get_block_entry(BlockIdType(block));
                             
                         else
-                            return _chain_db->get_block_entry(std::stoi(block));
+                        {
+                            uint32_t block_num = std::stoi(block);
+                            if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                            {
+                                return _chain_db->get_block_entry(block_num);
+                            }
+                            else
+                            {
+                                return oBlockEntry(*(_chain_db->get_block_entry_v2(block_num)));
+                            }
+                        }
                             
-                    } catch (...) {
+                            
+                    } 
+					//if fc::key_not_found_exception,then try the get_block_entry_v2
+					catch(fc::key_not_found_exception)
+					{
+                        return oBlockEntry(BlockEntry(*(_chain_db->get_block_entry_v2(BlockIdType(block)))));
+					}
+					catch (...) {
                     }
                     
                     return oBlockEntry();

@@ -698,9 +698,33 @@ namespace thinkyoung {
             * @param  header  SignedBlockHeader
             *
             * @return void
+            * caller: block maker
             */
-            void sign_block(SignedBlockHeader& header)const;
+            void sign_block(SignedBlockHeader& header, const AccountEntry& delegate_entry)const;
+
+            void sign_block_v2(SignedBlockHeader_v2& header, const AccountEntry& delegate_entry)const;
+
+
+            /**
+            * sign a block if this wallet controls the key for the active delegates, or throw
+            *
+            * @param  p_header  SignedBlockHeader_v2
+            * @param  is_from_local bool -- where this block form ? local or p2p
+            *
+            * @return uint32_t: delegates count of sign this block
+            * caller:other delegates
+            */
+            uint32_t delegate_sign_block(SignedBlockHeader_v2* p_header, bool is_from_local)const;
             
+            /**
+            * validate all sign, or throw
+            *
+            * @param  p_header  SignedBlockHeader_v2
+            *
+            * caller:other delegates
+            */
+            void validate_signs(SignedBlockHeader_v2* p_header)const;
+
             /**
             * Sign a block based on the input address or public key
             *

@@ -105,6 +105,19 @@ namespace thinkyoung {
             double              participation_rate;
         };
 
+        // delegate sign
+        struct DeleSign
+        {
+            DeleSign(){}
+            DeleSign(std::string name, SignatureType sign) :dele_name(name), signature(sign){}
+            std::string dele_name;
+            SignatureType signature;
+        };
+
+        //超过三分之二代理签名
+        typedef std::vector<DeleSign>   DelegateSignatures;
+        //typedef std::list<DeleSign>   DelegateSignatures;
+
     }
 } // thinkyoung::blockchain
 
@@ -115,7 +128,12 @@ namespace fc
 }
 
 #include <fc/reflect/reflect.hpp>
+//FC_REFLECT_TYPENAME(std::list<thinkyoung::blockchain::DeleSign>)
 FC_REFLECT(thinkyoung::blockchain::PublicKeyType, (key_data))
 FC_REFLECT(thinkyoung::blockchain::PublicKeyType::BinaryKey, (data)(check));
 FC_REFLECT_ENUM(thinkyoung::blockchain::BlockchainSecurityState::alert_level_enum, (green)(yellow)(red)(grey));
 FC_REFLECT(thinkyoung::blockchain::BlockchainSecurityState, (alert_level)(estimated_confirmation_seconds)(participation_rate))
+
+// delegate sign
+FC_REFLECT(thinkyoung::blockchain::DeleSign, (dele_name)(signature))
+

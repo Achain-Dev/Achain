@@ -138,7 +138,7 @@ namespace thinkyoung {
                 const map<Address, string>& account_balances,
                 const set<string>& account_names) {
             try {
-                const SignedBlockHeader block_header = _blockchain->get_block_header(block_num);
+                const SignedBlockHeader_v2 block_header = _blockchain->get_block_header_v2(block_num);
                 const vector<TransactionEntry> transaction_entrys = _blockchain->get_transactions_for_block(block_header.id());
                 
                 for (const TransactionEvaluationState& eval_state : transaction_entrys) {
@@ -600,7 +600,7 @@ namespace thinkyoung {
                     FC_THROW_EXCEPTION(transaction_not_found, "Transaction not found!", ("transaction_id_prefix", transaction_id_prefix));
                     
                 const auto block_num = transaction_entry->chain_location.block_num;
-                const auto block = my->_blockchain->get_block_header(block_num);
+                const auto block = my->_blockchain->get_block_header_v2(block_num);
                 return my->scan_transaction_experimental(*transaction_entry, block_num, block.timestamp, overwrite_existing);
             }
             

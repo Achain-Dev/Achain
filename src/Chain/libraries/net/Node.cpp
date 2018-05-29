@@ -431,8 +431,8 @@ namespace thinkyoung {
                 typedef std::unordered_map<thinkyoung::blockchain::BlockIdType, fc::time_point> ActiveSyncRequestsMap;
 
                 ActiveSyncRequestsMap              _active_sync_requests; /// list of sync blocks we've asked for from peers but have not yet received
-                std::list<thinkyoung::client::BlockMessage> _new_received_sync_items; /// list of sync blocks we've just received but haven't yet tried to process
-                std::list<thinkyoung::client::BlockMessage> _received_sync_items; /// list of sync blocks we've received, but can't yet process because we are still missing blocks that come earlier in the chain
+                std::list<thinkyoung::client::BlockMessage_v2> _new_received_sync_items; /// list of sync blocks we've just received but haven't yet tried to process
+                std::list<thinkyoung::client::BlockMessage_v2> _received_sync_items; /// list of sync blocks we've received, but can't yet process because we are still missing blocks that come earlier in the chain
                 // @}
 
                 fc::future<void> _process_backlog_of_sync_blocks_done;
@@ -657,11 +657,11 @@ namespace thinkyoung {
 
                 void on_connection_closed(PeerConnection* originating_peer) override;
 
-                void send_sync_block_to_node_delegate(const thinkyoung::client::BlockMessage& block_message_to_send);
+                void send_sync_block_to_node_delegate(const thinkyoung::client::BlockMessage_v2& block_message_to_send);
                 void process_backlog_of_sync_blocks();
                 void trigger_process_backlog_of_sync_blocks();
-                void process_block_during_sync(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage& block_message, const MessageHashType& message_hash);
-                void process_block_during_normal_operation(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage& block_message, const MessageHashType& message_hash);
+                void process_block_during_sync(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage_v2& block_message, const MessageHashType& message_hash);
+                void process_block_during_normal_operation(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage_v2& block_message, const MessageHashType& message_hash);
                 void process_block_message(PeerConnection* originating_peer, const Message& message_to_process, const MessageHashType& message_hash);
 
                 void process_ordinary_message(PeerConnection* originating_peer, const Message& message_to_process, const MessageHashType& message_hash);
@@ -977,9 +977,9 @@ namespace thinkyoung {
             {
                 VERIFY_CORRECT_THREAD();
                 return std::find_if(_received_sync_items.begin(), _received_sync_items.end(),
-                    [&item_hash](const thinkyoung::client::BlockMessage& message) { return message.block_id == item_hash; }) != _received_sync_items.end() ||
+                    [&item_hash](const thinkyoung::client::BlockMessage_v2& message) { return message.block_id == item_hash; }) != _received_sync_items.end() ||
                     std::find_if(_new_received_sync_items.begin(), _new_received_sync_items.end(),
-                    [&item_hash](const thinkyoung::client::BlockMessage& message) { return message.block_id == item_hash; }) != _new_received_sync_items.end();;
+                    [&item_hash](const thinkyoung::client::BlockMessage_v2& message) { return message.block_id == item_hash; }) != _new_received_sync_items.end();;
             }
 
             void NodeImpl::request_sync_item_from_peer(const PeerConnectionPtr& peer, const ItemHashType& item_to_request)
@@ -1727,6 +1727,9 @@ namespace thinkyoung {
                     on_closing_connection_message(originating_peer, received_message.as<ClosingConnectionMessage>());
                     break;
                 case thinkyoung::client::MessageTypeEnum::block_message_type:
+                    process_block_message(originating_peer, received_message, message_hash);
+                    break;
+				case thinkyoung::client::MessageTypeEnum::block_message_type_v2:
                     process_block_message(originating_peer, received_message, message_hash);
                     break;
                 case CoreMessageTypeEnum::current_time_request_message_type:
@@ -2840,7 +2843,7 @@ namespace thinkyoung {
                 schedule_peer_for_deletion(originating_peer_ptr);
             }
 
-            void NodeImpl::send_sync_block_to_node_delegate(const thinkyoung::client::BlockMessage& block_message_to_send)
+            void NodeImpl::send_sync_block_to_node_delegate(const thinkyoung::client::BlockMessage_v2& block_message_to_send)
             {
                 dlog("in send_sync_block_to_node_delegate()");
                 bool client_accepted_block = false;
@@ -3093,7 +3096,7 @@ namespace thinkyoung {
                             if (std::find(_most_recent_blocks_accepted.begin(), _most_recent_blocks_accepted.end(),
                                 received_block_iter->block_id) == _most_recent_blocks_accepted.end())
                             {
-                                thinkyoung::client::BlockMessage block_message_to_process = *received_block_iter;
+                                thinkyoung::client::BlockMessage_v2 block_message_to_process = *received_block_iter;
                                 _received_sync_items.erase(received_block_iter);
                                 _handle_message_calls_in_progress.emplace_back(fc::async([this, block_message_to_process](){
                                     send_sync_block_to_node_delegate(block_message_to_process);
@@ -3134,7 +3137,7 @@ namespace thinkyoung {
             }
 
             void NodeImpl::process_block_during_sync(PeerConnection* originating_peer,
-                const thinkyoung::client::BlockMessage& block_message_to_process, const MessageHashType& message_hash)
+                const thinkyoung::client::BlockMessage_v2& block_message_to_process, const MessageHashType& message_hash)
             {
                 VERIFY_CORRECT_THREAD();
                 dlog("received a sync block from peer ${endpoint}", ("endpoint", originating_peer->get_remote_endpoint()));
@@ -3146,7 +3149,7 @@ namespace thinkyoung {
             }
 
             void NodeImpl::process_block_during_normal_operation(PeerConnection* originating_peer,
-                const thinkyoung::client::BlockMessage& block_message_to_process,
+                const thinkyoung::client::BlockMessage_v2& block_message_to_process,
                 const MessageHashType& message_hash)
             {
                 fc::time_point message_receive_time = fc::time_point::now();
@@ -3180,7 +3183,7 @@ namespace thinkyoung {
 
                     dlog("client validated the block, advertising it to other peers");
 
-                    ItemId block_message_item_id(thinkyoung::client::MessageTypeEnum::block_message_type, message_hash);
+                    ItemId block_message_item_id(thinkyoung::client::MessageTypeEnum::block_message_type_v2, message_hash);
                     uint32_t block_number = block_message_to_process.block.block_num;
                     fc::time_point_sec block_time = block_message_to_process.block.timestamp;
 
@@ -3267,7 +3270,9 @@ namespace thinkyoung {
                 // (it's possible that we request an item during normal operation and then get kicked into sync
                 // mode before we receive and process the item.  In that case, we should process the item as a normal
                 // item to avoid confusing the sync code)
-                thinkyoung::client::BlockMessage block_message_to_process(message_to_process.as<thinkyoung::client::BlockMessage>());
+                
+
+                thinkyoung::client::BlockMessage_v2 block_message_to_process(message_to_process.as<thinkyoung::client::BlockMessage_v2>());
                 
                 if (block_message_to_process.block.block_size() > ALP_BLOCKCHAIN_MAX_BLOCK_SIZE)
                 {
@@ -3279,7 +3284,7 @@ namespace thinkyoung {
                     return;
                 }
 
-                auto item_iter = originating_peer->items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type, message_hash));
+                auto item_iter = originating_peer->items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type_v2, message_hash));
                 if (item_iter != originating_peer->items_requested_from_peer.end())
                 {
                     originating_peer->items_requested_from_peer.erase(item_iter);
@@ -3291,7 +3296,7 @@ namespace thinkyoung {
                 else
                 {
                     // not during normal operation.  see if we requested it during sync
-                    auto sync_item_iter = originating_peer->sync_items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type,
+                    auto sync_item_iter = originating_peer->sync_items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type_v2,
                         block_message_to_process.block_id));
                     if (sync_item_iter != originating_peer->sync_items_requested_from_peer.end())
                     {
@@ -4795,6 +4800,12 @@ namespace thinkyoung {
                     hash_of_message_contents = block_message_to_broadcast.block_id; // for debugging
                     _most_recent_blocks_accepted.push_back(block_message_to_broadcast.block_id);
                 }
+				else if (item_to_broadcast.msg_type == thinkyoung::client::block_message_type_v2)
+				{
+					thinkyoung::client::BlockMessage_v2 block_message_to_broadcast = item_to_broadcast.as<thinkyoung::client::BlockMessage_v2>();
+                    hash_of_message_contents = block_message_to_broadcast.block_id; // for debugging
+                    _most_recent_blocks_accepted.push_back(block_message_to_broadcast.block_id);
+				}
                 else if (item_to_broadcast.msg_type == thinkyoung::client::trx_message_type)
                 {
                     thinkyoung::client::TrxMessage transaction_message_to_broadcast = item_to_broadcast.as<thinkyoung::client::TrxMessage>();

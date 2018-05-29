@@ -14,10 +14,21 @@ namespace thinkyoung {
         
         class TransactionEvaluationState;
         typedef std::shared_ptr<TransactionEvaluationState> TransactionEvaluationStatePtr;
-        
+
+		//id
         struct BlockSummary {
-            FullBlock                                    block_data;
+            //FullBlock                                    block_data;
+            BlockIdType                                block_id;
+			uint32_t                                   block_num;
             PendingChainStatePtr                       applied_changes;
+        };
+
+        struct fork_history
+        {
+            fork_history(const BlockIdType id, const uint32_t num)
+                :block_id(id), block_num(num){}
+            BlockIdType block_id;
+            uint32_t block_num;
         };
         
         struct BlockForkData {
@@ -242,6 +253,12 @@ namespace thinkyoung {
             */
             FullBlock                  generate_block(const time_point_sec block_timestamp,
                     const DelegateConfig& config = DelegateConfig());
+
+			void pack_trx(const DelegateConfig& config, signed_transactions& trxs, size_t block_size);
+				
+			//v2
+			FullBlock_v2  generate_block_v2(const time_point_sec block_timestamp, const uint32_t pos,
+                    const DelegateConfig& config = DelegateConfig());
                     
             /**  Get BlockForkData from _fork_db
             *
@@ -308,7 +325,10 @@ namespace thinkyoung {
             */
             AccountEntry              get_slot_signee(const time_point_sec timestamp,
                     const std::vector<AccountIdType>& ordered_delegates)const;
-                    
+
+
+			AccountEntry get_slot_signee(const uint32_t index,
+                const std::vector<AccountIdType>& ordered_delegates)const;
             /**  Get next producible block timestamp
             *
             * @param  delegate_ids  vector<AccountIdType>
@@ -422,7 +442,55 @@ namespace thinkyoung {
             * @return FullBlock
             */
             FullBlock                  get_block(uint32_t block_num)const;
+
+			//v2
+			/**  Get block header by block_id
+            *
+            * @param  block_id  BlockIdType
+            *
+            * @return SignedBlockHeader_v2
+            */
+            virtual SignedBlockHeader_v2         get_block_header_v2(const BlockIdType&)const;
             
+            /**  Get block header by block_num
+            *
+            * @param  block_num  uint32_t
+            *
+            * @return SignedBlockHeader_v2
+            */
+            SignedBlockHeader_v2         get_block_header_v2(uint32_t block_num)const;
+            
+            /**  Get DigestBlock by block_id, copy DigestBlock from FullBlock
+            *
+            * @param  block_id  BlockIdType
+            *
+            * @return DigestBlock_v2
+            */
+            DigestBlock_v2                get_block_digest_v2(const BlockIdType&)const;
+            
+            /**  Get DigestBlock by block_num, copy DigestBlock from FullBlock
+            *
+            * @param  block_num  uint32_t
+            *
+            * @return DigestBlock_v2
+            */
+            DigestBlock_v2                get_block_digest_v2(uint32_t block_num)const;
+            
+            /**  Get FullBlock by block_id
+            *
+            * @param  block_id  BlockIdType
+            *
+            * @return FullBlock_v2
+            */
+            FullBlock_v2                  get_block_v2(const BlockIdType&)const;
+            
+            /**  Get FullBlock by block_num
+            *
+            * @param  block_num  uint32_t
+            *
+            * @return FullBlock_v2
+            */
+            FullBlock_v2                  get_block_v2(uint32_t block_num)const;
             /**
             * Retrieves the detailed transaction information for a block.
             *
@@ -438,6 +506,14 @@ namespace thinkyoung {
             * @return SignedBlockHeader
             */
             SignedBlockHeader         get_head_block()const;
+
+			/**  Get the SignedBlockHeader of head block
+            *
+            *
+            * @return SignedBlockHeader_v2
+            */
+            SignedBlockHeader_v2         get_head_block_v2()const;
+			
             
             /**  Get the block_num of head block
             *
@@ -479,6 +555,8 @@ namespace thinkyoung {
             * @return oBlockEntry
             */
             oBlockEntry               get_block_entry(const BlockIdType& block_id)const;
+			//v2
+			oBlockEntry_v2               get_block_entry_v2(const BlockIdType& block_id)const;
             
             /**  Get block entry by block_num
             *
@@ -487,6 +565,7 @@ namespace thinkyoung {
             * @return oBlockEntry
             */
             oBlockEntry               get_block_entry(uint32_t block_num)const;
+			oBlockEntry_v2               get_block_entry_v2(uint32_t block_num)const;
             
             /**  Get result entry by result_id
             *
@@ -617,11 +696,11 @@ namespace thinkyoung {
             *   this state can be used by wallets to scan for changes without the wallets
             *   having to process raw transactions.
             *
-            * @param  block_data  FullBlock
+            * @param  block_data  FullBlock_v2
             *
             * @return BlockForkData
             */
-            BlockForkData push_block(const FullBlock& block_data);
+            BlockForkData push_block(const FullBlock_v2& block_data);
             
             /**
             * Traverse the previous links of all blocks in fork until we find one that is_included
@@ -631,9 +710,9 @@ namespace thinkyoung {
             *
             * @param  id  BlockIdType
             *
-            * @return std::vector<BlockIdType>
+            * @return std::vector<fork_history>
             */
-            vector<BlockIdType> get_fork_history(const BlockIdType& id);
+            vector<fork_history> get_fork_history(const BlockIdType& id);
             
             /**  Evaluate the transaction and return the results.
             *
@@ -1322,3 +1401,4 @@ namespace thinkyoung {
 
 FC_REFLECT(thinkyoung::blockchain::BlockForkData, (next_blocks)(is_linked)(is_valid)(invalid_reason)(is_included)(is_known))
 FC_REFLECT(thinkyoung::blockchain::ForkEntry, (block_id)(signing_delegate)(transaction_count)(latency)(size)(timestamp)(is_valid)(invalid_reason)(is_current_fork))
+FC_REFLECT(thinkyoung::blockchain::fork_history, (block_id)(block_num))

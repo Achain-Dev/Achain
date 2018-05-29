@@ -38,6 +38,8 @@ namespace thinkyoung {
 		FC_DECLARE_DERIVED_EXCEPTION(invalid_address, thinkyoung::blockchain::blockchain_exception, 30028, "invalid address");
 		FC_DECLARE_DERIVED_EXCEPTION(out_of_max_block_size, thinkyoung::blockchain::blockchain_exception, 30029, "out of max block size");
 		FC_DECLARE_DERIVED_EXCEPTION(out_of_max_trx_size, thinkyoung::blockchain::blockchain_exception, 30030, "out of max trx size");
+        FC_DECLARE_DERIVED_EXCEPTION(invalid_delegate, thinkyoung::blockchain::blockchain_exception, 30031, "unknow delegate name");
+        FC_DECLARE_DERIVED_EXCEPTION(insufficient_signature, thinkyoung::blockchain::blockchain_exception, 30032, "insufficient num of signature");
 
         FC_DECLARE_EXCEPTION(evaluation_error, 31000, "Evaluation Error");
         FC_DECLARE_DERIVED_EXCEPTION(negative_deposit, thinkyoung::blockchain::evaluation_error, 31001, "negative deposit");
