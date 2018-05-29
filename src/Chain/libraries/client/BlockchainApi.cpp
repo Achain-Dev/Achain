@@ -135,6 +135,8 @@ namespace thinkyoung {
 
                             if (entrys.size() >= count) break;
                         }
+                        
+                        return entrys;
                     }
                     else
                     {
