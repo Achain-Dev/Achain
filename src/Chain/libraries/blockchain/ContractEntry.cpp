@@ -400,14 +400,12 @@ namespace thinkyoung {
 
             std::stringstream sqlss;
             sqlss << sqlstr_beging << "('";
-            sqlss << res.str() << "',";
-            sqlss << req.str() << ",";
+            sqlss << res.str() << "','";
+            sqlss << req.str() << "',";
             sqlss << "now())";
             sqlss << sqlstr_ending;
             return sqlss.str();
         }
-
-
 
 
 		RequestIdEntry::RequestIdEntry()

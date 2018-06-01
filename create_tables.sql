@@ -17,7 +17,8 @@ create table block_entry
 create table trx_entry
 (
     trx_id                      varchar(40)        NOT NULL         COMMENT '交易id'
-   ,trx_type                    int(2)         UNSIGNED             COMMENT '交易类型' 
+-- ,trx_type                    int(2)         UNSIGNED             COMMENT '交易类型' 
+   ,trx_type                    varchar(64)                         COMMENT '交易类型' 
    ,deposit_balance_id          varchar(40)                         COMMENT '存入的余额id'
    ,deposit_amount              bigint(10)                          COMMENT '存入数量' 
    ,withdraw_balance_id         varchar(40)                         COMMENT '取出的余额id'
@@ -86,7 +87,7 @@ create table balance_entry
 (
     balance_id                 varchar(40)                        COMMENT '余额id'
    ,asset_id                   int(10)                            COMMENT '资产id' 
-   ,slate_id                   int(10)                            COMMENT '资产id' 
+   ,slate_id                   bigint(10)    UNSIGNED             COMMENT '投票id' 
    ,condition_type             varchar(64)                        COMMENT '条件类型'
    ,balance_types              varchar(64)                        COMMENT '余额类型'
    ,owner                      varchar(64)                        COMMENT '持有者地址'

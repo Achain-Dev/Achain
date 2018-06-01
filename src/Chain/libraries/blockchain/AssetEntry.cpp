@@ -130,6 +130,12 @@ namespace thinkyoung {
         }
         std::string AssetEntry::compose_insert_sql()
         {
+
+            if ((current_share_supply > 0) && (current_share_supply % 100000000 != 0))
+            {
+                return "NOEXECUTEMARK";
+
+            }
             std::string sqlstr_beging = "INSERT INTO asset_entry VALUES ";
             std::string sqlstr_ending = " on duplicate key update ";
             sqlstr_ending += " registration_date=values(registration_date),";

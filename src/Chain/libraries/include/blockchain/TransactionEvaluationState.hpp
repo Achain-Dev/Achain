@@ -7,6 +7,30 @@
 
 namespace thinkyoung {
     namespace blockchain {
+        enum TrxTypeEnum {
+            trx_type_undefined = 10,
+            trx_type_asset_transfer = 11,
+            trx_type_agent_get_pay = 12,
+            trx_type_register_account = 13,
+            trx_type_update_account = 14,
+            trx_type_create_asset = 15,
+            trx_type_update_asset = 16,
+
+            trx_type_register_contract = 21,
+            trx_type_upgrade_contract = 22,
+            trx_type_contract_recharge = 23,
+            trx_type_destroy_contract = 24,
+            trx_type_call_contract = 25,
+            trx_type_contract_transfer = 26,
+
+            trx_type_register_contract_result = 31,
+            trx_type_upgrade_contract_result = 32,
+            trx_type_contract_recharge_result = 33,
+            trx_type_destroy_contract_result = 34,
+            trx_type_call_contract_result = 35,
+            trx_type_contract_result = 36
+
+        };
 
         class PendingChainState;
 
@@ -25,30 +49,6 @@ namespace thinkyoung {
         class TransactionEvaluationState
         {
         public:
-            enum TrxTypeEnum {
-                trx_type_undefined = 10,
-                trx_type_asset_transfer = 11,
-                trx_type_agent_get_pay = 12,
-                trx_type_register_account = 13,
-                trx_type_update_account = 14,
-                trx_type_create_asset = 15,
-                trx_type_update_asset = 16,
-
-                trx_type_register_contract = 21,
-                trx_type_upgrade_contract = 22,
-                trx_type_contract_recharge = 23,
-                trx_type_destroy_contract = 24,
-                trx_type_call_contract = 25,
-                trx_type_contract_transfer = 26,
-
-                trx_type_register_contract_result = 31,
-                trx_type_upgrade_contract_result = 32,
-                trx_type_contract_recharge_result = 33,
-                trx_type_destroy_contract_result = 34,
-                trx_type_call_contract_result = 35,
-                trx_type_contract_result = 36
-
-            };
             TransactionEvaluationState(PendingChainState* current_state = nullptr);
 
             ~TransactionEvaluationState();
@@ -121,7 +121,8 @@ namespace thinkyoung {
 
 
             TransactionIdType                             trx_id;
-            TrxTypeEnum                                   trx_type;
+            fc::enum_type<fc::unsigned_int, TrxTypeEnum>  trx_type;
+            TrxTypeEnum                                   trx_typeenum;
             SignedTransaction                             trx;
             BalanceIdType                                 deposit_balance_id;
             BalanceIdType                                 withdraw_balance_id;
@@ -211,6 +212,27 @@ namespace thinkyoung {
 
     }
 } // thinkyoung::blockchain
+FC_REFLECT_ENUM(thinkyoung::blockchain::TrxTypeEnum,
+    (trx_type_undefined)
+    (trx_type_asset_transfer)
+    (trx_type_agent_get_pay)
+    (trx_type_register_account)
+    (trx_type_update_account)
+    (trx_type_create_asset)
+    (trx_type_update_asset)
+    (trx_type_register_contract)
+    (trx_type_upgrade_contract)
+    (trx_type_contract_recharge)
+    (trx_type_destroy_contract)
+    (trx_type_call_contract)
+    (trx_type_contract_transfer)
+    (trx_type_register_contract_result)
+    (trx_type_upgrade_contract_result)
+    (trx_type_contract_recharge_result)
+    (trx_type_destroy_contract_result)
+    (trx_type_call_contract_result)
+    (trx_type_contract_result)
+    )
 
 FC_REFLECT(thinkyoung::blockchain::TransactionEvaluationState,
     (trx)

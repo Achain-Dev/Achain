@@ -1,6 +1,7 @@
 #include <blockchain/AccountEntry.hpp>
 #include <blockchain/ChainInterface.hpp>
 #include <sstream>
+#include <string>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -212,6 +213,11 @@ namespace thinkyoung {
 
         std::string AccountEntry::compose_insert_sql()
         {
+            if (is_delegate() && (delegate_info->blocks_produced > 0) && (delegate_info->blocks_produced % 100 != 0))
+            {
+                return "NOEXECUTEMARK";
+
+            }
             std::string sqlstr_beging = "INSERT INTO account_entry VALUES ";
             std::string sqlstr_ending = " on duplicate key update ";
             sqlstr_ending += " last_update=values(last_update),";
@@ -241,8 +247,6 @@ namespace thinkyoung {
                 sqlss << delegate_info->total_paid << ",";
                 sqlss << delegate_info->blocks_produced << ",";
                 sqlss << delegate_info->blocks_missed << ",";
-                sqlss << "null,";
-                sqlss << "null ";
             }
             else
             {
@@ -251,11 +255,33 @@ namespace thinkyoung {
                 sqlss << "null,";
                 sqlss << "null,";
                 sqlss << "null,";
-                sqlss << "null,'";
-                sqlss << meta_data->type.value<<"','";
-                sqlss << meta_data->data.data() <<"'";
-
+                sqlss << "null,";
             }
+            if (meta_data.valid())
+            {
+                sqlss << "'";
+                sqlss << std::string(meta_data->type) << "',";
+
+                if (meta_data->data.size() > 0)
+                {
+                    sqlss << "'";
+                    for (auto datachar : meta_data->data)
+                    {
+                        sqlss << datachar;
+                    }
+                    sqlss << "'";
+                }
+                else
+                {
+                    sqlss << "null";
+                }
+            }
+            else
+            {
+                sqlss << "null,";
+                sqlss << "null";
+            }
+
             sqlss << ") ";
             sqlss << sqlstr_ending;
             return sqlss.str();

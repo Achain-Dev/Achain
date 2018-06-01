@@ -972,7 +972,7 @@ namespace thinkyoung {
 
         void TransactionEvaluationState::set_trx_amount()
         {
-            if (trx_type == TransactionEvaluationState::trx_type_asset_transfer)
+            if (trx_type == trx_type_asset_transfer)
             {
                 for (auto dpst : deposits)
                 {
@@ -980,7 +980,7 @@ namespace thinkyoung {
                     trx_amount /= 100000;   //precision
                 }
             }
-            else if (TransactionEvaluationState::trx_type_contract_transfer)
+            else if (trx_type == trx_type_contract_transfer)
             {
                 std::string amount_str;
                 //get trx_amount string
@@ -1005,7 +1005,7 @@ namespace thinkyoung {
         void TransactionEvaluationState::clear_afer_store()
         {
 
-            trx_type = TransactionEvaluationState::trx_type_undefined;
+            trx_type = trx_type_undefined;
             deposit_balance_id = Address();
             withdraw_balance_id = Address();
             transaction_fee = Asset();

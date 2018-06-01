@@ -57,6 +57,10 @@ namespace thinkyoung {
         }
         std::string SlotEntry::compose_insert_sql()
         {
+            if (0  == 0)
+            {
+                return "NOEXECUTEMARK";
+            }
             std::string sqlstr_beging = "INSERT INTO slot_entry VALUES ";
             std::string sqlstr_ending = " on duplicate key update ";
             sqlstr_ending += " delegate_id=values(delegate_id),";

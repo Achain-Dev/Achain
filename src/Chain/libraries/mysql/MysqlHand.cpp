@@ -32,7 +32,6 @@ MysqlHandSingleton * MysqlHandSingleton::get_instance()
 
 }
 
-
 MysqlHandSingleton::~MysqlHandSingleton()
 {
     free_connect();
@@ -45,9 +44,9 @@ bool MysqlHandSingleton::connect_to_mysql()
         mysql_database.c_str(), mysql_port, NULL, 0))
     {
         fc_ilog(fc::logger::get("mysql"), " user     : ${u}", ("u", mysql_user));
-        fc_ilog(fc::logger::get("mysql"), " host     : ${u}", ("u", mysql_user));
-        fc_ilog(fc::logger::get("mysql"), " port     : ${u}", ("u", mysql_user));
-        fc_ilog(fc::logger::get("mysql"), " database : ${u}", ("u", mysql_user));
+        fc_ilog(fc::logger::get("mysql"), " host     : ${h}", ("h", mysql_host));
+        fc_ilog(fc::logger::get("mysql"), " port     : ${p}", ("p", mysql_pswd));
+        fc_ilog(fc::logger::get("mysql"), " database : ${d}", ("d", mysql_database));
         fc_ilog(fc::logger::get("mysql"), " Database connected successfully!");
 
     }

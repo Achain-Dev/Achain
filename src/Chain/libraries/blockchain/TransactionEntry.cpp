@@ -73,8 +73,8 @@ namespace thinkyoung {
               set_trx_type();
               set_trx_amount();
               sqlss << trx_entry_sqlstr_beging << "('";
-              sqlss << trx.id().str() << "',";                              //trx_id   
-              sqlss << static_cast<uint32_t>(trx_type) << ",'";             //trx_type 
+              sqlss << trx.id().str() << "','";                              //trx_id   
+              sqlss << std::string(trx_type) << "','";             //trx_type 
               
               if (deposit_balance_id != Address())
               {
@@ -126,7 +126,7 @@ namespace thinkyoung {
               std::stringstream  opsss;
               for (auto op : operations)
               {
-                  opsss << op.type << ",";
+                  opsss << std::string(op.type) << ",";
               }
 
               sqlss << opsss.str()<<"','"; //operations
