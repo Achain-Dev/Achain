@@ -53,6 +53,9 @@ namespace thinkyoung {
 
             BlockMessage_v2(){}
 
+            BlockMessage_v2(const BlockMessage& message_1)
+                :block(message_1.block), block_id(message_1.block_id){}
+
 			BlockMessage_v2(const thinkyoung::blockchain::FullBlock_v2& blk)
                 :block(blk), block_id(blk.id()){}
 
@@ -64,7 +67,7 @@ namespace thinkyoung {
     }
 } // thinkyoung::client
 
-FC_REFLECT_ENUM(thinkyoung::client::MessageTypeEnum, (trx_message_type)(block_message_type)(batch_trx_message_type))
+FC_REFLECT_ENUM(thinkyoung::client::MessageTypeEnum, (trx_message_type)(block_message_type)(batch_trx_message_type)(block_message_type_v2))
 FC_REFLECT(thinkyoung::client::TrxMessage, (trx))
 FC_REFLECT(thinkyoung::client::BatchTrxMessage, (trx_vec))
 FC_REFLECT(thinkyoung::client::BlockMessage, (block)(block_id))

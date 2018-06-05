@@ -42,6 +42,7 @@ namespace thinkyoung {
             trx_message_type = 1000,
             block_message_type = 1001,
             batch_trx_message_type = 1002,
+            block_message_type_v2 = 1003,
             core_message_type_first = 5000,
             item_ids_inventory_message_type = 5001,
             blockchain_item_ids_inventory_message_type = 5002,
@@ -360,6 +361,7 @@ FC_REFLECT_ENUM(thinkyoung::net::CoreMessageTypeEnum,
     (trx_message_type)
     (block_message_type)
     (batch_trx_message_type)
+    (block_message_type_v2)
     (core_message_type_first)
     (item_ids_inventory_message_type)
     (blockchain_item_ids_inventory_message_type)

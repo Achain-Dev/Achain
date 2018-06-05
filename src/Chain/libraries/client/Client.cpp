@@ -1195,7 +1195,8 @@ namespace thinkyoung {
             
             //client supply this method for node , item could be block or trx
             bool ClientImpl::has_item(const thinkyoung::net::ItemId& id) {
-                if (id.item_type == block_message_type) {
+                if (id.item_type == block_message_type
+                    || id.item_type == block_message_type_v2) {
                     return _chain_db->is_known_block(id.item_hash);
                 }
                 
@@ -1324,7 +1325,8 @@ namespace thinkyoung {
                     uint32_t& remaining_item_count,
                     uint32_t limit /* = 2000 */) {
                 // limit = 20; // for testing
-                FC_ASSERT(item_type == thinkyoung::client::block_message_type);
+                FC_ASSERT(item_type == thinkyoung::client::block_message_type || item_type == thinkyoung::client::block_message_type_v2);
+
                 
                 // assume anything longer than our limit is an attacker (limit is currently ~26 items)
                 if (blockchain_synopsis.size() > _blockchain_synopsis_size_limit)
@@ -1411,7 +1413,7 @@ namespace thinkyoung {
             std::vector<thinkyoung::net::ItemHashType> ClientImpl::get_blockchain_synopsis(uint32_t item_type,
                     const thinkyoung::net::ItemHashType& reference_point /* = thinkyoung::net::item_hash_t() */,
                     uint32_t number_of_blocks_after_reference_point /* = 0 */) {
-                FC_ASSERT(item_type == thinkyoung::client::block_message_type);
+                FC_ASSERT(item_type == thinkyoung::client::block_message_type || item_type == thinkyoung::client::block_message_type_v2);
                 std::vector<thinkyoung::net::ItemHashType> synopsis;
                 uint32_t high_block_num = 0;
                 uint32_t non_fork_high_block_num = 0;
@@ -1485,7 +1487,7 @@ namespace thinkyoung {
                     // if it's <= non_fork_high_block_num, we grab it from the main blockchain;
                     // if it's not, we pull it from the fork history
                     if (low_block_num <= non_fork_high_block_num)
-                        synopsis.push_back(_chain_db->get_block(low_block_num).id());
+                        synopsis.push_back(_chain_db->get_block_v2(low_block_num).id());
                         
                     else
                         synopsis.push_back(history[low_block_num - non_fork_high_block_num - 1].block_id);
@@ -1499,12 +1501,20 @@ namespace thinkyoung {
             
             //client supply item for on_fetch_items_message from other peer.  item could be block or trx
             thinkyoung::net::Message ClientImpl::get_item(const thinkyoung::net::ItemId& id) {
-                if (id.item_type == block_message_type) {
-                    //   uint32_t block_number = _chain_db->get_block_num(id.item_hash);
-                    thinkyoung::client::BlockMessage block_message_to_send(_chain_db->get_block(id.item_hash));
-                    FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
-                    //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
-                    return block_message_to_send;
+                if (id.item_type == block_message_type || id.item_type == block_message_type_v2) {
+                    try{
+                        thinkyoung::client::BlockMessage block_message_to_send(_chain_db->get_block(id.item_hash));
+                        FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                        //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                        return block_message_to_send;
+                    }
+                    catch (...)
+                    {
+                        thinkyoung::client::BlockMessage_v2 block_message_to_send(_chain_db->get_block_v2(id.item_hash));
+                        FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                        //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                        return block_message_to_send;
+                    }
                 }
                 
                 if (id.item_type == trx_message_type) {
@@ -1648,11 +1658,11 @@ namespace thinkyoung {
                 // if we have no connections, don't warn about the head block too old --
                 //   we should already be warning about no connections
                 // if we're syncing, don't warn, we wouldn't be syncing if the head block weren't old
-                if (_chain_db->get_head_block().timestamp < thinkyoung::blockchain::now() - fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2) &&
+                if (_chain_db->get_head_block_time() < thinkyoung::blockchain::now() - fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2) &&
                         !_sync_mode &&
                         _p2p_node->get_connection_count() > 0 &&
                         _notifier)
-                    _notifier->notify_head_block_too_old(_chain_db->get_head_block().timestamp);
+                        _notifier->notify_head_block_too_old(_chain_db->get_head_block_time());
                     
                 if (!_blocks_too_old_monitor_done.canceled())
                     _blocks_too_old_monitor_done = fc::schedule([=]() {
@@ -2230,9 +2240,17 @@ namespace thinkyoung {
         
         void Client::connect_to_p2p_network() {
             thinkyoung::net::ItemId head_item_id;
-            head_item_id.item_type = thinkyoung::client::block_message_type;
             uint32_t last_block_num = my->_chain_db->get_head_block_num();
             
+            if (last_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+            {
+                head_item_id.item_type = thinkyoung::client::block_message_type;
+            }
+            else
+            {
+                head_item_id.item_type = thinkyoung::client::block_message_type_v2;
+            }
+
             if (last_block_num == (uint32_t)-1)
                 head_item_id.item_hash = thinkyoung::net::ItemHashType();
                 

@@ -661,8 +661,11 @@ namespace thinkyoung {
                 void process_backlog_of_sync_blocks();
                 void trigger_process_backlog_of_sync_blocks();
                 void process_block_during_sync(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage_v2& block_message, const MessageHashType& message_hash);
-                void process_block_during_normal_operation(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage_v2& block_message, const MessageHashType& message_hash);
+                
+                void process_block_during_normal_operation_v2(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage_v2& block_message, const MessageHashType& message_hash);
+                void process_block_during_normal_operation(PeerConnection* originating_peer, const thinkyoung::client::BlockMessage& block_message_to_process, const MessageHashType& message_hash);
                 void process_block_message(PeerConnection* originating_peer, const Message& message_to_process, const MessageHashType& message_hash);
+                void process_block_message_v2(PeerConnection* originating_peer, const Message& message_to_process, const MessageHashType& message_hash);
 
                 void process_ordinary_message(PeerConnection* originating_peer, const Message& message_to_process, const MessageHashType& message_hash);
 
@@ -982,6 +985,7 @@ namespace thinkyoung {
                     [&item_hash](const thinkyoung::client::BlockMessage_v2& message) { return message.block_id == item_hash; }) != _new_received_sync_items.end();;
             }
 
+#if 0
             void NodeImpl::request_sync_item_from_peer(const PeerConnectionPtr& peer, const ItemHashType& item_to_request)
             {
                 VERIFY_CORRECT_THREAD();
@@ -992,7 +996,7 @@ namespace thinkyoung {
                 //std::vector<item_hash_t> items_to_fetch;
                 peer->send_message(FetchItemsMessage(item_id_to_request.item_type, std::vector < ItemHashType > {item_id_to_request.item_hash}));
             }
-
+#endif
             void NodeImpl::request_sync_items_from_peer(const PeerConnectionPtr& peer, const std::vector<ItemHashType>& items_to_request)
             {
                 VERIFY_CORRECT_THREAD();
@@ -1730,7 +1734,7 @@ namespace thinkyoung {
                     process_block_message(originating_peer, received_message, message_hash);
                     break;
 				case thinkyoung::client::MessageTypeEnum::block_message_type_v2:
-                    process_block_message(originating_peer, received_message, message_hash);
+                    process_block_message_v2(originating_peer, received_message, message_hash);
                     break;
                 case CoreMessageTypeEnum::current_time_request_message_type:
                     on_current_time_request_message(originating_peer, received_message.as<CurrentTimeRequestMessage>());
@@ -2589,7 +2593,8 @@ namespace thinkyoung {
                             ("endpoint", originating_peer->get_remote_endpoint())
                             ("id", requested_message.id()));
                         reply_messages.push_back(requested_message);
-                        if (fetch_items_message_received.item_type == block_message_type)
+                        if (fetch_items_message_received.item_type == block_message_type
+                            || fetch_items_message_received.item_type == block_message_type_v2)
                             last_block_message_sent = requested_message;
                         continue;
                     }
@@ -2607,7 +2612,8 @@ namespace thinkyoung {
                             ("size", requested_message.size)
                             ("endpoint", originating_peer->get_remote_endpoint()));
                         reply_messages.push_back(requested_message);
-                        if (fetch_items_message_received.item_type == block_message_type)
+                        if (fetch_items_message_received.item_type == block_message_type
+                            || fetch_items_message_received.item_type == block_message_type_v2)
                             last_block_message_sent = requested_message;
                         continue;
                     }
@@ -2622,16 +2628,27 @@ namespace thinkyoung {
                 // if we sent them a block, update our entry of the last block they've seen accordingly
                 if (last_block_message_sent)
                 {
-                    thinkyoung::client::BlockMessage block = last_block_message_sent->as<thinkyoung::client::BlockMessage>();
-                    originating_peer->last_block_delegate_has_seen = block.block_id;
-                    originating_peer->last_block_number_delegate_has_seen = _delegate->get_block_number(block.block_id);
-                    originating_peer->last_block_time_delegate_has_seen = _delegate->get_block_time(block.block_id);
+                    try{
+                        thinkyoung::client::BlockMessage block = last_block_message_sent->as<thinkyoung::client::BlockMessage>();
+                        originating_peer->last_block_delegate_has_seen = block.block_id;
+                        originating_peer->last_block_number_delegate_has_seen = _delegate->get_block_number(block.block_id);
+                        originating_peer->last_block_time_delegate_has_seen = _delegate->get_block_time(block.block_id);
+                    }
+                    catch (...)
+                    {
+                        thinkyoung::client::BlockMessage_v2 block = last_block_message_sent->as<thinkyoung::client::BlockMessage_v2>();
+                        originating_peer->last_block_delegate_has_seen = block.block_id;
+                        originating_peer->last_block_number_delegate_has_seen = _delegate->get_block_number(block.block_id);
+                        originating_peer->last_block_time_delegate_has_seen = _delegate->get_block_time(block.block_id);
+                    }
                 }
 
                 for (const Message& reply : reply_messages)
                 {
                     if (reply.msg_type == block_message_type)
                         originating_peer->send_item(ItemId(block_message_type, reply.as<thinkyoung::client::BlockMessage>().block_id));
+                    else if (reply.msg_type == block_message_type_v2)
+                        originating_peer->send_item(ItemId(block_message_type_v2, reply.as<thinkyoung::client::BlockMessage_v2>().block_id));
                     else
                         originating_peer->send_message(reply);
                 }
@@ -3148,7 +3165,7 @@ namespace thinkyoung {
                 trigger_process_backlog_of_sync_blocks();
             }
 
-            void NodeImpl::process_block_during_normal_operation(PeerConnection* originating_peer,
+            void NodeImpl::process_block_during_normal_operation_v2(PeerConnection* originating_peer,
                 const thinkyoung::client::BlockMessage_v2& block_message_to_process,
                 const MessageHashType& message_hash)
             {
@@ -3260,8 +3277,190 @@ namespace thinkyoung {
                     wlog("disconnecting client ${endpoint} because it offered us the rejected block", ("endpoint", peer->get_remote_endpoint()));
                     disconnect_from_peer(peer.get(), disconnect_reason, true, *disconnect_exception);
                 }
-}
+            }
+
+            void NodeImpl::process_block_during_normal_operation(PeerConnection* originating_peer,
+                const thinkyoung::client::BlockMessage& block_message_to_process,
+                const MessageHashType& message_hash)
+            {
+                fc::time_point message_receive_time = fc::time_point::now();
+
+                dlog("received a block from peer ${endpoint}, passing it to client", ("endpoint", originating_peer->get_remote_endpoint()));
+                std::list<PeerConnectionPtr> peers_to_disconnect;
+                std::string disconnect_reason;
+                fc::oexception disconnect_exception;
+
+                try
+                {
+                    // we can get into an intersting situation near the end of synchronization.  We can be in
+                    // sync with one peer who is sending us the last block on the chain via a regular inventory
+                    // message, while at the same time still be synchronizing with a peer who is sending us the
+                    // block through the sync mechanism.  Further, we must request both blocks because
+                    // we don't know they're the same (for the peer in normal operation, it has only told us the
+                    // message id, for the peer in the sync case we only known the block_id).
+                    fc::time_point message_validated_time;
+                    if (std::find(_most_recent_blocks_accepted.begin(), _most_recent_blocks_accepted.end(),
+                        block_message_to_process.block_id) == _most_recent_blocks_accepted.end())
+                    {
+                        _delegate->handle_message(block_message_to_process, false);
+                        message_validated_time = fc::time_point::now();
+                        ilog("Successfully pushed block ${num} (id:${id})",
+                            ("num", block_message_to_process.block.block_num)
+                            ("id", block_message_to_process.block_id));
+                        _most_recent_blocks_accepted.push_back(block_message_to_process.block_id);
+                    }
+                    else
+                        dlog("Already received and accepted this block (presumably through sync mechanism), treating it as accepted");
+
+                    dlog("client validated the block, advertising it to other peers");
+
+                    ItemId block_message_item_id(thinkyoung::client::MessageTypeEnum::block_message_type, message_hash);
+                    uint32_t block_number = block_message_to_process.block.block_num;
+                    fc::time_point_sec block_time = block_message_to_process.block.timestamp;
+
+                    for (const PeerConnectionPtr& peer : _active_connections)
+                    {
+                        ASSERT_TASK_NOT_PREEMPTED(); // don't yield while iterating over _active_connections
+
+                        auto iter = peer->inventory_peer_advertised_to_us.find(block_message_item_id);
+                        if (iter != peer->inventory_peer_advertised_to_us.end())
+                        {
+                            // this peer offered us the item.  It will eventually expire from the peer's
+                            // inventory_peer_advertised_to_us list after some time has passed (currently 2 minutes).
+                            // For now, it will remain there, which will prevent us from offering the peer this
+                            // block back when we rebroadcast the block below
+                            peer->last_block_delegate_has_seen = block_message_to_process.block_id;
+                            peer->last_block_number_delegate_has_seen = block_number;
+                            peer->last_block_time_delegate_has_seen = block_time;
+                        }
+                        peer->clear_old_inventory();
+                    }
+                    MessagePropagationData propagation_data{ message_receive_time, message_validated_time, originating_peer->node_id };
+                    broadcast(block_message_to_process, propagation_data);
+                    _message_cache.block_accepted();
+
+                    if (is_hard_fork_block(block_number))
+                    {
+                        // we just pushed a hard fork block.  Find out if any of our peers are running clients
+                        // that will be unable to process future blocks
+                        for (const PeerConnectionPtr& peer : _active_connections)
+                        {
+                            if (peer->last_known_fork_block_number != 0)
+                            {
+                                uint32_t next_fork_block_number = get_next_known_hard_fork_block_number(peer->last_known_fork_block_number);
+                                if (next_fork_block_number != 0 &&
+                                    next_fork_block_number <= block_number)
+                                {
+                                    peers_to_disconnect.push_back(peer);
+#ifdef ENABLE_DEBUG_ULOGS
+                                    ulog("Disconnecting from peer because their version is too old.  Their version date: ${date}", ("date", peer->thinkyoung_git_revision_unix_timestamp));
+#endif
+                                }
+                            }
+                        }
+                        if (!peers_to_disconnect.empty())
+                        {
+                            std::ostringstream disconnect_reason_stream;
+                            disconnect_reason_stream << "You need to upgrade your client due to hard fork at block " << block_number;
+                            disconnect_reason = disconnect_reason_stream.str();
+                            disconnect_exception = fc::exception(FC_LOG_MESSAGE(error, "You need to upgrade your client due to hard fork at block ${block_number}",
+                                ("block_number", block_number)));
+                        }
+                    }
+                }
+                catch (const fc::canceled_exception&)
+                {
+                    throw;
+                }
+                catch (const fc::exception& e)
+                {
+                    // client rejected the block.  Disconnect the client and any other clients that offered us this block
+                    wlog("Failed to push block ${num} (id:${id}), client rejected block sent by peer",
+                        ("num", block_message_to_process.block.block_num)
+                        ("id", block_message_to_process.block_id));
+
+                    disconnect_exception = e;
+                    disconnect_reason = "You offered me a block that I have deemed to be invalid";
+                    for (const PeerConnectionPtr& peer : _active_connections)
+                        if (!peer->ids_of_items_to_get.empty() &&
+                            peer->ids_of_items_to_get.front() == block_message_to_process.block_id)
+                            peers_to_disconnect.push_back(peer);
+                }
+                for (const PeerConnectionPtr& peer : peers_to_disconnect)
+                {
+                    wlog("disconnecting client ${endpoint} because it offered us the rejected block", ("endpoint", peer->get_remote_endpoint()));
+                    disconnect_from_peer(peer.get(), disconnect_reason, true, *disconnect_exception);
+                }
+            }
+
             void NodeImpl::process_block_message(PeerConnection* originating_peer,
+                const Message& message_to_process,
+                const MessageHashType& message_hash)
+            {
+                VERIFY_CORRECT_THREAD();
+                // find out whether we requested this item while we were synchronizing or during normal operation
+                // (it's possible that we request an item during normal operation and then get kicked into sync
+                // mode before we receive and process the item.  In that case, we should process the item as a normal
+                // item to avoid confusing the sync code)
+
+                thinkyoung::client::BlockMessage block_message_to_process(message_to_process.as<thinkyoung::client::BlockMessage>());
+
+                if (block_message_to_process.block.block_size() > ALP_BLOCKCHAIN_MAX_BLOCK_SIZE)
+                {
+                    wlog("block message ${hash} size ${size} from peer ${endpoint}, block size $(blocksize) is out of the max block size range",
+                        ("hash", message_hash)
+                        ("size", message_to_process.size)
+                        ("endpoint", originating_peer->get_remote_endpoint())
+                        ("blocksize", block_message_to_process.block.block_size()));
+                    return;
+                }
+
+                auto item_iter = originating_peer->items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type, message_hash));
+                if (item_iter != originating_peer->items_requested_from_peer.end())
+                {
+                    originating_peer->items_requested_from_peer.erase(item_iter);
+                    process_block_during_normal_operation(originating_peer, block_message_to_process, message_hash);
+                    if (originating_peer->idle())
+                        trigger_fetch_items_loop();
+                    return;
+                }
+                else
+                {
+                    // not during normal operation.  see if we requested it during sync
+                    auto sync_item_iter = originating_peer->sync_items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type,
+                        block_message_to_process.block_id));
+                    if (sync_item_iter != originating_peer->sync_items_requested_from_peer.end())
+                    {
+                        originating_peer->sync_items_requested_from_peer.erase(sync_item_iter);
+                        _active_sync_requests.erase(block_message_to_process.block_id);
+                        process_block_during_sync(originating_peer, block_message_to_process, message_hash);
+                        if (originating_peer->idle())
+                        {
+                            // we have finished fetching a batch of items, so we either need to grab another batch of items
+                            // or we need to get another list of item ids.
+                            if (originating_peer->number_of_unfetched_item_ids > 0 &&
+                                originating_peer->ids_of_items_to_get.size() < ALP_NET_MIN_BLOCK_IDS_TO_PREFETCH)
+                                fetch_next_batch_of_item_ids_from_peer(originating_peer);
+                            else
+                                trigger_fetch_sync_items_loop();
+                        }
+                        return;
+                    }
+                }
+
+                // if we get here, we didn't request the message, we must have a misbehaving peer
+                wlog("received a block ${block_id} I didn't ask for from peer ${endpoint}, disconnecting from peer",
+                    ("endpoint", originating_peer->get_remote_endpoint())
+                    ("block_id", block_message_to_process.block_id));
+                fc::exception detailed_error(FC_LOG_MESSAGE(error, "You sent me a block that I didn't ask for, block_id: ${block_id}",
+                    ("block_id", block_message_to_process.block_id)
+                    ("thinkyoung_git_revision_sha", originating_peer->thinkyoung_git_revision_sha)
+                    ("thinkyoung_git_revision_unix_timestamp", originating_peer->thinkyoung_git_revision_unix_timestamp)
+                    ("fc_git_revision_sha", originating_peer->fc_git_revision_sha)
+                    ("fc_git_revision_unix_timestamp", originating_peer->fc_git_revision_unix_timestamp)));
+                disconnect_from_peer(originating_peer, "You sent me a block that I didn't ask for", true, detailed_error);
+            }
+            void NodeImpl::process_block_message_v2(PeerConnection* originating_peer,
                 const Message& message_to_process,
                 const MessageHashType& message_hash)
             {
@@ -3288,7 +3487,7 @@ namespace thinkyoung {
                 if (item_iter != originating_peer->items_requested_from_peer.end())
                 {
                     originating_peer->items_requested_from_peer.erase(item_iter);
-                    process_block_during_normal_operation(originating_peer, block_message_to_process, message_hash);
+                    process_block_during_normal_operation_v2(originating_peer, block_message_to_process, message_hash);
                     if (originating_peer->idle())
                         trigger_fetch_items_loop();
                     return;
@@ -3296,7 +3495,7 @@ namespace thinkyoung {
                 else
                 {
                     // not during normal operation.  see if we requested it during sync
-                    auto sync_item_iter = originating_peer->sync_items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type_v2,
+                    auto sync_item_iter = originating_peer->sync_items_requested_from_peer.find(ItemId(thinkyoung::client::block_message_type,
                         block_message_to_process.block_id));
                     if (sync_item_iter != originating_peer->sync_items_requested_from_peer.end())
                     {

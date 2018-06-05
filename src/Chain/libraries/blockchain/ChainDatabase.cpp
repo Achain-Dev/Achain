@@ -2420,6 +2420,16 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
+
+        fc::time_point_sec ChainDatabase::get_head_block_time()const {
+            try {
+                if (my->_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    return my->_head_block_header.timestamp;
+                return my->_head_block_header_v2.timestamp;
+            }
+
+            FC_CAPTURE_AND_RETHROW()
+        }
         
         uint32_t ChainDatabase::find_block_num(fc::time_point_sec &time)const {
             try {

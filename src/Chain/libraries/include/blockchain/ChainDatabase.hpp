@@ -466,6 +466,9 @@ namespace thinkyoung {
             *
             * @return DigestBlock_v2
             */
+
+            fc::time_point_sec get_head_block_time()const;
+
             DigestBlock_v2                get_block_digest_v2(const BlockIdType&)const;
             
             /**  Get DigestBlock by block_num, copy DigestBlock from FullBlock
