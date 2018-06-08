@@ -2906,6 +2906,7 @@ namespace thinkyoung {
                 FC_THROW_EXCEPTION(thinkyoung::blockchain::invalid_contract_filename, "contract bytecode file name should end with .gpc");
             }
             
+            FC_ASSERT(init_limit < 20000, "init_limit should less than 20000");
             FC_ASSERT(init_limit > 0, "init_limit should greater than 0");
             FC_ASSERT(is_open(), "Wallet not open!");
             FC_ASSERT(is_unlocked(), "Wallet not unlock!");
@@ -2999,6 +3000,7 @@ namespace thinkyoung {
             if (CallContractOperation::is_function_not_allow_call(method)) {
                 FC_CAPTURE_AND_THROW(method_can_not_be_called_explicitly, (method)("method can't be called explicitly !"));
             }
+            
             FC_ASSERT(cost_limit < 20000, "cost_limit should less than 20000");
             FC_ASSERT(cost_limit > 0, "cost_limit should greater than 0");
             FC_ASSERT(is_open(), "Wallet not open!");
@@ -4200,7 +4202,6 @@ namespace thinkyoung {
                 FC_ASSERT(asset_name.size() <= ALP_BLOCKCHAIN_MAX_SYMBOL_NAME_SIZE, "Asset name too big");
                 FC_ASSERT(description.size() <= ALP_BLOCKCHAIN_MAX_SYMBOL_DES_SIZE, "Asset description too big");
                 FC_ASSERT(!my->_blockchain->is_valid_symbol(symbol)); // not yet registered
-
                 SignedTransaction     trx;
                 unordered_set<Address> required_signatures;
                 trx.expiration = blockchain::now() + get_transaction_expiration();
@@ -4226,7 +4227,6 @@ namespace thinkyoung {
                 
                 if (ipos != string::npos) {
                     FC_ASSERT(false, "Asset supply must be integer");
-
 #if 0
                     string str = max_share_supply.substr(ipos + 1);
                     int64_t precision_input = static_cast<int64_t>(pow(10, str.size()));
