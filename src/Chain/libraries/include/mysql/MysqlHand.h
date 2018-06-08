@@ -3,13 +3,14 @@
 #include<string>
 #include<memory>
 #include"mysql.h"
+#include<future>
 
 
-class MysqlHandSingleton
+class MysqlHand
 {
 private:
-    MysqlHandSingleton();
-    static MysqlHandSingleton * _instance_ptr; // must be initialized before use
+    MysqlHand();
+    static MysqlHand * _instance_ptr; // must be initialized before use
 
     class Garbo//delete ptr
     {
@@ -18,9 +19,10 @@ private:
     static Garbo garbo;
 public:
 
-    static MysqlHandSingleton * get_instance();
+    static MysqlHand * get_instance();
+    static MysqlHand * get_instance(bool overload);
 
-    ~MysqlHandSingleton();
+    ~MysqlHand();
     bool connect_to_mysql();
     void free_connect();
     bool run_insert_sql(std::string&  sqlstr);

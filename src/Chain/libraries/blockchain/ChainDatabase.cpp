@@ -1272,7 +1272,7 @@ namespace thinkyoung {
             void  ChainDatabaseImpl::write_to_mysqls(T en)
             {
                 //std::string sqlstr = en.compose_insert_sql();
-                if (!MysqlHandSingleton::get_instance()->run_insert_sql( en.compose_insert_sql()) )
+                if (!MysqlHand::get_instance()->run_insert_sql( en.compose_insert_sql()) )
                 {
                     assert(false);
                 }

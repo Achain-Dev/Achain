@@ -3,20 +3,20 @@
 #include <assert.h>
 #include <sstream>
 
-#define myssqllogger "mysql"
+//#define myssqllogger "mysql"
 
-MysqlHandSingleton * MysqlHandSingleton::_instance_ptr = nullptr;
+MysqlHand * MysqlHand::_instance_ptr = nullptr;
 //static private member must be initialized before using;
 
-MysqlHandSingleton::Garbo::~Garbo()
+MysqlHand::Garbo::~Garbo()
 {
     {
-        if (MysqlHandSingleton::_instance_ptr)
-            delete MysqlHandSingleton::_instance_ptr;
+        if (MysqlHand::_instance_ptr)
+            delete MysqlHand::_instance_ptr;
     }
 }
 
-MysqlHandSingleton::MysqlHandSingleton()
+MysqlHand::MysqlHand()
 {
     if (!connect_to_mysql())
     {
@@ -24,20 +24,25 @@ MysqlHandSingleton::MysqlHandSingleton()
     }
 }
 
-MysqlHandSingleton * MysqlHandSingleton::get_instance()
+MysqlHand * MysqlHand::get_instance()
 {
     if (!_instance_ptr)
-        _instance_ptr = new MysqlHandSingleton();
+        _instance_ptr = new MysqlHand();
     return _instance_ptr;
 
 }
 
-MysqlHandSingleton::~MysqlHandSingleton()
+MysqlHand * MysqlHand::get_instance( bool overload)
+{
+    return nullptr;
+}
+
+MysqlHand::~MysqlHand()
 {
     free_connect();
 }
 
-bool MysqlHandSingleton::connect_to_mysql()
+bool MysqlHand::connect_to_mysql()
 {
     mysql_init(&myConnect);
     if (mysql_real_connect(&myConnect, mysql_host.c_str(), mysql_user.c_str(), mysql_pswd.c_str(),
@@ -60,7 +65,7 @@ bool MysqlHandSingleton::connect_to_mysql()
     return true;
 }
 
-void MysqlHandSingleton::free_connect()
+void MysqlHand::free_connect()
 {
     if (result)
     {
@@ -72,7 +77,7 @@ void MysqlHandSingleton::free_connect()
     }
 }
 
-bool MysqlHandSingleton::run_insert_sql(std::string&  sql_str)
+bool MysqlHand::run_insert_sql(std::string&  sql_str)
 {
 
     if (sql_str == "NOEXECUTEMARK")
@@ -97,7 +102,7 @@ bool MysqlHandSingleton::run_insert_sql(std::string&  sql_str)
     }
 }
 
-long MysqlHandSingleton::max_block_num()
+long MysqlHand::max_block_num()
 {
     std::string querySqlStr;
     uint64_t maxBlockNum;
