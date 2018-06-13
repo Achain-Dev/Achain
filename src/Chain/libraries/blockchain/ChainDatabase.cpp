@@ -2175,9 +2175,7 @@ namespace thinkyoung {
                 
                 TransactionEvaluationStatePtr eval_state = evaluate_transaction(trx, relay_fee, contract_vm_exec, false, cache);
                 const ShareType fees = eval_state->get_fees() + eval_state->alt_fees_paid.amount;
-                
-                //if( fees < my->_relay_fee )
-                //   FC_CAPTURE_AND_THROW( insufficient_relay_fee, (fees)(my->_relay_fee) );
+
                 /*
                 代理在收到块的时候在对合约调用结果进行校验
                 但是这里并不会在验块的时候被调用，因此并不需要对合约调用交易产生的结果与交易中携带的结果进行对比

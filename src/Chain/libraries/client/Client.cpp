@@ -782,6 +782,7 @@ namespace thinkyoung {
                     "local_pending");
                 }
             }
+
             void ClientImpl::fork_update_time_loop() {
                 uint32_t fork_num = _chain_db->get_fork_list_num();
                 uint32_t fork_pre_num = _chain_db->get_forkdb_num();
@@ -791,6 +792,7 @@ namespace thinkyoung {
                     _chain_db->set_forkdb_num(fork_num);
                 }
             }
+
             thinkyoung::blockchain::PublicKeyType ClientImpl::wallet_get_account_owner_publickey(const std::string& account_name) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
@@ -798,6 +800,7 @@ namespace thinkyoung {
                     
                 return _wallet->get_owner_public_key(account_name);
             }
+  
             void ClientImpl::cancel_rebroadcast_pending_loop() {
                 try {
                     _rebroadcast_pending_loop_done.cancel_and_wait(__FUNCTION__);
