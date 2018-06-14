@@ -1971,8 +1971,13 @@ namespace thinkyoung {
             }
         }
         
-        vector<WalletAccountEntry> Wallet::get_my_delegates(uint32_t delegates_to_retrieve)const {
+        vector<WalletAccountEntry> Wallet::get_my_delegates(uint32_t delegates_to_retrieve, bool skip_check)const {
+
+			if (!skip_check)
+			{
             FC_ASSERT(is_open(), "Wallet not open!");
+			}
+
             vector<WalletAccountEntry> delegate_entrys;
             const auto& account_entrys = list_my_accounts();
             
@@ -2026,7 +2031,7 @@ namespace thinkyoung {
                 //get the head_block, find its maker
                 SignedBlockHeader header = my->_blockchain->get_head_block();
 
-                //  这里是否需要优化？  在块里携带本次产块代理的index？
+                //  这里是否需要优化？  在块里携带本次产块代理的index�?
                 for (int i = 0; i < active_len; i++)
                 {
                     if (header.delegate_signature[0].dele_name ==
@@ -2164,6 +2169,8 @@ namespace thinkyoung {
         uint32_t Wallet::delegate_sign_block(SignedBlockHeader_v2* p_header, bool is_from_local)const
         {
             FC_ASSERT(p_header);
+            uint32_t iter_i = 0;
+            uint32_t iter_j = 0;
             uint32_t sign_count = p_header->delegate_signature.size();
             PublicKeyType public_signing_key;
             PrivateKeyType private_signing_key;
@@ -2177,7 +2184,7 @@ namespace thinkyoung {
                 return ALP_BLOCKCHAIN_SIGN_COUNT_MAX;
 
             //get active delegates from this wallet, if has no active delegate, return 0
-            vector<WalletAccountEntry> active_delegates = get_my_delegates(active_delegate_status);
+            vector<WalletAccountEntry> active_delegates = get_my_delegates(active_delegate_status, true);
             uint32_t deleg_count = active_delegates.size();
             if (deleg_count == 0)
                 return sign_count;
@@ -2205,11 +2212,19 @@ namespace thinkyoung {
             else
             {
                 //Check to see if you have signed this block 
-                for (int i = 0; i < deleg_count; i++)
+                //check 1: if the count of sings is bigger than the count of my delegates,then check
+                if (sign_count > deleg_count)
                 {
-                    if (p_header->delegate_signature[0].dele_name == active_delegates[i].name)
+                    for (iter_i = 0; iter_i < deleg_count; iter_i++)
                     {
-                        return sign_count;
+                        for (iter_j = 0; iter_j < sign_count; iter_j++)
+                        {
+                            //if my delegate has signed this block, then break
+                            if (p_header->delegate_signature[iter_j].dele_name == active_delegates[iter_i].name)
+                            {
+                                return sign_count;
+                            }
+                        }
                     }
                 }
 

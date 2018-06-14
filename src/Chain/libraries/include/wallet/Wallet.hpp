@@ -682,7 +682,7 @@ namespace thinkyoung {
             *
             * @return vector<WalletAccountEntry>
             */
-            vector<WalletAccountEntry> get_my_delegates(uint32_t delegates_to_retrieve = any_delegate_status)const;
+            vector<WalletAccountEntry> get_my_delegates(uint32_t delegates_to_retrieve = any_delegate_status, bool skip_check = false)const;
             
             /**  get_next_producible_block_timestamp
             *

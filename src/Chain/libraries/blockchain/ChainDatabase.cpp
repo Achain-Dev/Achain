@@ -204,9 +204,21 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::clear_invalidation_of_future_blocks() {
                 for (auto block_id_itr = _revalidatable_future_blocks_db.begin(); block_id_itr.valid();) {
+
+                    fc::time_point_sec block_time;
+					try{
                     auto full_data = _block_id_to_full_block.fetch(block_id_itr.key());
+                    	
+                    	block_time = fc::time_point_sec(full_data.timestamp);
+					}
+					catch(...)
+					{
+						auto full_data = _block_id_to_full_block_v2.fetch(block_id_itr.key());
+                    	block_time = fc::time_point_sec(full_data.timestamp);
+					}
+
                     fc::time_point_sec now = blockchain::now();
-                    fc::time_point_sec block_time = fc::time_point_sec(full_data.timestamp);
+                    
                     
                     //int32_t aaa = (now - block_time).to_seconds();
                     if ((now - block_time).to_seconds() > (2 * 24 * 60 * 60)) { //[CN]时间超过2天就删除[CN]
@@ -529,13 +541,16 @@ namespace thinkyoung {
                     	_block_id_to_full_block_v2.store(block_id, block_data);
 
 						if (self->get_statistics_enabled()) {
-	                        BlockEntry_v2 entry_v2;
-	                        DigestBlock_v2& temp = entry_v2;
-	                        temp = DigestBlock_v2(block_data);
-	                        entry_v2.id = block_id;
-	                        entry_v2.block_size = block_data.block_size();
-	                        entry_v2.latency = blockchain::now() - block_data.timestamp;
-	                        _block_id_to_block_entry_db_v2.store(block_id, entry_v2);
+                            if (block_data.delegate_signature.size() >= ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+                            {
+	                            BlockEntry_v2 entry_v2;
+	                            DigestBlock_v2& temp = entry_v2;
+	                            temp = DigestBlock_v2(block_data);
+	                            entry_v2.id = block_id;
+	                            entry_v2.block_size = block_data.block_size();
+	                            entry_v2.latency = blockchain::now() - block_data.timestamp;
+	                            _block_id_to_block_entry_db_v2.store(block_id, entry_v2);
+                    	    }
                     	}
 
                         prev_blockid = block_data.previous;

@@ -776,7 +776,7 @@ namespace thinkyoung {
 						{
                             FullBlock next_block = _chain_db->generate_block(*next_block_time, _delegate_config);
                             _wallet->sign_block(next_block, delegate_entry);
-                            on_new_block(next_block, next_block.id(), false);
+                            on_new_block(next_block, next_block.id(), false, true);
 
                             _p2p_node->broadcast(BlockMessage(next_block));
 
@@ -786,7 +786,7 @@ namespace thinkyoung {
 						{
                             FullBlock_v2 next_block_v2 = _chain_db->generate_block_v2(*next_block_time, pos, _delegate_config);
                             _wallet->sign_block_v2(next_block_v2, delegate_entry);
-                            on_new_block(next_block_v2, next_block_v2.id(), false);
+                            on_new_block(next_block_v2, next_block_v2.id(), false, true);
 
                             _p2p_node->broadcast(BlockMessage_v2(next_block_v2));
 
@@ -1047,7 +1047,7 @@ namespace thinkyoung {
             ///////////////////////////////////////////////////////
             BlockForkData ClientImpl::on_new_block(const FullBlock_v2& block,
                                                    const BlockIdType& block_id,
-                                                   bool sync_mode) {
+                                                   bool sync_mode, bool is_from_local) {
                 try {
 					const uint32_t block_num = block.block_num;
                     // delay until we want to accept the block
@@ -1079,10 +1079,36 @@ namespace thinkyoung {
                         } else {
 							if (block_num >= ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
 							{
-								//check the count of signature
-	                            int sign_count = _wallet->delegate_sign_block((SignedBlockHeader_v2*)(&block), false);
+                                //use FullBlock.id store unsign block
+                                FullBlock unsign_block = block;
+                                const BlockIdType unsign_id = unsign_block.id();
+
+								//if the block from network, then sign this block by my delegates
+                                if (!is_from_local)
+                                {
+                                	//delete the temp block first
+                                	try{
+                                        get_unsign_block(unsign_id, 1);
+                                        remove_unsign_block(unsign_id, 1);
+									}
+                                	catch (fc::exception)
+                                	{}
+                                    _wallet->delegate_sign_block((SignedBlockHeader_v2*)(&block), is_from_local);
+                                }
+
+
+                                if (!is_from_local)
+                                    _p2p_node->broadcast(BlockMessage_v2(block));
+
+								//get the count of signs
+			                    uint32_t sign_count = block.delegate_signature.size();
+
+								//if the count of sign less than ALP_BLOCKCHAIN_SIGN_COUNT_MAX
 	                            if (sign_count < ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+			                    {
+                                    store_unsign_block(unsign_id, block_id, block);
 	                                return BlockForkData();
+							    }
 							}
 
 							BlockForkData result = _chain_db->push_block(block);
@@ -1256,7 +1282,7 @@ namespace thinkyoung {
                             
                             ilog("CLIENT: just received block ${id}", ("id", block_message_to_handle.block.id()));
                             thinkyoung::blockchain::BlockIdType old_head_block = _chain_db->get_head_block_id();
-                            BlockForkData fork_data = on_new_block(block_message_to_handle.block, block_message_to_handle.block_id, sync_mode);
+                            BlockForkData fork_data = on_new_block(block_message_to_handle.block, block_message_to_handle.block_id, sync_mode, false);
                             return fork_data.is_included ^ (block_message_to_handle.block.previous == old_head_block);  // TODO is this right?
                         }
 
@@ -1272,7 +1298,7 @@ namespace thinkyoung {
                                      ("blocksize", block_message_to_handle_v2.block.block_size()));
                                 return false;
                             }
-							BlockForkData fork_data = on_new_block(block_message_to_handle_v2.block, block_message_to_handle_v2.block_id, sync_mode);
+							BlockForkData fork_data = on_new_block(block_message_to_handle_v2.block, block_message_to_handle_v2.block_id, sync_mode, false);
 							thinkyoung::blockchain::BlockIdType old_head_block = _chain_db->get_head_block_id();
 							return fork_data.is_included ^ (block_message_to_handle_v2.block.previous == old_head_block);  // TODO is this right?
 						}
@@ -1501,19 +1527,30 @@ namespace thinkyoung {
             
             //client supply item for on_fetch_items_message from other peer.  item could be block or trx
             thinkyoung::net::Message ClientImpl::get_item(const thinkyoung::net::ItemId& id) {
-                if (id.item_type == block_message_type || id.item_type == block_message_type_v2) {
+                if (id.item_type == block_message_type || id.item_type == block_message_type_v2)
+                {
                     try{
                         thinkyoung::client::BlockMessage block_message_to_send(_chain_db->get_block(id.item_hash));
                         FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
                         //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
                         return block_message_to_send;
                     }
-                    catch (...)
+                    catch (fc::exception)
                     {
-                        thinkyoung::client::BlockMessage_v2 block_message_to_send(_chain_db->get_block_v2(id.item_hash));
-                        FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
-                        //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
-                        return block_message_to_send;
+                        try
+                        {
+                            thinkyoung::client::BlockMessage_v2 block_message_to_send(get_unsign_block(id.item_hash, 2));
+                            FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                            //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                            return block_message_to_send;
+                        }
+                        catch (fc::exception)
+                        {
+                            thinkyoung::client::BlockMessage_v2 block_message_to_send(_chain_db->get_block_v2(id.item_hash));
+                            FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                            //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                            return block_message_to_send;
+                        }
                     }
                 }
                 
@@ -1610,7 +1647,17 @@ namespace thinkyoung {
             }
             
             uint32_t ClientImpl::get_block_number(const thinkyoung::net::ItemHashType& block_id) {
-                return _chain_db->get_block_num(block_id);
+
+				try{
+                    return _chain_db->get_block_num(block_id);
+                }
+				catch(...)
+				{
+					auto block = get_unsign_block(block_id, 2);
+
+                    return block.block_num;
+				}
+                
             }
             
             fc::time_point_sec ClientImpl::get_block_time(const thinkyoung::net::ItemHashType& block_id) {
@@ -1627,8 +1674,15 @@ namespace thinkyoung {
                     throw;
                     
                 } catch (const fc::exception&) {
+
+				    try{
+                        return get_unsign_block(block_id, 2).timestamp;
+                    }
+				    catch(...)
+                    {
                     return fc::time_point_sec::min();
                 }
+            }
             }
             
             fc::time_point_sec ClientImpl::get_blockchain_now() {
@@ -1680,6 +1734,60 @@ namespace thinkyoung {
                     wlog("Unexpected exception thrown while canceling blocks_too_old_monitor(): ${e}", ("e", e.to_detail_string()));
                 }
             }
+
+			void ClientImpl::store_unsign_block(const BlockIdType& block_id1, const BlockIdType& block_id2, const FullBlock_v2& block_data) {
+	            try {
+					_unsign_blocks.insert(unsign_block(block_id1, block_id2, block_data));
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id1))
+	        }
+
+	        void ClientImpl::remove_unsign_block(const BlockIdType& block_id, uint32_t mode) {
+	            try {
+	                // first of all store this block at the given block number
+	                if (mode == 1)
+	                {
+	                	Id1Index &idex = _unsign_blocks.get<mode1_index>();
+	                	idex.erase(idex.find(block_id));
+	                }
+					else
+					{
+						Id2Index &idex = _unsign_blocks.get<mode2_index>();
+						idex.erase(idex.find(block_id));
+					}
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id))
+	        }
+
+	        const FullBlock_v2 ClientImpl::get_unsign_block(const BlockIdType& block_id, uint32_t mode) {
+	            try {
+	                // first of all store this block at the given block number
+	                if (mode == 1)
+	                {
+                        Id1Index &iter1 = _unsign_blocks.get<mode1_index>();
+                        auto block_iter = iter1.find(block_id);
+
+                        if (block_iter != iter1.end())
+						{
+                            return block_iter->block;
+						}
+	                }
+					else
+					{
+                        Id2Index &iter2 = _unsign_blocks.get<mode2_index>();
+                        auto block_iter = iter2.find(block_id);
+
+                        if (block_iter != iter2.end())
+                        {
+                            return block_iter->block;
+                        }
+					}
+	                
+	                throw "no unsign block";
+
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id))
+	        }
             
         } // end namespace detail
         
