@@ -2628,13 +2628,14 @@ namespace thinkyoung {
                 // if we sent them a block, update our entry of the last block they've seen accordingly
                 if (last_block_message_sent)
                 {
-                    try{
+                    if (last_block_message_sent->msg_type == block_message_type)
+                    {
                         thinkyoung::client::BlockMessage block = last_block_message_sent->as<thinkyoung::client::BlockMessage>();
                         originating_peer->last_block_delegate_has_seen = block.block_id;
                         originating_peer->last_block_number_delegate_has_seen = _delegate->get_block_number(block.block_id);
                         originating_peer->last_block_time_delegate_has_seen = _delegate->get_block_time(block.block_id);
                     }
-                    catch (...)
+                    else
                     {
                         thinkyoung::client::BlockMessage_v2 block = last_block_message_sent->as<thinkyoung::client::BlockMessage_v2>();
                         originating_peer->last_block_delegate_has_seen = block.block_id;
