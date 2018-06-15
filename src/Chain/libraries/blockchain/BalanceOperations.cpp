@@ -83,12 +83,14 @@ namespace thinkyoung {
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
                 
+#if 0
                 if (asset_rec->is_restricted()) {
                     for (const auto& owner : cur_entry->owners()) {
                         // TODO
                         //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
                     }
                 }
+#endif
                 
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
@@ -287,6 +289,7 @@ namespace thinkyoung {
             FC_CAPTURE_AND_RETHROW((*this));
         }
         
+#if 0
         void UpdateBalanceVoteOperation::evaluate(TransactionEvaluationState& eval_state)const {
             try {
                 FC_ASSERT(false, "Disable UpdateBalanceVoteOperation!");
@@ -385,6 +388,7 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((*this))
         }
+#endif
         
         BalanceIdType DepositContractOperation::balance_id()const {
             return condition.get_address();
@@ -439,17 +443,14 @@ namespace thinkyoung {
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
                 
-                // if( eval_state._current_state->get_head_block_num() >= ALP_V0_6_0_FORK_BLOCK_NUM )
-                //{
-                //FC_ASSERT( !eval_state._current_state->is_fraudulent_asset( *asset_rec ) );
-                //}
+#if 0
                 if (asset_rec->is_restricted()) {
                     for (const auto& owner : cur_entry->owners()) {
                         // TODO
                         //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
                     }
                 }
-                
+#endif
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
             
