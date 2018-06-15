@@ -1,6 +1,7 @@
 #ifndef lremote_debugger_h
 #define lremote_debugger_h
 
+#include <boost/asio.hpp>
 #include <glua/lprefix.h>
 #include <string>
 #include <vector>
@@ -8,7 +9,6 @@
 #include <memory>
 #include <thread>
 
-#include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 namespace glua
