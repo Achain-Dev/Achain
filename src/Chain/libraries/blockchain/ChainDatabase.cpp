@@ -2249,7 +2249,7 @@ namespace thinkyoung {
 				try{
 					return get_block_v2(block_id);
 				}
-				catch(...)
+				catch(fc::exception&)
 				{
 					return get_block(block_id);
 				}
@@ -2570,7 +2570,7 @@ namespace thinkyoung {
                         FullBlock longest_fork_block = my->_block_id_to_full_block.fetch(longest_fork.first);
 						highest_unchecked_block_number = longest_fork_block.block_num;
                     }
-					catch(...)
+					catch(fc::exception&)
 					{
 						FullBlock_v2 longest_fork_block_v2 = my->_block_id_to_full_block_v2.fetch(longest_fork.first);
 						highest_unchecked_block_number = longest_fork_block_v2.block_num;
@@ -3146,7 +3146,7 @@ namespace thinkyoung {
                 try{
                     return get_block(block_id).block_num;
                 }
-                catch (...)
+                catch (fc::exception&)
                 {
                     return get_block_v2(block_id).block_num;
                 }
