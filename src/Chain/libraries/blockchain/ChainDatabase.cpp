@@ -421,6 +421,7 @@ namespace thinkyoung {
             std::pair<BlockIdType, BlockForkData> ChainDatabaseImpl::recursive_mark_as_linked(const std::unordered_set<BlockIdType>& ids) {
                 BlockForkData longest_fork;
                 uint32_t highest_block_num = 0;
+                uint32_t next_block_num = 0;
                 BlockIdType last_block_id;
                 std::unordered_set<BlockIdType> next_ids = ids;
                 
@@ -436,10 +437,22 @@ namespace thinkyoung {
                         //ilog( "store: ${id} => ${data}", ("id",next_id)("data",entry) );
                         _fork_db.store(next_id, entry);
                         //keep one of the block ids of the current block number being processed (simplify this code)
-                        const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+                        //const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+                        try{
+                            const FullBlock_v2& next_block = _block_id_to_full_block_v2.fetch(next_id);
+
+                            next_block_num = next_block.block_num;
+                        }
+                        catch (fc::exception)
+                        {
+                            const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+
+                            next_block_num = next_block.block_num;
+                        }
                         
-                        if (next_block.block_num > highest_block_num) {
-                            highest_block_num = next_block.block_num;
+                        
+                        if (next_block_num > highest_block_num) {
+                            highest_block_num = next_block_num;
                             last_block_id = next_id;
                             longest_fork = entry;
                         }
