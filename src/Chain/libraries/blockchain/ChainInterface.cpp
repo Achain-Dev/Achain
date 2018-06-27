@@ -464,7 +464,7 @@ namespace thinkyoung {
 
         int ChainInterface::get_limit(AssetIdType id, ShareType amount)
         {
-            //to do  根据设定设置指定资产指定amount对应的limit值
+            //the limit will depend on the asset .
             if (id != 0)
             {
                 return 0;
@@ -487,7 +487,6 @@ namespace thinkyoung {
 
         Asset ChainInterface::get_contract_register_fee(const Code& code) const
         {
-            //FC_ASSERT(0);//todo 修改成正确的规则
             //vector<string>::const_iterator  abit = code.abi.begin();
             //vector<string>::const_iterator  abit_end = code.abi.end();
             //int length = 0;
@@ -670,16 +669,6 @@ namespace thinkyoung {
             if (description.length() == 0 || description.length() > CONTRACT_MAX_DESCRIPTION_SIZE)
                 return false;
 
-            /*
-			int length = description.length();
-			const char* c_str = description.c_str();
-			for (int i = 0;i < length;i++)
-			{
-				if (c_str[i]<32||c_str[i]>126)
-					return false;
-			}
-            */
-
             return true;
         }
         // contract account -> common account (contract balance)
@@ -715,26 +704,6 @@ namespace thinkyoung {
                 Asset asset_to_transfer(amount_to_transfer, asset_rec->id);
 
                 unordered_set<Address> required_signatures;
-
-                /*
-                const auto required_fees = get_transaction_fee(asset_to_transfer.asset_id);
-                if (required_fees.asset_id == asset_to_transfer.asset_id)
-                {
-                    withdraw_from_contract(required_fees + asset_to_transfer,
-                        from_contract_address,
-                        trx);
-                }
-                else
-                {
-                    withdraw_from_contract(asset_to_transfer,
-                        from_contract_address,
-                        trx);
-
-                    withdraw_from_contract(required_fees,
-                        from_contract_address,
-                        trx);
-                } 
-                */
 
                 /*
                 由于原先对于从合约中转账的操作, 会构建一个转账交易, 后来实际操作中发现可能会存在相同时间产生的向同一个人发起的相同数额的交易

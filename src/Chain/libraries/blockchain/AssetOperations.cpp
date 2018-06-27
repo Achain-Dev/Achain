@@ -11,26 +11,7 @@ namespace thinkyoung {
         {
             switch (n)
             {
-#if 0
-            case 1ll:
-            case 10ll:
-            case 100ll:
-            case 1000ll:
-            case 10000ll:
-#endif
             case 100000ll:
-#if 0
-            case 1000000ll:
-            case 10000000ll:
-            case 100000000ll:
-            case 1000000000ll:
-            case 10000000000ll:
-            case 100000000000ll:
-            case 1000000000000ll:
-            case 10000000000000ll:
-            case 100000000000000ll:
-            case 1000000000000000ll:
-#endif
                 return true;
             default:
                 return false;
