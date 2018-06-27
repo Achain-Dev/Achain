@@ -289,8 +289,9 @@ namespace thinkyoung {
             FC_CAPTURE_AND_RETHROW((*this));
         }
         
-#if 0
-        void UpdateBalanceVoteOperation::evaluate(TransactionEvaluationState& eval_state)const {
+
+        void UpdateBalanceVoteOperation::evaluate(TransactionEvaluationState& eval_state)const { }
+  #if 0      
             try {
                 FC_ASSERT(false, "Disable UpdateBalanceVoteOperation!");
                 auto current_balance_entry = eval_state._current_state->get_balance_entry(this->balance_id);
