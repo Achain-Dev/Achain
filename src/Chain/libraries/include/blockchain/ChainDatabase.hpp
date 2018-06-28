@@ -1395,6 +1395,7 @@ namespace thinkyoung {
             
           public:
             bool generating_block;
+            bool evaluate_trx_contract;
             
         };
         typedef shared_ptr<ChainDatabase> ChainDatabasePtr;

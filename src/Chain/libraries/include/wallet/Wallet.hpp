@@ -1053,6 +1053,7 @@ namespace thinkyoung {
             * @param  pay_from_account   pay from account name
             * @param  public_data  public data
             * @param  delegate_pay_rate  0-100 or 255 default 255
+            * @param  delegate_mode  0 1
             * @param  sign  bool
             *
             *
@@ -1063,6 +1064,7 @@ namespace thinkyoung {
                 const string& pay_from_account,
                 optional<variant> public_data,
                 uint8_t delegate_pay_rate,
+                uint8_t delegate_mode,
                 bool sign
             );
             /**

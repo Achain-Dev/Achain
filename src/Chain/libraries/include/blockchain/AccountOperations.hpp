@@ -47,6 +47,7 @@ namespace thinkyoung {
             fc::optional<fc::variant>         public_data;
             fc::optional<PublicKeyType>     active_key;
             uint8_t                           delegate_pay_rate = -1;
+			uint8_t                          delegate_mode = class_a_delegate;
             
             bool is_retracted()const;
             bool is_delegate()const;

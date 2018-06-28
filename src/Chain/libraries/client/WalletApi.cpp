@@ -974,12 +974,13 @@ namespace thinkyoung {
                 const string& account_to_update,
                 const string& pay_from_account,
                 const variant& public_data,
-                uint8_t delegate_pay_rate) {
+                uint8_t delegate_pay_rate,
+                uint8_t delegate_mode) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
                     FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
                     
-                auto entry = _wallet->update_registered_account(account_to_update, pay_from_account, public_data, delegate_pay_rate, true);
+                auto entry = _wallet->update_registered_account(account_to_update, pay_from_account, public_data, delegate_pay_rate, delegate_mode, true);
                 _wallet->cache_transaction(entry);
                 network_broadcast_transaction(entry.trx);
                 return entry;

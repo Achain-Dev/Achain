@@ -130,6 +130,7 @@ namespace thinkyoung {
                     else
                     {
                         current_entry->delegate_info = DelegateStats();
+                        current_entry->delegate_info->delegate_mode = (DelegateMode)(this->delegate_mode);
                         current_entry->delegate_info->pay_rate = this->delegate_pay_rate;
                         current_entry->set_signing_key(eval_state._current_state->get_head_block_num(), current_entry->active_key());
 

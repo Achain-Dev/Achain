@@ -3213,7 +3213,11 @@ namespace thinkyoung {
             (fc::json::from_string("-1").as<uint8_t>()) :
             parameters[3].as<uint8_t>();
 
-            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate);
+			uint8_t delegate_mode = (parameters.size() <= 4) ?
+            (fc::json::from_string("0").as<uint8_t>()) :
+            parameters[4].as<uint8_t>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate, delegate_mode);
             return fc::variant(result);
         }
 
@@ -3238,7 +3242,11 @@ namespace thinkyoung {
                 (fc::json::from_string("-1").as<uint8_t>()) :
                 parameters["delegate_pay_rate"].as<uint8_t>();
 
-            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate);
+			uint8_t delegate_mode = parameters.contains("delegate_mode") ?
+                (fc::json::from_string("0").as<uint8_t>()) :
+                parameters["delegate_mode"].as<uint8_t>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate, delegate_mode);
             return fc::variant(result);
         }
 
@@ -11282,10 +11290,11 @@ namespace thinkyoung {
                         {"account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"pay_from_account", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"public_data", "json_variant", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("null"))},
-                        {"delegate_pay_rate", "uint8_t", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("-1"))}
+                        {"delegate_pay_rate", "uint8_t", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("-1"))},
+                        {"delegate_mode", "uint8_t", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("0"))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
-                    /* detailed description */ "Updates the data published about a given account\n\nParameters:\n  account_name (account_name, required): the account that will be updated\n  pay_from_account (account_name, required): the account from which fees will be paid\n  public_data (json_variant, optional, defaults to null): public data about the account\n  delegate_pay_rate (uint8_t, optional, defaults to -1): -1 for non-delegates; otherwise the percent of delegate pay to accept per produced block\n\nReturns:\n  transaction_entry\n",
+                    /* detailed description */ "Updates the data published about a given account\n\nParameters:\n  account_name (account_name, required): the account that will be updated\n  pay_from_account (account_name, required): the account from which fees will be paid\n  public_data (json_variant, optional, defaults to null): public data about the account\n  delegate_pay_rate (uint8_t, optional, defaults to -1): -1 for non-delegates; otherwise the percent of delegate pay to accept per produced block\n  delegate_mode (uint8_t, optional, defaults to 0): 0 for class_a_delegates\n\nReturns:\n  transaction_entry\n",
                     /* aliases */ {"update_registration"}, false};
                 store_method_metadata(wallet_account_update_registration_method_metadata);
             }

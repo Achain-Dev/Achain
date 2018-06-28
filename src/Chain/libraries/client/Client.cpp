@@ -650,6 +650,7 @@ namespace thinkyoung {
 
 			bool ClientImpl::get_next_block_maker(const time_point_sec& now,
                 optional<time_point_sec>& next_time,
+                const vector<WalletAccountEntry>& my_active_delegates,
                 AccountEntry& delegate_entry,
                 uint32_t& pos)const
             {
@@ -657,14 +658,7 @@ namespace thinkyoung {
 				uint32_t skip_distance = 0;
 				uint32_t delegate_pos = ALP_DELEGATE_POS_INVALID;
 				time_point_sec head_time = _chain_db->get_head_block().timestamp;
-				
-            	//get current active delegates on the wallet
-                vector<WalletAccountEntry> my_active_delegates = _wallet->get_my_delegates(active_delegate_status);
-
-				//if the my_active_delegates is empty, the client can not generate blocks
-                if (my_active_delegates.empty())
-                    throw "no delegate";
-
+			
                 //get current active delegates on the chain
                 const vector<AccountIdType> active_delegate_ids = _chain_db->get_active_delegates();
 
@@ -723,6 +717,7 @@ namespace thinkyoung {
 			
             void ClientImpl::delegate_loop() {
                 bool is_turn = false;
+				bool if_class_a = false;
                 optional<time_point_sec> next_block_time;
 				AccountEntry delegate_entry;
 				uint32_t pos = 0;
@@ -731,12 +726,31 @@ namespace thinkyoung {
                     return;
 
 				_chain_db->generating_block = false;
+				_chain_db->evaluate_trx_contract = false;
 				
 				const auto now = blockchain::now();
 				ilog("Starting delegate loop at time: ${t}", ("t", now));
 
 				try{
-					is_turn = get_next_block_maker(now, next_block_time, delegate_entry, pos);
+					vector<WalletAccountEntry> my_active_delegates = _wallet->get_my_delegates(active_delegate_status);
+
+					//if the my_active_delegates is empty, the client can not generate blocks
+	                if (my_active_delegates.empty())
+	                    return;
+					
+					is_turn = get_next_block_maker(now, next_block_time, my_active_delegates, delegate_entry, pos);
+
+					//check if has class_a_delegate
+					for (const auto& item : my_active_delegates)
+                    {
+                        if (item.delegate_info->delegate_mode == class_a_delegate)
+                        {
+                            //if one of these delegates is class_a_delegate
+                            if_class_a = true;
+                            break;
+                        }
+                    }
+					
 				}
 				catch(...)
 				{
@@ -745,6 +759,7 @@ namespace thinkyoung {
 
 				_wallet->_generating_block = true;
                 _chain_db->generating_block = true;
+                _chain_db->evaluate_trx_contract = if_class_a;
                 _chain_db->_verify_transaction_signatures = true;
 				
 

@@ -3292,9 +3292,9 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
-        thinkyoung::wallet::WalletTransactionEntry CommonApiClient::wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data /* = fc::json::from_string("null").as<fc::variant>() */, uint8_t delegate_pay_rate /* = fc::json::from_string("-1").as<uint8_t>() */)
+        thinkyoung::wallet::WalletTransactionEntry CommonApiClient::wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data, uint8_t delegate_pay_rate, uint8_t delegate_mode)
         {
-            ilog("received RPC call: wallet_account_update_registration(${account_name}, ${pay_from_account}, ${public_data}, ${delegate_pay_rate})", ("account_name", account_name)("pay_from_account", pay_from_account)("public_data", public_data)("delegate_pay_rate", delegate_pay_rate));
+            ilog("received RPC call: wallet_account_update_registration(${account_name}, ${pay_from_account}, ${public_data}, ${delegate_pay_rate}, ${delegate_mode})", ("account_name", account_name)("pay_from_account", pay_from_account)("public_data", public_data)("delegate_pay_rate", delegate_pay_rate)("delegate_mode", delegate_mode));
             thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
             uint64_t call_id = 0;
             fc::variants args;
@@ -3304,6 +3304,7 @@ namespace thinkyoung {
                 args.push_back( fc::variant(pay_from_account) );
                 args.push_back( fc::variant(public_data) );
                 args.push_back( fc::variant(delegate_pay_rate) );
+				args.push_back( fc::variant(delegate_mode) );
                 call_id = glog->log_call_started( this, "wallet_account_update_registration", args );
             }
 
@@ -3315,7 +3316,7 @@ namespace thinkyoung {
             } execution_time_logger;
             try
             {
-                thinkyoung::wallet::WalletTransactionEntry result =             get_impl()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate);
+                thinkyoung::wallet::WalletTransactionEntry result =             get_impl()->wallet_account_update_registration(account_name, pay_from_account, public_data, delegate_pay_rate, delegate_mode);
                 if( call_id != 0 )
                     glog->log_call_finished( call_id, this, "wallet_account_update_registration", args, fc::variant(result) );
 
