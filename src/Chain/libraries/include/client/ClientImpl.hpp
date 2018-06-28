@@ -246,6 +246,7 @@ namespace thinkyoung {
 
                 bool get_next_block_maker(const time_point_sec& now,
                     optional<time_point_sec>& next_time,
+                    const vector<WalletAccountEntry>& my_active_delegates,
                     AccountEntry& delegate_entry,
                     uint32_t& pos)const;
 				

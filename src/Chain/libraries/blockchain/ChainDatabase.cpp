@@ -768,6 +768,9 @@ namespace thinkyoung {
                         
                         if (trx_eval_state->skipexec)
                             trx_eval_state->skipexec = !self->get_node_vm_enabled();
+
+						if (!trx_eval_state->skipexec && self->generating_block)
+                            trx_eval_state->skipexec = !self->evaluate_trx_contract;
                             
                         if (trx.result_trx_type == ResultTransactionType::incomplete_result_transaction)
                             trx_eval_state->skipexec = false;
@@ -1739,6 +1742,7 @@ namespace thinkyoung {
             :my(new detail::ChainDatabaseImpl()) {
             my->self = this;
             generating_block = false;
+            evaluate_trx_contract = false;
         }
         
         ChainDatabase::~ChainDatabase() {
@@ -2154,6 +2158,11 @@ namespace thinkyoung {
                 //the local machine which create a contract transaction, will start virtual machine and will execute the contract  
                 if (trx_eval_state->skipexec && contract_vm_exec)
                     trx_eval_state->skipexec = !contract_vm_exec;
+
+                //check if the delegate is class_b_delegate
+                if (!trx_eval_state->skipexec && generating_block)
+                    trx_eval_state->skipexec = !evaluate_trx_contract;
+
                     
                 if (trx_eval_state->origin_trx_basic_verify(trx) == false)
                     FC_CAPTURE_AND_THROW(illegal_transaction, (trx));
@@ -2892,6 +2901,13 @@ namespace thinkyoung {
         void ChainDatabase::pack_trx(const DelegateConfig& config, signed_transactions& trxs, size_t block_size)
         {
             try {
+                const set<OperationTypeEnum> skip_pack_op = 
+                { register_contract_op_type,
+                upgrade_contract_op_type,
+                destroy_contract_op_type,
+                call_contract_op_type,
+                transfer_contract_op_type };
+                bool skip_flag = false;
                 const time_point start_time = time_point::now();
                 const PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(shared_from_this());
 
@@ -2904,6 +2920,8 @@ namespace thinkyoung {
                         // Check block production time limit
                         if (time_point::now() - start_time >= config.block_max_production_time)
                             break;
+
+                        skip_flag = false;
 
                         const SignedTransaction& new_transaction = item->trx;
 
@@ -2950,6 +2968,22 @@ namespace thinkyoung {
                                         ("id", new_transaction.id())("op", *blacklisted_op));
                                     continue;
                                 }
+                            }
+
+                            //check if package contract_trx
+                            if (evaluate_trx_contract == false)
+                            {
+                                for (const Operation& op : new_transaction.operations) 
+                                {
+                                    if (skip_pack_op.count(op.type) > 0)
+                                    {
+                                        skip_flag = true;
+                                        break;
+                                    }
+                                }
+
+                                if (skip_flag)
+                                    continue;
                             }
 
                             // Validate transaction
@@ -3089,6 +3123,8 @@ namespace thinkyoung {
             try {
                 // Initialize block
                 FullBlock_v2 new_block_v2;
+
+                new_block_v2.block_num = my->_head_block_num + 1;
 
                 pack_trx(config, new_block_v2.user_transactions, new_block_v2.block_size());
 

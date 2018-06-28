@@ -2352,7 +2352,8 @@ namespace thinkyoung {
                 trx.update_account(current_account->id,
                                    current_account->delegate_pay_rate(),
                                    fc::variant_object(public_data),
-                                   optional<PublicKeyType>());
+                                   optional<PublicKeyType>(),
+                                   optional<uint8_t>());
                 my->authorize_update(required_signatures, current_account);
                 const auto required_fees = get_transaction_fee();
                 
@@ -2421,7 +2422,8 @@ namespace thinkyoung {
                 trx.update_account(current_account->id,
                                    current_account->delegate_pay_rate(),
                                    fc::variant_object(public_data),
-                                   optional<PublicKeyType>());
+                                   optional<PublicKeyType>(),
+                                   optional<uint8_t>());
                 my->authorize_update(required_signatures, current_account);
                 const auto required_fees = get_transaction_fee();
                 
@@ -4669,12 +4671,17 @@ namespace thinkyoung {
             const string& pay_from_account,
             optional<variant> public_data,
             uint8_t delegate_pay_rate,
+            uint8_t delegate_mode,
             bool sign) {
             try {
                 FC_ASSERT(is_unlocked(), "Wallet not unlock!");
                 
                 if (delegate_pay_rate < 100) {
                     FC_THROW_EXCEPTION(invalid_delegate_pay_rate, "invalid_delegate_pay_rate", ("delegate_pay_rate", delegate_pay_rate));
+                }
+
+				if (delegate_mode > 2) {
+                    FC_THROW_EXCEPTION(invalid_delegate_mode, "invalid_delegate_mode", ("delegate_mode", delegate_mode));
                 }
                 
                 auto account = get_account(account_to_update);
@@ -4686,9 +4693,11 @@ namespace thinkyoung {
                 
                 if (delegate_pay_rate <= 100)
                     pay = delegate_pay_rate;
-                    
+
+				optional<uint8_t> odelegate_mode = delegate_mode;
+				
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, public_data, optional<PublicKeyType>(), pay, payer).
+                builder->update_account_registration(account, public_data, optional<PublicKeyType>(), pay, payer, odelegate_mode).
                 finalize();
                 
                 if (sign)
@@ -4724,7 +4733,7 @@ namespace thinkyoung {
                 }
                 
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer).
+                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer, optional<uint8_t>()).
                 finalize();
                 
                 if (sign) {
@@ -4752,7 +4761,7 @@ namespace thinkyoung {
                 fc::ecc::public_key empty_pk;
                 PublicKeyType new_public_key(empty_pk);
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer).
+                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer, optional<uint8_t>()).
                 finalize();
                 
                 if (sign)

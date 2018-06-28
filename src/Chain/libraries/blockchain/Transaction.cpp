@@ -225,12 +225,15 @@ namespace thinkyoung {
         void Transaction::update_account(AccountIdType account_id,
                                          uint8_t delegate_pay_rate,
                                          const fc::optional<fc::variant>& public_data,
-                                         const fc::optional<PublicKeyType>& active) {
+                                         const fc::optional<PublicKeyType>& active,
+                                         const fc::optional<uint8_t>& delegate_mode) {
             UpdateAccountOperation op;
             op.account_id = account_id;
             op.public_data = public_data;
             op.active_key = active;
             op.delegate_pay_rate = delegate_pay_rate;
+			if (delegate_mode.valid())
+				op.delegate_mode = *delegate_mode;
             operations.emplace_back(std::move(op));
         }
         
