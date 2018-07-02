@@ -647,6 +647,15 @@ namespace thinkyoung {
             */
             virtual TransactionEvaluationStatePtr   evaluate_transaction(const SignedTransaction& trx, const ShareType required_fees = 0, bool contract_vm_exec = false, bool skip_signature_check = false, bool throw_exec_exception=false);
             
+            /**  Evaluate the transaction and return the results.
+            *
+            * @param  trx  SignedTransaction
+            * @param  required_fees  ShareType
+            *
+            * @return TransactionEvaluationStatePtr
+            */
+            virtual TransactionEvaluationStatePtr   evaluate_transaction_no_pending(const SignedTransaction& trx, const ShareType required_fees = 0, bool contract_vm_exec = false, bool skip_signature_check = false, bool throw_exec_exception=false);
+            
             /**  Evaluate the transaction and return exception
             *
             * @param  transaction  SignedTransaction
