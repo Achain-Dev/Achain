@@ -9,7 +9,7 @@ create table block_entry
    ,processing_time           bigint(20)     UNSIGNED             COMMENT '处理时间' 
    ,sync_timestamp            datetime                            COMMENT '开始同步时间' 
    ,last_update_timestamp     datetime                            COMMENT '最近一次更新的时间' 
-   ,PRIMARY KEY (block_num)
+-- ,PRIMARY KEY (block_num)
 -- ,KEY idx_block_num (block_num)
 -- ,KEY idx_block_id  (block_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COMMENT='块表';
@@ -41,7 +41,7 @@ create table trx_entry
    ,block_num                   bigint(10)  UNSIGNED                COMMENT '块号' 
    ,trx_num                     bigint(10)  UNSIGNED                COMMENT '交易序号' 
    ,last_update_timestamp       datetime                            COMMENT '最近一次更新的时间' 
-   ,PRIMARY KEY (trx_id) 
+-- ,PRIMARY KEY (trx_id) 
 -- ,KEY idx_trx_id (trx_id)
 -- ,KEY idx_block_num  (block_num)
 )DEFAULT CHARSET=utf8 COMMENT='交易表';
@@ -51,7 +51,7 @@ create table result_to_origin_trx_id
     result_trx_id             varchar(40)             NOT NULL   COMMENT '结果交易id' 
    ,origin_trx_id             varchar(40)                        COMMENT '原始交易id'
    ,last_update_timestamp     datetime                           COMMENT '最近一次更新的时间'
-   ,PRIMARY KEY (result_trx_id)
+-- ,PRIMARY KEY (result_trx_id)
 ) ENGINE=INNODB DEFAULT CHARSET=utf8 COMMENT='结果交易原始交易id对照表';
 
 create table slot_entry
@@ -59,7 +59,7 @@ create table slot_entry
     block_id                  varchar(40)                        COMMENT '块id'
    ,delegate_id               int(10)                            COMMENT '产块代理' 
    ,slot_timestamp            datetime                           COMMENT '产块时间'
-   ,PRIMARY KEY (block_id)
+-- ,PRIMARY KEY (block_id)
 )  DEFAULT CHARSET=utf8 COMMENT='产块slot表';
 
 create table account_entry
@@ -78,9 +78,8 @@ create table account_entry
    ,blocks_missed              int(10)                            COMMENT '错过的块数' 
    ,account_type               varchar(64)                        COMMENT '账户类型'
    ,meta_data                  varchar(64)                        COMMENT 'data'
-   ,PRIMARY KEY (account_id)
+-- ,PRIMARY KEY (account_id)
 )  DEFAULT CHARSET=utf8 COMMENT='账户表';
-
 
 
 create table balance_entry
@@ -95,7 +94,7 @@ create table balance_entry
    ,deposit_date               datetime                           COMMENT '存款日期'
    ,last_update                datetime                           COMMENT '最新更新'
    ,meta_data                  varchar(64)                        COMMENT 'metadata' 
-   ,PRIMARY KEY (balance_id)
+-- ,PRIMARY KEY (balance_id)
 )  DEFAULT CHARSET=utf8 COMMENT='余额表';
 
 create table asset_entry

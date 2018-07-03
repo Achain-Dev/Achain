@@ -171,6 +171,8 @@ namespace thinkyoung {
                     _request_to_result_iddb.open(data_dir / "index/_request_to_result_iddb");
                     _contract_to_trx_iddb.open(data_dir / "index/_contract_to_trx_iddb");
                     _trx_to_contract_iddb.open(data_dir / "index/_trx_to_contract_iddb");
+
+                    MysqlHand::init_all_instance();
                     _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                     clear_invalidation_of_future_blocks();
                 }
@@ -514,13 +516,6 @@ namespace thinkyoung {
                         entry.syc_timestamp = blockchain::now();
                         _block_id_to_block_entry_db.store(block_id, entry);
 
-                        //wirte to mysql after extend_chains
-                        //fc::async([=](){ this->write_to_mysqls( entry); }, "write_block_entry_to_mysql");
-                        //return type void   parm type void
-                        //fc::async([=](){ this->write_to_mysql(block_id, entry); }, "write_block_entry_to_mysql");//return type void   parm type void
-                        //fc::async([&block_id, &entry](BlockEntry ety){return 0; }(entry), "write_block_entry_to_mysql");
-                        //fc::async([](BlockIdType bldk_id,BlockEntry ety){ }, "write_block_entry_to_mysql");
-                        //int m = [](int x) { return [](int y) { return y * 2; }(x)+6; }(5);
                     }
                     
                     // update the parallel block list (fork_number_db):
@@ -1122,8 +1117,39 @@ namespace thinkyoung {
                         if (block_entry.valid()) {
                             block_entry->processing_time = time_point::now() - start_time;
                             _block_id_to_block_entry_db.store(block_id, *block_entry);
-                            //formysql
-                            fc::async([=](){ this->write_to_mysqls(*block_entry); }, "write_block_entry_to_mysql2");
+                            
+
+                            auto block_age = blockchain::now() - self->now();
+                            if (block_age.to_seconds() <= 60)
+                            {
+                                if (_blockety_cache.size() > 0)
+                                {
+                                    auto fu = fc::async([=](){ this->batch_write_to_mysqls(); }, "batch_write_block_entry_to_mysqls");
+                                    fu.wait();
+                                    _blockety_cache.clear();
+                                }
+                                else
+                                {
+                                    fc::async([=](){ this->write_to_mysqls(*block_entry); }, "write_block_entry_to_mysql2");   //onebyone insert
+                                }
+                            }
+                            else
+                            {
+                                if (_blockety_cache.size() >=10000)
+                                {
+                                    auto beg_time = time_point::now();
+                                    auto fu = fc::async([=](){ this->batch_write_to_mysqls(); }, "batch_write_block_entry_to_mysqls");
+                                    fu.wait();
+                                    auto t = time_point::now() - beg_time;
+                                    fc_ilog(fc::logger::get("mysql"), " one batch insert of block_entry done , elapsed time : ${t} ", ("t", t.to_seconds() ));
+                                    _blockety_cache.clear();
+                                }
+                                else
+                                { 
+                                    _blockety_cache.push_back(*block_entry);
+
+                                }
+                            }
                         }
                         
                         self->store_extend_status(block_id, 2);
@@ -1272,14 +1298,60 @@ namespace thinkyoung {
             void  ChainDatabaseImpl::write_to_mysqls(T en)
             {
                 //std::string sqlstr = en.compose_insert_sql();
-                if (!MysqlHand::get_instance()->run_insert_sql( en.compose_insert_sql()) )
+                if (!MysqlHand::get_instance()->run_insert_sql(en.compose_insert_sql()))
                 {
                     assert(false);
                 }
             }
+            template<class T >
+            void  ChainDatabaseImpl::batch_write_to_mysqls(std::vector<T> & ety_cache)
+            {
+
+                //batch insert sql
+                std::stringstream sqlss;
+                sqlss << T::sqlstr_beging;
+                for (auto etry_itr = ety_cache.begin(); etry_itr != ety_cache.end(); etry_itr++)
+                {
+                    sqlss << etry_itr->compose_insert_sql_value();
+                    if (etry_itr == (ety_cache.end() - 1))
+                    {
+                        break;
+                    }
+                    sqlss << ",";
+                }
+                sqlss << T::sqlstr_ending;
+
+                if (!MysqlHand::get_instance()->run_insert_sql(sqlss.str()))
+                {
+                    assert(false);
+                }
+                fc_ilog(fc::logger::get("mysql"), " one batch insert ! records : ${recs} ", ("recs", ety_cache.size()));
+            }
 
 
+            void  ChainDatabaseImpl::batch_write_to_mysqls()
+            {
 
+                //batch insert sql
+                std::stringstream sqlss;
+                sqlss << BlockEntry::sqlstr_beging;
+                for (auto blockety = _blockety_cache.begin(); blockety != _blockety_cache.end(); blockety++)
+                {
+                    sqlss << blockety->compose_insert_sql_value();
+                    if (blockety == (_blockety_cache.end() - 1))
+                    {
+                        break;
+                    }
+                    sqlss << ",";
+                }
+                sqlss << BlockEntry::sqlstr_ending;
+
+                if (!MysqlHand::get_instance()->run_insert_sql(sqlss.str()))
+                {
+                    assert(false);
+                }
+                fc_ilog(fc::logger::get("mysql"), " one batch insert of block_entry ! records : ${recs} ", ("recs", _blockety_cache.size()));
+            }
 } // namespace detail
         
         ChainDatabase::ChainDatabase()
@@ -3182,7 +3254,6 @@ namespace thinkyoung {
         void ChainDatabase::account_insert_into_id_map(const AccountIdType id, const AccountEntry& entry) {
             my->_account_id_to_entry.store(id, entry);
             fc::async([=](){ my->write_to_mysqls(entry); }, "write_account_entry_to_mysql");
-
         }
         
         void ChainDatabase::account_insert_into_name_map(const string& name, const AccountIdType id) {
@@ -3358,6 +3429,39 @@ namespace thinkyoung {
         
         void ChainDatabase::slot_insert_into_index_map(const SlotIndex index, const SlotEntry& entry) {
             my->_slot_index_to_entry.store(index, entry);
+
+
+            auto block_age = blockchain::now() - this->now();
+            if (block_age.to_seconds() <= 60)
+            {
+                if (my->_slotety_cache.size() > 0)
+                {
+                    auto fu = fc::async([=](){ my->batch_write_to_mysqls(my->_slotety_cache); }, "batch_write_slot_entry_to_mysqls");
+                    fu.wait();
+                    my->_slotety_cache.clear();
+                }
+                else
+                {
+                    fc::async([=](){ my->write_to_mysqls(entry); }, "write_slot_entry_to_mysql");   //onebyone insert
+                }
+            }
+            else
+            {
+                if (my->_slotety_cache.size() >= 1000)
+                {
+                    auto beg_time = time_point::now();
+                    auto fu = fc::async([=](){ my->batch_write_to_mysqls(my->_slotety_cache); }, "batch_write_slot_entry_to_mysqls");
+                    fu.wait();
+                    auto t = time_point::now() - beg_time;
+                    fc_ilog(fc::logger::get("mysql"), " one batch insert of slot_entry done , elapsed time : ${t} ", ("t", t.to_seconds()));
+                    my->_slotety_cache.clear();
+                }
+                else
+                {
+                    my->_slotety_cache.push_back(entry);
+                }
+            }
+
             fc::async([=](){ my->write_to_mysqls(entry); }, "write_slot_entry_to_mysql");
 
         }

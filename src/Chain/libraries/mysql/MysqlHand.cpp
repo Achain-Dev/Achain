@@ -2,22 +2,56 @@
 #include "mysql/MysqlHand.h"
 #include <assert.h>
 #include <sstream>
+#include <stdlib.h>
+#include <time.h>
+
 
 //#define myssqllogger "mysql"
 
 MysqlHand * MysqlHand::_instance_ptr = nullptr;
+std::vector<MysqlHand *> MysqlHand::_instance_ptr_vec(10, nullptr);
 //static private member must be initialized before using;
 
 MysqlHand::Garbo::~Garbo()
 {
+    if (MysqlHand::_instance_ptr)
+        delete MysqlHand::_instance_ptr;
+
+    for (auto itr : _instance_ptr_vec)
     {
-        if (MysqlHand::_instance_ptr)
-            delete MysqlHand::_instance_ptr;
+        if (itr)
+        {
+            delete itr;
+        }
     }
 }
 
-MysqlHand::MysqlHand()
+void MysqlHand::init_all_instance(int instance_num )
 {
+    for (int i = 0; i < instance_num; i++)
+    {
+        _instance_ptr_vec[i] = new MysqlHand(i + 1);
+    }
+}
+
+MysqlHand::MysqlHand():
+mysql_user("root")
+, mysql_pswd("password")
+{
+    if (!connect_to_mysql())
+    {
+        assert(false);
+    }
+}
+
+MysqlHand::MysqlHand(int user_seq):
+mysql_pswd("password")
+{
+    std::stringstream  userss;
+    userss << "user_";
+    userss << user_seq;
+    mysql_user = userss.str();
+
     if (!connect_to_mysql())
     {
         assert(false);
@@ -26,16 +60,20 @@ MysqlHand::MysqlHand()
 
 MysqlHand * MysqlHand::get_instance()
 {
-    if (!_instance_ptr)
-        _instance_ptr = new MysqlHand();
-    return _instance_ptr;
+    unsigned rand_seq;
+    std::srand((unsigned)time(NULL));  
+    rand_seq = std::rand() % 10;   // 随机获取一个实例
+    assert(!_instance_ptr_vec[rand_seq]);
+    return _instance_ptr_vec[rand_seq];
 
 }
 
-MysqlHand * MysqlHand::get_instance( bool overload)
-{
-    return nullptr;
-}
+//MysqlHand * MysqlHand::get_instance( bool overload)
+//{
+//    if (!_instance_ptr)
+//        _instance_ptr = new MysqlHand();
+//    return _instance_ptr;
+//}
 
 MysqlHand::~MysqlHand()
 {

@@ -36,6 +36,8 @@ namespace thinkyoung {
             SlotEntry(const time_point_sec t, const AccountIdType d, const optional<BlockIdType>& b = optional<BlockIdType>())
                 : index(d, t), block_id(b) {}
 
+            static std::string sqlstr_beging;
+            static std::string sqlstr_ending;
             SlotIndex              index;
             optional<BlockIdType> block_id;
 
@@ -45,6 +47,7 @@ namespace thinkyoung {
             static void store(ChainInterface&, const SlotIndex, const SlotEntry&);
             static void remove(ChainInterface&, const SlotIndex);
             std::string compose_insert_sql();
+            std::string compose_insert_sql_value();
         };
 
         class SlotDbInterface

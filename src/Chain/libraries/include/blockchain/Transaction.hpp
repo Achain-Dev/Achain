@@ -34,8 +34,8 @@ namespace thinkyoung {
         };
         
         enum ResultTransactionType {
-            origin_transaction = 0,          //原始交易
-            complete_result_transaction = 1,       //完整的结果交易
+            origin_transaction = 0,                  //原始交易
+            complete_result_transaction = 1,         //完整的结果交易
             incomplete_result_transaction = 2,       //不完整的结果交易
         };
         

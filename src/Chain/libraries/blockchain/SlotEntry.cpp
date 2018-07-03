@@ -5,6 +5,11 @@
 namespace thinkyoung {
     namespace blockchain {
 
+        std::string SlotEntry::sqlstr_beging = "INSERT INTO slot_entry VALUES ";
+        std::string SlotEntry::sqlstr_ending = " on duplicate key update delegate_id=values(delegate_id), slot_timestamp=values(slot_timestamp);";
+
+
+
         void SlotEntry::sanity_check(const ChainInterface& db)const
         {
             try {
@@ -57,15 +62,6 @@ namespace thinkyoung {
         }
         std::string SlotEntry::compose_insert_sql()
         {
-            if (0  == 0)
-            {
-                return "NOEXECUTEMARK";
-            }
-            std::string sqlstr_beging = "INSERT INTO slot_entry VALUES ";
-            std::string sqlstr_ending = " on duplicate key update ";
-            sqlstr_ending += " delegate_id=values(delegate_id),";
-            sqlstr_ending += " slot_timestamp=values(slot_timestamp);";
-
             std::stringstream sqlss;
             sqlss << sqlstr_beging << "('";
             sqlss << block_id->str() << "',";
@@ -76,6 +72,15 @@ namespace thinkyoung {
             sqlss << sqlstr_ending;
             return sqlss.str();
         }
+        std::string SlotEntry::compose_insert_sql_value()
+        {
+            std::stringstream sqlss;
+            sqlss << "('";
+            sqlss << block_id->str() << "',";
+            sqlss << index.delegate_id << ",";
 
+            sqlss << "STR_TO_DATE('" << index.timestamp.to_iso_string() << "','%Y-%m-%d T %H:%i:%s') )";//expiration
+            return sqlss.str();
+        }
     }
 } // thinkyoung::blockchain

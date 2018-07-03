@@ -1984,6 +1984,7 @@ namespace thinkyoung {
             } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
             }
         }
+
         void Client::connect_to_peer(const string& remote_endpoint) {
             fc::ip::endpoint endpoint;
             fc::oexception string_to_endpoint_error;
