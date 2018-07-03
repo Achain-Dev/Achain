@@ -128,10 +128,8 @@ TransactionBuilder& TransactionBuilder::update_account_registration(const Wallet
 
     if (delegate_mode)
     {
-        //if account is a delegate and its delegate_mode is class_a_delegate, can not change to class_b_delegate mode
         FC_ASSERT(!(account.is_delegate() &&
-            (account.delegate_info->delegate_mode == class_a_delegate) &&
-            (*delegate_mode == class_b_delegate)), "Pay mode can not be update!");
+            (account.delegate_info->delegate_mode != *delegate_mode)), "Pay mode can not be update!");
     }
 
     trx.update_account(account.id, *delegate_pay, public_data, active_key, delegate_mode);

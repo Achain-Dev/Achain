@@ -82,6 +82,6 @@ namespace thinkyoung {
 } // thinkyoung::blockchain
 
 FC_REFLECT(thinkyoung::blockchain::RegisterAccountOperation, (name)(public_data)(owner_key)(active_key)(delegate_pay_rate)(meta_data))
-FC_REFLECT(thinkyoung::blockchain::UpdateAccountOperation, (account_id)(public_data)(active_key)(delegate_pay_rate))
+FC_REFLECT(thinkyoung::blockchain::UpdateAccountOperation, (account_id)(public_data)(active_key)(delegate_pay_rate)(delegate_mode))
 FC_REFLECT(thinkyoung::blockchain::WithdrawPayOperation, (amount)(account_id))
 FC_REFLECT(thinkyoung::blockchain::UpdateSigningKeyOperation, (account_id)(signing_key))

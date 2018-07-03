@@ -2176,7 +2176,6 @@ namespace thinkyoung {
             PrivateKeyType private_signing_key;
 
             time_point start_time = time_point::now();
-            std::cout << "sign_block:  " << is_from_local << std::endl;
 
 
             //if the count of sign >= 50, then return 
@@ -2235,8 +2234,6 @@ namespace thinkyoung {
             }
 
             time_point end_time = time_point::now();
-
-            std::cout << "check time: " << (end_time - start_time).count() << std::endl;
             //sign
             for (int k = 0; k < deleg_count; k++)
             {
@@ -2252,8 +2249,6 @@ namespace thinkyoung {
             }
 
             end_time = time_point::now();
-
-            std::cout << "toyal time: " << (end_time - start_time).count() << std::endl;
 
             return sign_count;
         }
