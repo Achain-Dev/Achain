@@ -732,7 +732,7 @@ namespace thinkyoung {
 				ilog("Starting delegate loop at time: ${t}", ("t", now));
 
 				try{
-					vector<WalletAccountEntry> my_active_delegates = _wallet->get_my_delegates(active_delegate_status);
+                    vector<WalletAccountEntry> my_active_delegates = _wallet->get_my_delegates(enabled_delegate_status);
 
 					//if the my_active_delegates is empty, the client can not generate blocks
 	                if (my_active_delegates.empty())
