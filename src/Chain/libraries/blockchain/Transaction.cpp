@@ -41,14 +41,6 @@ namespace thinkyoung {
             signatures.push_back(signer.sign_compact(digest(chain_id)));
         }
         
-        PublicKeyType SignedTransaction::get_signing_key(const size_t sig_index, const DigestType& chain_id)const {
-            try {
-                return fc::ecc::public_key(signatures.at(sig_index), this->digest(chain_id), false);
-            }
-            
-            FC_CAPTURE_AND_RETHROW((sig_index)(chain_id))
-        }
-        
         void SignedTransaction::push_transaction(const SignedTransaction& trx) {
             operations.emplace_back(Operation(TransactionOperation(trx)));
         }

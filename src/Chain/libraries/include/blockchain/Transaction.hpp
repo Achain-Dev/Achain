@@ -23,8 +23,8 @@ namespace thinkyoung {
             create_asset = 6,       // 创建新资产
             issue_asset = 7,    //分配资产
             transfer_multi_asset = 8,   //多资产转账
-
-
+            
+            
             
             register_contract_transaction = 10,
             transfer_contract_transaction = 11,
@@ -45,7 +45,6 @@ namespace thinkyoung {
             fc::time_point_sec    expiration;
             optional<uint64_t>    reserved;
             string alp_account;
-            //string from_account;
             Asset alp_inport_asset;
             vector<Operation>     operations;
             fc::enum_type<uint8_t, ResultTransactionType>    result_trx_type = ResultTransactionType::origin_transaction;
@@ -159,7 +158,6 @@ namespace thinkyoung {
             TransactionIdType   id()const;
             size_t                data_size()const;
             void                  sign(const fc::ecc::private_key& signer, const DigestType& chain_id);
-            PublicKeyType       get_signing_key(const size_t sig_index, const DigestType& chain_id)const;
             void push_transaction(const SignedTransaction& trx);
             void push_storage_operation(const StorageOperation& storage_op);
             void push_event_operation(const EventOperation& event_op);
@@ -209,8 +207,6 @@ namespace thinkyoung {
             uint32_t block_num;
             uint32_t trx_num;
         };
-        typedef optional<TransactionLocation> oTransactionLocation;
-        
     }
 } // thinkyoung::blockchain
 
