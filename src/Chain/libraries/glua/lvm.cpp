@@ -7,6 +7,7 @@
 #define lvm_cpp
 #define LUA_CORE
 
+#include <glua/lremote_debugger.h>
 #include <glua/lprefix.h>
 
 #include <float.h>
@@ -38,7 +39,6 @@
 #include <glua/thinkyoung_lua_api.h>
 #include <glua/thinkyoung_lua_lib.h>
 #include <glua/glua_debug_file.h>
-#include <glua/lremote_debugger.h>
 
 using thinkyoung::lua::api::global_glua_chain_api;
 

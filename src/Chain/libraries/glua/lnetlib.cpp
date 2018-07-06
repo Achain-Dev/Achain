@@ -1,5 +1,6 @@
 ﻿#define lnetlib_cpp
 
+#include <boost/asio.hpp>
 #include <glua/lprefix.h>
 
 
@@ -10,7 +11,6 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
 #include <glua/lua.h>

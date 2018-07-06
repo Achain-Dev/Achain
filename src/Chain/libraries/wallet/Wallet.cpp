@@ -2906,6 +2906,7 @@ namespace thinkyoung {
                 FC_THROW_EXCEPTION(thinkyoung::blockchain::invalid_contract_filename, "contract bytecode file name should end with .gpc");
             }
             
+            FC_ASSERT(init_limit < 20000, "init_limit should less than 20000");
             FC_ASSERT(init_limit > 0, "init_limit should greater than 0");
             FC_ASSERT(is_open(), "Wallet not open!");
             FC_ASSERT(is_unlocked(), "Wallet not unlock!");
