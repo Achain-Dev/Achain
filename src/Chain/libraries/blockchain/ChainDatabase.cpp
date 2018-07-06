@@ -37,6 +37,7 @@ namespace thinkyoung {
                 auto itr = _pending_transaction_db.begin();
                 const time_point start_time = time_point::now();
                 
+                //
                 while (itr.valid()) {
                     SignedTransaction trx = itr.value();
                     const TransactionIdType trx_id = itr.key();
@@ -47,7 +48,7 @@ namespace thinkyoung {
                         break;
                         
                     try {
-                        TransactionEvaluationStatePtr eval_state = self->evaluate_transaction(trx, _relay_fee, false, true);
+                        TransactionEvaluationStatePtr eval_state = self->evaluate_transaction_no_pending(trx, _relay_fee, false, true);
                         
                         if (eval_state->p_result_trx.operations.size() > 0) {
                             eval_state->p_result_trx.operations.resize(0);
@@ -1951,6 +1952,7 @@ namespace thinkyoung {
             FC_CAPTURE_AND_RETHROW((delegate_ids))
         }
         
+        
         TransactionEvaluationStatePtr ChainDatabase::evaluate_transaction(const SignedTransaction& trx,
                 const ShareType required_fees, bool contract_vm_exec, bool skip_signature_check, bool throw_exec_exception) {
             try {
@@ -1959,6 +1961,84 @@ namespace thinkyoung {
                     
                 PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(my->_pending_trx_state);
                 PendingChainStatePtr          pend_state_res = std::make_shared<PendingChainState>(my->_pending_trx_state);
+                TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
+                
+                if (skip_signature_check)
+                    trx_eval_state->_skip_signature_check = skip_signature_check;
+                    
+                trx_eval_state->skipexec = !generating_block; //to check ! evaluate_transaction,基本只在store pending的时候被调用，此时如果是代理就需要执行代码，不是则不用执行
+                
+                //如果普通节点打开了VM开关
+                if (trx_eval_state->skipexec)
+                    trx_eval_state->skipexec = !get_node_vm_enabled();
+                    
+                trx_eval_state->throw_exec_exception = throw_exec_exception;
+                
+                //钱包创建交易首次本地验证，执行一次解释器
+                if (trx_eval_state->skipexec && contract_vm_exec)
+                    trx_eval_state->skipexec = !contract_vm_exec;
+                    
+                if (trx_eval_state->origin_trx_basic_verify(trx) == false)
+                    FC_CAPTURE_AND_THROW(illegal_transaction, (trx));
+                    
+                bool no_check_required_fee = false;
+                ShareType fees = 0;
+                
+                try {
+                    trx_eval_state->evaluate(trx, false);
+                    
+                } catch (thinkyoung::blockchain::ignore_check_required_fee_state& e) {
+                    no_check_required_fee = true;
+                }
+                
+                //如果有结果交易，就不将原始请求在此处写入DB了，原始请求会在evaluate结果交易时被保存
+                if (trx_eval_state->p_result_trx.operations.size() > 0)
+                    trx_eval_state->_current_state->remove<TransactionEntry>(trx.id());
+                    
+                fees = trx_eval_state->get_fees() + trx_eval_state->alt_fees_paid.amount;
+                
+                if (!no_check_required_fee && (fees < required_fees)) {
+                    ilog("Transaction ${id} needed relay fee ${required_fees} but only had ${fees}", ("id", trx.id())("required_fees", required_fees)("fees", fees));
+                    FC_CAPTURE_AND_THROW(insufficient_relay_fee, (fees)(required_fees));
+                }
+                
+                // apply changes from this transaction to _pending_trx_state
+                //在store_pending的过程中如果没有结果交易，就直接保存,(结果交易evaluate首个交易op后产生的result在交易evalute过程中被移除)
+                //有结果交易则，取消evaluate方法中缓存的改动(在有结果交易时，原始请求并不需要修改缓存)
+                if (trx_eval_state->p_result_trx.operations.size() < 1) {
+                    pend_state->apply_changes();
+                    
+                } else {
+                    //验证下结果交易是否可行
+                    TransactionEvaluationStatePtr trx_eval_state_res = std::make_shared<TransactionEvaluationState>(pend_state_res.get());
+                    //  trx_eval_state_res->skipexec = !generating_block;
+                    //  if (trx_eval_state_res->skipexec)
+                    //      trx_eval_state_res->skipexec = !get_node_vm_enabled();
+                    //
+                    //  //钱包创建交易首次本地验证，执行一次解释器
+                    //  if (trx_eval_state_res->skipexec && contract_vm_exec)
+                    //      trx_eval_state_res->skipexec = !contract_vm_exec;
+                    trx_eval_state_res->skipexec = true;
+                    trx_eval_state->throw_exec_exception = throw_exec_exception;
+                    trx_eval_state_res->evaluate(trx_eval_state->p_result_trx);
+                    pend_state_res->apply_changes();
+                    TransactionEvaluationStatePtr eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
+                    eval_state->p_result_trx = trx_eval_state->p_result_trx;
+                    eval_state->trx = trx;
+                    return eval_state;
+                }
+                
+                return trx_eval_state;
+            }
+            
+            FC_CAPTURE_AND_RETHROW((trx))
+        }
+        
+        TransactionEvaluationStatePtr ChainDatabase::evaluate_transaction_no_pending(const SignedTransaction & trx, const ShareType required_fees, bool contract_vm_exec, bool skip_signature_check, bool throw_exec_exception) {
+            try {
+                auto pending_trx_state = std::make_shared<PendingChainState>(shared_from_this());
+                PendingChainStatePtr          pend_state = std::make_shared<PendingChainState>(pending_trx_state);
+                PendingChainStatePtr          pend_state_res = std::make_shared<PendingChainState>(pending_trx_state);
                 TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pend_state.get());
                 
                 if (skip_signature_check)
