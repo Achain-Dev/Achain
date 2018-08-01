@@ -1022,8 +1022,6 @@ namespace thinkyoung {
 
                         time_point end_time = time_point::now();
 
-                        std::cout << "verify_header time is :" << (end_time - start_time).count() << std::endl;
-
                         start_time = time_point::now();
                         auto sign_count = block_digest.delegate_signature.size();
 
@@ -1044,8 +1042,6 @@ namespace thinkyoung {
                         }
 
                         end_time = time_point::now();
-
-                        std::cout << "verify_header total  time is :" << (end_time - start_time).count() << std::endl;
                        
                     }
                     
@@ -2154,16 +2150,16 @@ namespace thinkyoung {
                     trx_eval_state->skipexec = !get_node_vm_enabled();
                     
                 trx_eval_state->throw_exec_exception = throw_exec_exception;
+
+				//check if the delegate is class_b_delegate
+                if (!trx_eval_state->skipexec && generating_block)
+                    trx_eval_state->skipexec = !evaluate_trx_contract;
                 
                 //the local machine which create a contract transaction, will start virtual machine and will execute the contract  
                 if (trx_eval_state->skipexec && contract_vm_exec)
                     trx_eval_state->skipexec = !contract_vm_exec;
 
-                //check if the delegate is class_b_delegate
-                if (!trx_eval_state->skipexec && generating_block)
-                    trx_eval_state->skipexec = !evaluate_trx_contract;
-
-                    
+                
                 if (trx_eval_state->origin_trx_basic_verify(trx) == false)
                     FC_CAPTURE_AND_THROW(illegal_transaction, (trx));
                     
