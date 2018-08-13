@@ -147,6 +147,11 @@ namespace thinkyoung {
                   event_args = event_args.substr(0, 1023);
               }
               sqlss << event_args << "','";
+
+              while (memo_message.find("'"))
+              {
+                  memo_message = memo_message.replace(memo_message.find("'"), 1, "/'");
+              }
               sqlss << memo_message << "',";
               sqlss << chain_location.block_num << ",";
               sqlss << chain_location.trx_num << ",";
