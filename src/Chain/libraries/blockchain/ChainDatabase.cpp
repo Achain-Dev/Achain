@@ -2205,7 +2205,74 @@ namespace thinkyoung {
         }
         
         
-        
+        bool ChainDatabase::check_asset_transfer(const SignedTransaction& trx)
+        {
+            ShareType withdraw_amount = 0;
+            ShareType deposit_amount = 0;
+            AssetIdType muiltiasset_id = 0;
+            AssetIdType muiltiasset_id_w = 0;
+            uint32_t deposit_num = 0;
+            BalanceIdType withdraw_id;
+
+            for (const Operation& op : trx.operations)
+            {
+                if (op.type.value == deposit_op_type)
+                {
+                    deposit_num++;
+                    DepositOperation dop = op.as<DepositOperation>();
+
+                    muiltiasset_id = dop.condition.asset_id;
+                    deposit_amount += dop.amount;
+                }
+                else if (op.type.value == withdraw_op_type)
+                {
+                    WithdrawOperation wop = op.as<WithdrawOperation>();
+                    withdraw_amount += wop.amount;
+
+                    //get BalanceEntry
+                    const auto oBalance = get_balance_entry(wop.balance_id);
+
+                    if (!oBalance.valid())
+                        return false;
+
+                    //get asset_id of withdraw balance
+                    auto id = oBalance->asset_id();
+
+                    //check if the withdraw op is muitl_asset transfer
+                    if (id != 0)
+                    {
+                        //check if has several withdraw ops, and the asset_ids of these ops are different
+                        if ((muiltiasset_id_w != 0) && (muiltiasset_id_w != id))
+                            return false;
+
+                        muiltiasset_id_w = id;
+                    }
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            if (deposit_num > 1)
+                return false;
+
+            if (withdraw_amount < deposit_amount + 1000)
+                return false;
+
+            if (trx.alp_account != "")
+            {
+                if (muiltiasset_id != trx.alp_inport_asset.asset_id
+                    || deposit_amount != trx.alp_inport_asset.amount)
+                    return false;
+            }
+
+            //if withdraw asset is not the same as deposit asset, the trx is illegal
+            if (muiltiasset_id != muiltiasset_id_w)
+                return false;
+
+            return true;
+        }
         
         FullBlock ChainDatabase::generate_block(const time_point_sec block_timestamp, const DelegateConfig& config) {
             try {
@@ -2271,6 +2338,9 @@ namespace thinkyoung {
                                     continue;
                                 }
                             }
+
+                            if (check_asset_transfer(new_transaction) == false)
+                                continue;
                             
                             // Validate transaction
                             auto origin_trx_state = std::make_shared<PendingChainState>(pending_state);

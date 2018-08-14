@@ -243,6 +243,8 @@ namespace thinkyoung {
             FullBlock                  generate_block(const time_point_sec block_timestamp,
                     const DelegateConfig& config = DelegateConfig());
                     
+            bool check_asset_transfer(const SignedTransaction& trx);
+
             /**  Get BlockForkData from _fork_db
             *
             * @param  block_id  BlockIdType
