@@ -52,11 +52,16 @@ namespace thinkyoung {
                         cur_entry->meta_data = variant_object("creating_transaction_id", eval_state.trx.id());
                 }
                 
-                auto owner = cur_entry->owner();
+                //owners
+                auto owners = cur_entry->owners();
                 
-                if (owner.valid()) {
-                    if (!eval_state.deposit_address.insert(*owner).second) {
-                        FC_CAPTURE_AND_THROW(deposit_to_one_address_twice, (*owner));
+                if (!owners.empty()) {
+                    for (const Address& addr : owners)
+                    {
+                        //check the deposit_op
+                        if (!eval_state.deposit_address.insert(addr).second) {
+                            FC_CAPTURE_AND_THROW(deposit_to_one_address_twice, (addr));
+                        }
                     }
                 }
                 
@@ -82,15 +87,6 @@ namespace thinkyoung {
                 cur_entry->last_update = eval_state._current_state->now();
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
-                
-#if 0
-                if (asset_rec->is_restricted()) {
-                    for (const auto& owner : cur_entry->owners()) {
-                        // TODO
-                        //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
-                    }
-                }
-#endif
                 
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
@@ -126,9 +122,6 @@ namespace thinkyoung {
                             if (!eval_state.check_signature(owner))
                                 FC_CAPTURE_AND_THROW(missing_signature, (owner));
                                 
-                            // TODO
-                            //if( asset_rec->is_restricted() )
-                            //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
                             break;
                         }
                         
@@ -137,9 +130,6 @@ namespace thinkyoung {
                             uint32_t valid_signatures = 0;
                             
                             for (const auto& sig : multisig.owners) {
-                                // TODO
-                                //if( asset_rec->is_restricted() && NOT eval_state._current_state->get_authorization(asset_rec->id, owner) )
-                                //continue;
                                 valid_signatures += eval_state.check_signature(sig);
                             }
                             
