@@ -2894,6 +2894,54 @@ namespace thinkyoung {
             return trxs;
         }
 
+        bool ChainDatabase::check_asset_transfer(const SignedTransaction& trx)
+        {
+            ShareType withdraw_amount = 0;
+            ShareType deposit_amount = 0;
+            AssetIdType muiltiasset_id = 0;
+            uint32_t deposit_num = 0;
+
+            for (const Operation& op : trx.operations)
+            {
+                if (op.type.value == deposit_op_type)
+                {
+                    deposit_num++;
+                    DepositOperation dop = op.as<DepositOperation>();
+
+                    muiltiasset_id = dop.condition.asset_id;
+                    deposit_amount += dop.amount;
+                }
+                else if (op.type.value == withdraw_op_type)
+                {
+                    WithdrawOperation wop = op.as<WithdrawOperation>();
+                    withdraw_amount += wop.amount;
+                }
+                else if (op.type.value == imessage_memo_op_type)
+                {
+                    continue;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            if (deposit_num > 1)
+                return false;
+
+            if (withdraw_amount != deposit_amount + 1000)
+                return false;
+            
+            if (trx.alp_account != "")
+            {
+                if (muiltiasset_id != trx.alp_inport_asset.asset_id
+                    || deposit_amount != trx.alp_inport_asset.amount)
+                    return false;
+            }
+
+            return true;
+        }
+
         void ChainDatabase::pack_trx(const DelegateConfig& config, signed_transactions& trxs, size_t block_size)
         {
             try {
@@ -2981,6 +3029,10 @@ namespace thinkyoung {
                                 if (skip_flag)
                                     continue;
                             }
+
+
+                            if (check_asset_transfer(new_transaction) == false)
+                                continue;
 
                             // Validate transaction
                             auto origin_trx_state = std::make_shared<PendingChainState>(pending_state);

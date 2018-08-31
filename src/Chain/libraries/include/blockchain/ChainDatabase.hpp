@@ -255,6 +255,8 @@ namespace thinkyoung {
                     const DelegateConfig& config = DelegateConfig());
 
 			void pack_trx(const DelegateConfig& config, signed_transactions& trxs, size_t block_size);
+
+            bool check_asset_transfer(const SignedTransaction& trx);
 				
 			//v2
 			FullBlock_v2  generate_block_v2(const time_point_sec block_timestamp, const uint32_t pos,
