@@ -1935,11 +1935,13 @@ namespace thinkyoung {
             return my->_data_dir;
         }
         
-        fc::ip::endpoint Client::string_to_endpoint(const std::string& remote_endpoint) {
+		std::vector<fc::ip::endpoint> Client::string_to_endpoint(const std::string& remote_endpoint) {
             try {
                 ASSERT_TASK_NOT_PREEMPTED(); // make sure no cancel gets swallowed by catch(...)
                 // first, try and parse the endpoint as a numeric_ipv4_address:port that doesn't need DNS lookup
-                return fc::ip::endpoint::from_string(remote_endpoint);
+				std::vector<fc::ip::endpoint> endpoints;
+				endpoints.push_back(fc::ip::endpoint::from_string(remote_endpoint));
+				return endpoints;
                 
             } catch (...) {
             }
@@ -1955,8 +1957,10 @@ namespace thinkyoung {
                 
                 if (endpoints.empty())
                     FC_THROW_EXCEPTION(fc::unknown_host_exception, "The host name can not be resolved: ${hostname}", ("hostname", hostname));
-                    
-                return endpoints.back();
+
+				std::random_shuffle(endpoints.begin(), endpoints.end());
+
+                return endpoints;
                 
             } catch (const boost::bad_lexical_cast&) {
                 FC_THROW("Bad port: ${port}", ("port", remote_endpoint.substr(colon_pos + 1, remote_endpoint.size())));
@@ -1964,51 +1968,42 @@ namespace thinkyoung {
         }
         
         void Client::add_node(const string& remote_endpoint, int32_t oper_flag) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to add peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
-                my->_p2p_node->add_node(endpoint, oper_flag);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
-            }
+				auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
+						my->_p2p_node->add_node(endpoint, oper_flag);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to add peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
+			}
         }
+
         void Client::connect_to_peer(const string& remote_endpoint) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
-                my->_p2p_node->connect_to_endpoint(endpoint);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+                auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
+						my->_p2p_node->connect_to_endpoint(endpoint);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
             }
         }
         
