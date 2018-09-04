@@ -523,7 +523,17 @@ namespace thinkyoung {
                 
                 if (!slate_entry.valid())
                     FC_CAPTURE_AND_THROW(unknown_delegate_slate, (slate_id));
-                    
+                
+                const uint64_t slate_num = slate_entry->slate.size();
+                assert(slate_num != 0);
+                ShareType amount_ava = amount / slate_num;
+
+                for (const AccountIdType id : slate_entry->slate) {
+                    if (id >= 0)
+                        delegate_vote_deltas[id] = (fc::safe<ShareType>(delegate_vote_deltas[id]) + fc::safe<ShareType>(amount_ava)).value;
+                }
+
+#if 0
                 if (slate_entry->duplicate_slate.empty()) {
                     for (const AccountIdType id : slate_entry->slate) {
                         if (id >= 0)
@@ -534,6 +544,7 @@ namespace thinkyoung {
                     for (const AccountIdType id : slate_entry->duplicate_slate)
                         delegate_vote_deltas[id] = (fc::safe<ShareType>(delegate_vote_deltas[id]) + fc::safe<ShareType>(amount)).value;
                 }
+#endif
             }
             
             FC_CAPTURE_AND_RETHROW((slate_id)(amount))

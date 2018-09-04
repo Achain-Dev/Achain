@@ -1296,7 +1296,7 @@ namespace thinkyoung {
                 return _wallet->regenerate_keys(account, number_to_regenerate);
             }
             
-            std::string ClientImpl::wallet_transfer_to_address_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("").as<std::string>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("vote_recommended").as<thinkyoung::wallet::vote_strategy>() */) {
+            std::string ClientImpl::wallet_transfer_to_address_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("").as<std::string>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("vote_none").as<thinkyoung::wallet::vote_strategy>() */) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
                     FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");

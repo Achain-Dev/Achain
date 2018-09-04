@@ -806,11 +806,11 @@ namespace thinkyoung {
             
             /**
              *  Select a slate of delegates from those approved by this wallet. Specify
-             *  strategy as vote_none, vote_all, or vote_random. The slate
+             *  strategy as vote_none, vote_all. The slate
              *  returned will contain no more than ALP_BLOCKCHAIN_MAX_SLATE_SIZE delegates.
              */
             SlateEntry WalletImpl::get_delegate_slate(const VoteStrategy strategy)const {
-                if (strategy == vote_none)
+                if (strategy != vote_all)
                     return SlateEntry();
                     
                 vector<AccountIdType> for_candidates;
@@ -819,7 +819,7 @@ namespace thinkyoung {
                 for (const auto& item : account_items) {
                     const auto account_entry = item.second;
                     
-                    if (!account_entry.is_delegate() && strategy != vote_recommended) continue;
+                    if (!account_entry.is_delegate()) continue;
                     
                     if (account_entry.approved <= 0) continue;
                     
@@ -829,10 +829,11 @@ namespace thinkyoung {
                 std::random_shuffle(for_candidates.begin(), for_candidates.end());
                 size_t slate_size = 0;
                 
-                if (strategy == vote_all) {
-                    slate_size = std::min<size_t>(ALP_BLOCKCHAIN_MAX_SLATE_SIZE, for_candidates.size());
-                    
-                } else if (strategy == vote_random) {
+				slate_size = std::min<size_t>(ALP_BLOCKCHAIN_MAX_SLATE_SIZE, for_candidates.size());
+
+
+#if 0
+                else if (strategy == vote_random) {
                     slate_size = std::min<size_t>(ALP_BLOCKCHAIN_MAX_SLATE_SIZE / 3, for_candidates.size());
                     slate_size = rand() % (slate_size + 1);
                     
@@ -915,6 +916,7 @@ namespace thinkyoung {
                     slate_size = for_candidates.size();
                 }
                 
+#endif
                 SlateEntry entry;
                 
                 for (const AccountIdType id : for_candidates) entry.slate.insert(id);
@@ -1873,7 +1875,7 @@ namespace thinkyoung {
             uint64_t total = 0;
             auto summary = VoteSummary();
             summary.up_to_date_with_recommendation = true;
-            auto my_slate = my->get_delegate_slate(vote_recommended);
+            auto my_slate = my->get_delegate_slate(vote_all);
             const AccountBalanceEntrySummaryType items = get_spendable_account_balance_entrys(account_name);
             
             for (const auto& item : items) {

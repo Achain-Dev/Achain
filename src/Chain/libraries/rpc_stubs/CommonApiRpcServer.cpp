@@ -2773,7 +2773,7 @@ namespace thinkyoung {
             (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
             parameters[4].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
-            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
             parameters[5].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_address(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -2803,7 +2803,7 @@ namespace thinkyoung {
                 (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
                 parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
-                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
                 parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_address(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -2834,7 +2834,7 @@ namespace thinkyoung {
             (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
             parameters[4].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
-            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
             parameters[5].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_public_account(amount_to_transfer, asset_symbol, from_account_name, to_account_name, memo_message, strategy);
@@ -2865,7 +2865,7 @@ namespace thinkyoung {
                 (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
                 parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
-                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
                 parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_public_account(amount_to_transfer, asset_symbol, from_account_name, to_account_name, memo_message, strategy);
@@ -4839,7 +4839,7 @@ namespace thinkyoung {
             (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
             parameters[4].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
-            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
             parameters[5].as<thinkyoung::wallet::VoteStrategy>();
 
             std::string result = get_client()->wallet_transfer_to_address_rpc(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -4869,7 +4869,7 @@ namespace thinkyoung {
                 (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
                 parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
-                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
                 parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
 
             std::string result = get_client()->wallet_transfer_to_address_rpc(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -4930,7 +4930,7 @@ namespace thinkyoung {
             (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
             parameters[4].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
-            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
             parameters[5].as<thinkyoung::wallet::VoteStrategy>();
 
             std::string result = get_client()->wallet_transfer_to_public_account_rpc(amount_to_transfer, asset_symbol, from_account_name, to_account_name, memo_message, strategy);
@@ -4961,7 +4961,7 @@ namespace thinkyoung {
                 (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
                 parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
-                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
                 parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
 
             std::string result = get_client()->wallet_transfer_to_public_account_rpc(amount_to_transfer, asset_symbol, from_account_name, to_account_name, memo_message, strategy);
@@ -5161,7 +5161,7 @@ namespace thinkyoung {
             (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
             parameters[4].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 5) ?
-            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
             parameters[5].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::blockchain::SignedTransaction result = get_client()->create_transfer_transaction(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -5191,7 +5191,7 @@ namespace thinkyoung {
                 (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
                 parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
             thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
-                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                (fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) :
                 parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
 
             thinkyoung::blockchain::SignedTransaction result = get_client()->create_transfer_transaction(amount_to_transfer, asset_symbol, from_account_name, to_address, memo_message, strategy);
@@ -11131,10 +11131,10 @@ namespace thinkyoung {
                         {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
                         {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
-                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_none\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
-                    /* detailed description */ "Do a simple (non-TITAN) transfer to an address\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  transaction_entry\n",
+                    /* detailed description */ "Do a simple (non-TITAN) transfer to an address\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n\nReturns:\n  transaction_entry\n",
                     /* aliases */ {}, false};
                 store_method_metadata(wallet_transfer_to_address_method_metadata);
             }
@@ -11150,10 +11150,10 @@ namespace thinkyoung {
                         {"from_account_name", "sending_account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"to_account_name", "receive_account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
-                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_none\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
-                    /* detailed description */ "Sends given amount to the given account\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (sending_account_name, required): the source account to draw the shares from\n  to_account_name (receive_account_name, required): the account to transfer the shares to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  transaction_entry\n",
+                    /* detailed description */ "Sends given amount to the given account\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (sending_account_name, required): the source account to draw the shares from\n  to_account_name (receive_account_name, required): the account to transfer the shares to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n\nReturns:\n  transaction_entry\n",
                     /* aliases */ {"transfer_public"}, false};
                 store_method_metadata(wallet_transfer_to_public_account_method_metadata);
             }
@@ -11173,7 +11173,7 @@ namespace thinkyoung {
                         {"builder_path", "string", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 1,
-                    /* detailed description */ "\n\nParameters:\n  amount (string, required): how much to transfer\n  symbol (string, required): which asset\n  from_address (address, required): the balance address to withdraw from\n  to (string, required): address or account to receive funds\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n  sign_and_broadcast (bool, optional, defaults to true): \n  builder_path (string, optional, defaults to \"\"): If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx\n\nReturns:\n  transaction_builder\n",
+                    /* detailed description */ "\n\nParameters:\n  amount (string, required): how much to transfer\n  symbol (string, required): which asset\n  from_address (address, required): the balance address to withdraw from\n  to (string, required): address or account to receive funds\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n  sign_and_broadcast (bool, optional, defaults to true): \n  builder_path (string, optional, defaults to \"\"): If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx\n\nReturns:\n  transaction_builder\n",
                     /* aliases */ {"withdraw_from_address"}, false};
                 store_method_metadata(wallet_withdraw_from_address_method_metadata);
             }
@@ -11824,7 +11824,7 @@ namespace thinkyoung {
                         {"builder_path", "string", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
-                    /* detailed description */ "Set this balance's voting address and slate\n\nParameters:\n  balance_id (address, required): the current name of the account\n  voter_address (string, optional, defaults to \"\"): The new voting address. If none is specified, tries to re-use existing address.\n  strategy (vote_strategy, optional, defaults to \"vote_all\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n  sign_and_broadcast (bool, optional, defaults to \"true\"): \n  builder_path (string, optional, defaults to \"\"): If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx\n\nReturns:\n  transaction_builder\n",
+                    /* detailed description */ "Set this balance's voting address and slate\n\nParameters:\n  balance_id (address, required): the current name of the account\n  voter_address (string, optional, defaults to \"\"): The new voting address. If none is specified, tries to re-use existing address.\n  strategy (vote_strategy, optional, defaults to \"vote_all\"): enumeration [vote_none | vote_all] \n  sign_and_broadcast (bool, optional, defaults to \"true\"): \n  builder_path (string, optional, defaults to \"\"): If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx\n\nReturns:\n  transaction_builder\n",
                     /* aliases */ {"set_vote_info"}, false};
                 store_method_metadata(wallet_balance_set_vote_info_method_metadata);
             }
@@ -11971,10 +11971,10 @@ namespace thinkyoung {
                         {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
                         {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
-                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_none\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
-                    /* detailed description */ "Do a simple (non-TITAN) transfer to an address\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  string\n",
+                    /* detailed description */ "Do a simple (non-TITAN) transfer to an address\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n\nReturns:\n  string\n",
                     /* aliases */ {}, false};
                 store_method_metadata(wallet_transfer_to_address_rpc_method_metadata);
             }
@@ -12004,10 +12004,10 @@ namespace thinkyoung {
                         {"from_account_name", "sending_account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"to_account_name", "receive_account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
-                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_none\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 4,
-                    /* detailed description */ "Sends given amount to the given account\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (sending_account_name, required): the source account to draw the shares from\n  to_account_name (receive_account_name, required): the account to transfer the shares to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  string\n",
+                    /* detailed description */ "Sends given amount to the given account\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (sending_account_name, required): the source account to draw the shares from\n  to_account_name (receive_account_name, required): the account to transfer the shares to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n\nReturns:\n  string\n",
                     /* aliases */ {}, false};
                 store_method_metadata(wallet_transfer_to_public_account_rpc_method_metadata);
             }
@@ -12086,10 +12086,10 @@ namespace thinkyoung {
                         {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
                         {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
                         {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
-                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_none\""))}
                           },
                     /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
-                    /* detailed description */ "create a simple (non-TITAN) transfer to an address without broadcast\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  signed_transaction\n",
+                    /* detailed description */ "create a simple (non-TITAN) transfer to an address without broadcast\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_none\"): enumeration [vote_none | vote_all] \n\nReturns:\n  signed_transaction\n",
                     /* aliases */ {}, false};
                 store_method_metadata(create_transfer_transaction_method_metadata);
             }
