@@ -43,6 +43,8 @@ namespace thinkyoung {
             block_message_type = 1001,
             batch_trx_message_type = 1002,
             block_message_type_v2 = 1003,
+            block_message_type_v2 = 1003,
+            deles_node_info_message_type=1004,
             core_message_type_first = 5000,
             item_ids_inventory_message_type = 5001,
             blockchain_item_ids_inventory_message_type = 5002,

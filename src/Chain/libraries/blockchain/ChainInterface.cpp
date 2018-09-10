@@ -141,7 +141,7 @@ namespace thinkyoung {
         {
             try {
                 const oPropertyEntry entry = get_property_entry(PropertyIdType::last_asset_id);
-                FC_ASSERT(entry.valid(), "Invalid asset entry");
+                FC_ASSERT(entry.valid(), "Invalid ass et entry");
                 return entry->value.as<AssetIdType>();
             } FC_CAPTURE_AND_RETHROW()
         }

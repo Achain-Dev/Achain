@@ -805,7 +805,7 @@ namespace thinkyoung {
 
                             _p2p_node->broadcast(BlockMessage_v2(next_block_v2));
 
-                            block_num = next_block_v2.block_num;
+                             block_num = next_block_v2.block_num;
 						}
                             
                         ilog("Produced block #${n}!", ("n", block_num));

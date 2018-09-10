@@ -10,7 +10,8 @@ namespace thinkyoung {
             trx_message_type = 1000,
             block_message_type = 1001,
             batch_trx_message_type = 1002,
-            block_message_type_v2 = 1003
+            block_message_type_v2 = 1003,
+            deles_node_info_message_type = 1004
         };
 
         struct TrxMessage
@@ -64,6 +65,15 @@ namespace thinkyoung {
 
         };
 
+        struct DelegatesNodeInfoMessage
+        {
+            static const MessageTypeEnum type;
+            std::map<AccountIdType, thinkyoung::blockchain::DelegateNodeInfo> deleinfo_map;
+            DelegatesNodeInfoMessage() {}
+            DelegatesNodeInfoMessage(std::map<AccountIdType,thinkyoung::blockchain::DelegateNodeInfo> dele_node_info_map) :
+                deleinfo_map(std::move(dele_node_info_map))
+            {}
+        };
     }
 } // thinkyoung::client
 
