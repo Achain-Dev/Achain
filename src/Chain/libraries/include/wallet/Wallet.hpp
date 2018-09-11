@@ -929,8 +929,8 @@ namespace thinkyoung {
             * @param from_account_name the source account to draw the shares from
             * @param to_address the address or pubkey to transfer to
             * @param memo_message a memo to store with the transaction
-            * @param selection_method enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy, optional,
-            *                 defaults to "vote_recommended")
+            * @param selection_method enumeration [vote_none | vote_all] (vote_strategy, optional,
+            *                 defaults to "vote_none")
             * @param sign whether sign the transaction
             * @param alp_account centralized system address
             *

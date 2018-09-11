@@ -135,9 +135,6 @@ namespace thinkyoung {
                             uint32_t valid_signatures = 0;
                             
                             for (const auto& sig : multisig.owners) {
-                                // TODO
-                                //if( asset_rec->is_restricted() && NOT eval_state._current_state->get_authorization(asset_rec->id, owner) )
-                                //continue;
                                 valid_signatures += eval_state.check_signature(sig);
                             }
                             

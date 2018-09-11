@@ -24,7 +24,7 @@ namespace thinkyoung {
 
         struct VoteSummary
         {
-            bool      up_to_date_with_recommendation;  // Are my votes all voting for the result of "vote_recommended" ?
+            bool      up_to_date_with_recommendation;  // Are my votes all voting for the result of "vote_none" ?
             float     utilization;
             float     negative_utilization;
         };

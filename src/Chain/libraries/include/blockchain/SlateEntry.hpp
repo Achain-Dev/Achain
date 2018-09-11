@@ -11,7 +11,7 @@ namespace thinkyoung {
         class ChainInterface;
         struct SlateEntry {
             set<AccountIdType> slate;
-            vector<AccountIdType> duplicate_slate;
+            //vector<AccountIdType> duplicate_slate;
             
             SlateIdType id()const;
             void sanity_check(const ChainInterface&)const;
@@ -31,4 +31,4 @@ namespace thinkyoung {
     }
 } // thinkyoung::blockchain
 
-FC_REFLECT(thinkyoung::blockchain::SlateEntry, (slate)(duplicate_slate))
+FC_REFLECT(thinkyoung::blockchain::SlateEntry, (slate))

@@ -833,12 +833,12 @@ namespace thinkyoung {
              * @param from_account_name the source account to draw the shares from (account_name, required)
              * @param to_address the address or pubkey to transfer to (string, required)
              * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
-             *                 optional, defaults to "vote_recommended")
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
+             *                 optional, defaults to "vote_none")
              *
              * @return transaction_entry
              */
-            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_address(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_address(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
              * Sends given amount to the given account.
              *
@@ -847,19 +847,19 @@ namespace thinkyoung {
              * @param from_account_name the source account to draw the shares from (sending_account_name, required)
              * @param to_account_name the account to transfer the shares to (receive_account_name, required)
              * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
-             *                 optional, defaults to "vote_recommended")
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
+             *                 optional, defaults to "vote_none")
              *
              * @return transaction_entry
              */
-            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_public_account(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_account_name, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_public_account(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_account_name, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
              *
              * @param amount how much to transfer (string, required)
              * @param symbol which asset (string, required)
              * @param from_address the balance address to withdraw from (address, required)
              * @param to address or account to receive funds (string, required)
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
              *                 optional, defaults to "vote_none")
              * @param sign_and_broadcast (bool, optional, defaults to true)
              * @param builder_path If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx
@@ -1242,7 +1242,7 @@ namespace thinkyoung {
              * @param balance_id the current name of the account (address, required)
              * @param voter_address The new voting address. If none is specified, tries to re-use existing address.
              *                      (string, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
              *                 optional, defaults to "vote_all")
              * @param sign_and_broadcast (bool, optional, defaults to "true")
              * @param builder_path If specified, will write builder here instead of to DATA_DIR/transactions/latest.trx
@@ -1340,12 +1340,12 @@ namespace thinkyoung {
              * @param from_account_name the source account to draw the shares from (account_name, required)
              * @param to_address the address or pubkey to transfer to (string, required)
              * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
-             *                 optional, defaults to "vote_recommended")
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
+             *                 optional, defaults to "vote_none")
              *
              * @return string
              */
-            virtual std::string wallet_transfer_to_address_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            virtual std::string wallet_transfer_to_address_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
              * Lists the total asset balances for the specified account.
              *
@@ -1363,12 +1363,12 @@ namespace thinkyoung {
              * @param from_account_name the source account to draw the shares from (sending_account_name, required)
              * @param to_account_name the account to transfer the shares to (receive_account_name, required)
              * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
-             *                 optional, defaults to "vote_recommended")
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
+             *                 optional, defaults to "vote_none")
              *
              * @return string
              */
-            virtual std::string wallet_transfer_to_public_account_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_account_name, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            virtual std::string wallet_transfer_to_public_account_rpc(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_account_name, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
              * Get owner publickey of specific account.
              *
@@ -1418,12 +1418,12 @@ namespace thinkyoung {
              * @param from_account_name the source account to draw the shares from (account_name, required)
              * @param to_address the address or pubkey to transfer to (string, required)
              * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
-             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
-             *                 optional, defaults to "vote_recommended")
+             * @param strategy enumeration [vote_none | vote_all] (vote_strategy,
+             *                 optional, defaults to "vote_none")
              *
              * @return signed_transaction
              */
-            virtual thinkyoung::blockchain::SignedTransaction create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            virtual thinkyoung::blockchain::SignedTransaction create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_none\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
              * scan to get all the contracts.
              */

@@ -14,9 +14,7 @@ namespace thinkyoung {
         enum VoteStrategy
         {
             vote_none = 0,
-            vote_all = 1,
-            vote_random = 2,
-            vote_recommended = 3
+            vote_all = 1
         };
 
         /**
@@ -252,7 +250,7 @@ namespace thinkyoung {
              *
              * All balances are leveled to zero by withdrawing or depositing as necessary. A fee is deducted arbitrarily from
              * the available balances, preferring XTS, or withdrawn from an arbitrary account in the transaction if no
-             * sufficiently positive balances are available. A single slate is chosen using vote_recommended for all deposits.
+             * sufficiently positive balances are available. A single slate is chosen using vote_none for all deposits.
              *
              * This function should be called only once, at the end of the builder function calls. Calling it multiple times
              * may cause attempts to over-withdraw balances.
@@ -302,7 +300,5 @@ namespace thinkyoung {
 FC_REFLECT_ENUM(thinkyoung::wallet::VoteStrategy,
     (vote_none)
     (vote_all)
-    (vote_random)
-    (vote_recommended)
     )
     FC_REFLECT(thinkyoung::wallet::TransactionBuilder, (transaction_entry)(required_signatures)(outstanding_balances))
