@@ -159,9 +159,7 @@ namespace thinkyoung {
                 } catch (const thinkyoung::wallet::invalid_password&) {
                     throw;
                     
-                } catch (...) {
-                    //ilog("@n I couldn't parse that as an object: ${o}", ("o", vo));
-                }
+                } catch (...) {}
                 
                 try {
                     const auto arr = vo.as<vector<variant>>();
@@ -173,11 +171,8 @@ namespace thinkyoung {
                 } catch (const thinkyoung::wallet::invalid_password&) {
                     throw;
                     
-                } catch (...) {
-                    //ilog("@n I couldn't parse that as an array: ${o}", ("o", vo));
-                }
+                } catch (...) {}
                 
-                //ilog("@n I couldn't parse that as anything!: ${o}", ("o", vo));
             }
             
             bool detail::ClientImpl::wallet_set_automatic_backups(bool enabled) {
