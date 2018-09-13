@@ -421,31 +421,6 @@ namespace thinkyoung {
                 FC_CAPTURE_AND_RETHROW((account_name)(label)(legacy_network_byte))
             }
             
-            
-            // wallet_transaction_entry detail::ClientImpl::wallet_transfer_to_legacy_address(
-            //         double amount_to_transfer,
-            //         const string& asset_symbol,
-            //         const string& from_account_name,
-            //      const pts_address& to_address,
-            //      const string& alp_account,
-            //         const string& memo_message,
-            //         const vote_strategy& strategy )
-            // {
-            //     auto entry =  _wallet->transfer_asset_to_address( amount_to_transfer,
-            //                                                        asset_symbol,
-            //                                                        from_account_name,
-            //                                                        address( to_address ),
-            //                                                        memo_message,
-            //                                                        strategy,
-            //                                                        true );
-            //     _wallet->cache_transaction( entry );
-            //     network_broadcast_transaction( entry.trx );
-            //     return entry;
-            //
-            // }
-            
-            
-            
             WalletTransactionEntry detail::ClientImpl::wallet_transfer_to_address(
                 const string& amount_to_transfer,
                 const string& asset_symbol,
