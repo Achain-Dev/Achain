@@ -53,10 +53,6 @@ namespace thinkyoung {
                 } FC_CAPTURE_AND_RETHROW((size))
             }
 
-            // void client_impl::delegate_set_block_max_production_time( uint64_t time )
-            // { try {
-            //     UPDATE_CONFIG( block_max_production_time, fc::microseconds( time ) );
-            // } FC_CAPTURE_AND_RETHROW( (time) ) }
             void ClientImpl::delegate_set_imessage_fee_coe(const string& fee_coe)
             {
                 // set limit in  sandbox state
