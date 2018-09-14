@@ -21,9 +21,6 @@
 #include <rpc/RpcClient.hpp>
 #include <rpc/RpcServer.hpp>
 
-//#include <thinkyoung/mail/server.hpp>
-
-
 #include <fc/log/file_appender.hpp>
 #include <fc/log/logger.hpp>
 #include <fc/log/logger_config.hpp>
@@ -356,6 +353,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         fc::path get_wallet_dir(const program_options::variables_map& option_variables, const fc::path& default_path) {
             try {
                 fc::path wallet_dir;
@@ -372,6 +370,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         void load_and_configure_chain_database(const fc::path& datadir,
                                                const program_options::variables_map& option_variables) {
             try {
