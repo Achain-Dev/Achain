@@ -39,6 +39,7 @@ Contributing
 ------------
 The source code can always be found at the [Achain GitHub Repository](https://github.com/Achain-Dev/Achain). 
 - `master` - official Achain releases are tagged from here; this should only change for a new release
+- `storage_optimization` - testing version which is about better the smart contract
 
 Some technical documentation is available at the [Achain GitHub Wiki](https://github.com/Achain-Dev/Achain/wiki).
 
