@@ -1633,19 +1633,7 @@ namespace thinkyoung {
                 if (network_started_callback) network_started_callback();
             }
         }
-        
-        //RPC server and CLI configuration rules:
-        //if daemon mode requested
-        //  start RPC server only (no CLI input)
-        //else
-        //  start RPC server if requested
-        //  start CLI
-        //  if input log
-        //    cli.processs_commands in input log
-        //    wait till finished
-        //  set input stream to cin
-        //  cli.process_commands from cin
-        //  wait till finished
+
         void Client::configure_from_command_line(int argc, char** argv) {
             if (argc == 0 && argv == nullptr) {
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
