@@ -2252,6 +2252,10 @@ namespace thinkyoung {
                 {
                     continue;
                 }
+                else if (op.type.value == define_slate_op_type)
+                {
+                    continue;
+                }
                 else
                 {
                     return true;
