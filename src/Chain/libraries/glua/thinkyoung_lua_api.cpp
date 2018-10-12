@@ -3,7 +3,7 @@
  */
 
 #include "glua/lprefix.h"
-#include <stdio.h>r
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string>
