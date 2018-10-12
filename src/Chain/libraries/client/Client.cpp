@@ -1633,19 +1633,7 @@ namespace thinkyoung {
                 if (network_started_callback) network_started_callback();
             }
         }
-        
-        //RPC server and CLI configuration rules:
-        //if daemon mode requested
-        //  start RPC server only (no CLI input)
-        //else
-        //  start RPC server if requested
-        //  start CLI
-        //  if input log
-        //    cli.processs_commands in input log
-        //    wait till finished
-        //  set input stream to cin
-        //  cli.process_commands from cin
-        //  wait till finished
+
         void Client::configure_from_command_line(int argc, char** argv) {
             if (argc == 0 && argv == nullptr) {
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
@@ -1683,7 +1671,6 @@ namespace thinkyoung {
             }
             
             // this just clears the database if the command line says
-            // TODO: rename it to smething better
             load_and_configure_chain_database(datadir, option_variables);
             fc::optional<fc::path> genesis_file_path;
             
@@ -1728,22 +1715,20 @@ namespace thinkyoung {
             
             accept_incoming_p2p_connections(option_variables["accept-incoming-connections"].as<bool>());
             
-            // else we use the default set in thinkyoung::net::node
-            
             //initialize cli
             if (option_variables.count("daemon") || my->_config.ignore_console) {
                 std::cout << "Running in daemon mode, ignoring console\n";
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
                 my->_cli->set_daemon_mode(true);
                 
-            } else { //we will accept input from the console
-                //if user wants us to execute a command script log for the CLI,
-                //  extract the commands and put them in a temporary input stream to pass to the CLI
+            } else { 
+                //we will accept input from the console
                 if (option_variables.count("input-log")) {
                     std::vector<string> input_logs = option_variables["input-log"].as< std::vector<string> >();
                     string input_commands;
                     
                     for (const auto& input_log : input_logs)
+                        //extract the commands and put them in a temporary input stream to pass to the CLI
                         input_commands += extract_commands_from_log_file(input_log);
                         
                     my->_command_script_holder.reset(new std::stringstream(input_commands));
@@ -1752,13 +1737,10 @@ namespace thinkyoung {
                 const fc::path console_log_file = datadir / "console.log";
                 
                 if (option_variables.count("log-commands") <= 0) {
-                    /* Remove any console logs for security */
                     fc::remove_all(console_log_file);
-                    /* Don't create a log file, just output to console */
                     my->_cli = new thinkyoung::cli::Cli(this, my->_command_script_holder.get(), &std::cout);
                     
                 } else {
-                    /* Tee cli output to the console and a log file */
                     ulog("Logging commands to: ${file}", ("file", console_log_file.string()));
                     my->_console_log.open(console_log_file.string());
                     my->_tee_device.reset(new TeeDevice(std::cout, my->_console_log));;
@@ -1772,8 +1754,7 @@ namespace thinkyoung {
             if (option_variables.count("stop-before-block"))
                 my->_debug_stop_before_block_num = option_variables["stop-before-block"].as<uint32_t>();
                 
-            // start listening.  this just finds a port and binds it, it doesn't start
-            // accepting connections until connect_to_p2p_network()
+            // start listening.  this just finds a port and binds it, it doesn't start ,accepting connections until connect_to_p2p_network()
             listen_to_p2p_network();
             
             if (option_variables["upnp"].as<bool>()) {
