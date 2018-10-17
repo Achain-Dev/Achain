@@ -1243,7 +1243,7 @@ namespace thinkyoung {
                 vector<EventOperation> ops;
                 
                 try {
-                    FullBlock block_data = self->get_block(block_index);
+                    FullBlock_v2 block_data = self->get_block_v2(block_index);
                     
                     for (const auto& item : block_data.user_transactions) {
                         TransactionIdType trx_id = item.id();
