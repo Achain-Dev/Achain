@@ -526,7 +526,7 @@ namespace thinkyoung {
                 
                 const uint64_t slate_num = slate_entry->slate.size();
                 assert(slate_num != 0);
-                ShareType amount_ava = amount / slate_num;
+                ShareType amount_ava = (fc::safe<ShareType>(amount) / fc::safe<ShareType>(slate_num)).value;
 
                 for (const AccountIdType id : slate_entry->slate) {
                     if (id >= 0)
