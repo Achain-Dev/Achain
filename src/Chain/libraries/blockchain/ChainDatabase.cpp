@@ -2248,11 +2248,7 @@ namespace thinkyoung {
                         muiltiasset_id_w = id;
                     }
                 }
-                else if (op.type.value == imessage_memo_op_type)
-                {
-                    continue;
-                }
-                else if (op.type.value == define_slate_op_type)
+                else if (op.type.value == imessage_memo_op_type || op.type.value == define_slate_op_type)
                 {
                     continue;
                 }
