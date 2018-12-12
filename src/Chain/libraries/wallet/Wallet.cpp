@@ -56,15 +56,21 @@ namespace thinkyoung {
                 
                 auto ntptime = blockchain::ntp_time();
                 fc::time_point t = (ntptime.valid() ? *ntp_time() : fc::time_point::now());
-                
-                if ((t - _blockchain->get_head_block_timestamp()) <= fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2))
+				auto head_time = _blockchain->get_head_block_timestamp();
+				
+				if (_blockchain->get_head_block_num() >= ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+				{
+					head_time = _blockchain->get_head_block_v2().timestamp;
+				}
+				
+                if ((t - head_time) <= fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2))
                     handle_events(summary.applied_changes->event_vector);
                     
                 if (!self->get_transaction_scanning()) return;
                 
-                if (summary.block_data.block_num <= self->get_last_scanned_block_number()) return;
+                if (summary.block_num <= self->get_last_scanned_block_number()) return;
                 
-                self->start_scan(std::min(self->get_last_scanned_block_number() + 1, summary.block_data.block_num), -1);
+                self->start_scan(std::min(self->get_last_scanned_block_number() + 1, summary.block_num), -1);
             }
             void WalletImpl::handle_events(const vector<EventOperation>& event_vector) {
                 auto map_end = contract_id_event_to_script_id_vector_db.unordered_end();
@@ -217,7 +223,7 @@ namespace thinkyoung {
                 BlockIdType header_id;
                 
                 if (block_num != uint32_t(-1) && block_num > 1) {
-                    auto block_header = _blockchain->get_block_header(block_num - 1);
+                    auto block_header = _blockchain->get_block_header_v2(block_num - 1);
                     header_id = block_header.id();
                 }
                 
@@ -551,6 +557,8 @@ namespace thinkyoung {
                         script_id_to_script_entry_db.open(wallet_file_path / "script_id_to_script_entry_db");
                         contract_id_event_to_script_id_vector_db.close();
                         contract_id_event_to_script_id_vector_db.open(wallet_file_path / "contract_id_event_to_script_id_vector_db");
+                        block_sign_db.close();
+                        block_sign_db.open(wallet_file_path / "block_sign_db");
                         FC_ASSERT(_wallet_db.validate_password(_wallet_password));
                         
                     } catch (...) {
@@ -589,6 +597,8 @@ namespace thinkyoung {
                         script_id_to_script_entry_db.open(wallet_file_path / "script_id_to_script_entry_db");
                         contract_id_event_to_script_id_vector_db.close();
                         contract_id_event_to_script_id_vector_db.open(wallet_file_path / "contract_id_event_to_script_id_vector_db");
+                        block_sign_db.close();
+                        block_sign_db.open(wallet_file_path / "block_sign_db");
                         
                     } catch (...) {
                         open_file_failure = std::current_exception();
@@ -957,6 +967,7 @@ namespace thinkyoung {
                 my->_wallet_db.close();
                 my->script_id_to_script_entry_db.close();
                 my->contract_id_event_to_script_id_vector_db.close();
+                my->block_sign_db.close();
                 my->_current_wallet_path = fc::path();
             }
             
@@ -1879,8 +1890,13 @@ namespace thinkyoung {
             }
         }
         
-        vector<WalletAccountEntry> Wallet::get_my_delegates(uint32_t delegates_to_retrieve)const {
+        vector<WalletAccountEntry> Wallet::get_my_delegates(uint32_t delegates_to_retrieve, bool skip_check)const {
+
+			if (!skip_check)
+			{
             FC_ASSERT(is_open(), "Wallet not open!");
+			}
+
             vector<WalletAccountEntry> delegate_entrys;
             const auto& account_entrys = list_my_accounts();
             
@@ -1916,7 +1932,38 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
-        
+#if 0
+        //get next block maker
+        optional<AccountIdType> Wallet::get_next_block_maker(const vector<WalletAccountEntry>& delegate_entrys)const {
+            try {
+                if (!is_open() || is_locked()) return optional<AccountIdType>();
+
+                vector<AccountIdType> delegate_ids;
+                delegate_ids.reserve(delegate_entrys.size());
+
+                for (const auto& delegate_entry : delegate_entrys)
+                    delegate_ids.push_back(delegate_entry.id);
+
+                //get the active delegates
+                auto active_delegates = my->_blockchain->get_active_delegates();
+                auto active_len = active_delegates.size();
+                //get the head_block, find its maker
+                SignedBlockHeader header = my->_blockchain->get_head_block();
+
+                //  这里是否需要优化？  在块里携带本次产块代理的index�?
+                for (int i = 0; i < active_len; i++)
+                {
+                    if (header.delegate_signature[0].dele_name ==
+                        my->_blockchain->get_account_entry(active_delegates[i])->name)
+
+                        break;
+                }
+
+            }
+
+            FC_CAPTURE_AND_RETHROW()
+        }
+#endif 
         
         fc::ecc::compact_signature Wallet::sign_hash(const string& signer, const fc::sha256& hash)const {
             try {
@@ -1935,18 +1982,69 @@ namespace thinkyoung {
                 }
             }
         }
-        
-        void Wallet::sign_block(SignedBlockHeader& header)const {
+
+        void Wallet::sign_block(SignedBlockHeader& header, const AccountEntry& delegate_entry)const
+        {
             try {
+                if (NOT is_open()) FC_CAPTURE_AND_THROW(wallet_closed);
+                if (NOT is_unlocked()) FC_CAPTURE_AND_THROW(wallet_locked);
+
+                FC_ASSERT(delegate_entry.is_delegate());
+
+                const PublicKeyType public_signing_key = delegate_entry.signing_key();
+                const PrivateKeyType private_signing_key = get_private_key(Address(public_signing_key));
+
+                FC_ASSERT(delegate_entry.delegate_info.valid());
+                const uint32_t last_produced_block_num = delegate_entry.delegate_info->last_block_num_produced;
+
+                const optional<SecretHashType>& prev_secret_hash = delegate_entry.delegate_info->next_secret_hash;
+                if (prev_secret_hash.valid())
+                {
+                    FC_ASSERT(!delegate_entry.delegate_info->signing_key_history.empty());
+                    const map<uint32_t, PublicKeyType>& signing_key_history = delegate_entry.delegate_info->signing_key_history;
+                    const uint32_t last_signing_key_change_block_num = signing_key_history.crbegin()->first;
+
+                    if (last_produced_block_num > last_signing_key_change_block_num)
+                    {
+                        header.previous_secret = my->get_secret(last_produced_block_num, private_signing_key);
+                    }
+                    else
+                    {
+                        // We need to use the old key to reveal the previous secret
+                        FC_ASSERT(signing_key_history.size() >= 2);
+                        auto iter = signing_key_history.crbegin();
+                        ++iter;
+
+                        const PublicKeyType& prev_public_signing_key = iter->second;
+                        const PrivateKeyType prev_private_signing_key = get_private_key(Address(prev_public_signing_key));
+
+                        header.previous_secret = my->get_secret(last_produced_block_num, prev_private_signing_key);
+                    }
+
+                    FC_ASSERT(fc::ripemd160::hash(header.previous_secret) == *prev_secret_hash);
+                }
+
+                header.next_secret_hash = fc::ripemd160::hash(my->get_secret(header.block_num, private_signing_key));
+                header.sign(private_signing_key);
+
+                FC_ASSERT(header.validate_signee(public_signing_key));
+            } FC_CAPTURE_AND_RETHROW((header))
+        }
+        
+        //sign_block_v2
+        void Wallet::sign_block_v2(SignedBlockHeader_v2& header, const AccountEntry& delegate_entry)const {
+            try {
+                uint32_t delegate_pos;
+
                 if (NOT is_open()) FC_CAPTURE_AND_THROW(wallet_closed);
                 
                 if (NOT is_unlocked()) FC_CAPTURE_AND_THROW(wallet_locked);
-                
-                const vector<AccountIdType>& active_delegate_ids = my->_blockchain->get_active_delegates();
-                const AccountEntry delegate_entry = my->_blockchain->get_slot_signee(header.timestamp, active_delegate_ids);
-                FC_ASSERT(delegate_entry.is_delegate());
-                const PublicKeyType public_signing_key = delegate_entry.signing_key();
-                const PrivateKeyType private_signing_key = get_private_key(Address(public_signing_key));
+
+				//check delete valid
+				FC_ASSERT(delegate_entry.is_delegate());
+
+                PublicKeyType public_signing_key = delegate_entry.signing_key();
+                PrivateKeyType private_signing_key = get_private_key(Address(public_signing_key));
                 FC_ASSERT(delegate_entry.delegate_info.valid());
                 const uint32_t last_produced_block_num = delegate_entry.delegate_info->last_block_num_produced;
                 const optional<SecretHashType>& prev_secret_hash = delegate_entry.delegate_info->next_secret_hash;
@@ -1971,14 +2069,129 @@ namespace thinkyoung {
                     
                     FC_ASSERT(fc::ripemd160::hash(header.previous_secret) == *prev_secret_hash);
                 }
-                
+                //vector reserve 50 signs
+                header.delegate_signature.reserve(ALP_BLOCKCHAIN_SIGN_COUNT_MAX);
+
                 header.next_secret_hash = fc::ripemd160::hash(my->get_secret(header.block_num, private_signing_key));
-                header.sign(private_signing_key);
+                //delagate sign this block generated by it
+                header.sign(delegate_entry.name, private_signing_key);
+
+                int i = delegate_sign_block(&header, true);
+                // validate signs
                 FC_ASSERT(header.validate_signee(public_signing_key));
             }
             
             FC_CAPTURE_AND_RETHROW((header))
         }
+
+        //the other delegates within this wallet sign this block
+        uint32_t Wallet::delegate_sign_block(SignedBlockHeader_v2* p_header, bool is_from_local)const
+        {
+            FC_ASSERT(p_header);
+            uint32_t iter_i = 0;
+            uint32_t iter_j = 0;
+            uint32_t sign_count = p_header->delegate_signature.size();
+            PublicKeyType public_signing_key;
+            PrivateKeyType private_signing_key;
+
+            time_point start_time = time_point::now();
+
+
+            //if the count of sign >= 50, then return 
+            if (sign_count >= ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+                return ALP_BLOCKCHAIN_SIGN_COUNT_MAX;
+
+            //get active delegates from this wallet, if has no active delegate, return 0
+            vector<WalletAccountEntry> active_delegates = get_my_delegates(active_delegate_status, true);
+            uint32_t deleg_count = active_delegates.size();
+            if (deleg_count == 0)
+                return sign_count;
+
+            vector<WalletAccountEntry>::iterator iter = active_delegates.begin();
+
+            //sign this block
+            if (is_from_local)
+            {
+                if (deleg_count == 1)
+                    return sign_count;
+                
+                //remove the block maker from active_delegates
+                while (iter != active_delegates.end())
+                {
+                    if (p_header->delegate_signature[0].dele_name == iter->name)
+                    {
+                        iter = active_delegates.erase(iter);
+                        deleg_count--;
+                        break;
+                    }
+                    iter++;
+                }
+            }
+            else
+            {
+                //Check to see if you have signed this block 
+                //check 1: if the count of sings is bigger than the count of my delegates,then check
+                if (sign_count > deleg_count)
+                {
+                    for (iter_i = 0; iter_i < deleg_count; iter_i++)
+                    {
+                        for (iter_j = 0; iter_j < sign_count; iter_j++)
+                        {
+                            //if my delegate has signed this block, then break
+                            if (p_header->delegate_signature[iter_j].dele_name == active_delegates[iter_i].name)
+                            {
+                                return sign_count;
+                            }
+                        }
+                    }
+                }
+
+                //validate all signs
+                try{
+                    validate_signs(p_header);
+                }FC_CAPTURE_AND_RETHROW()
+            }
+
+            time_point end_time = time_point::now();
+            //sign
+            for (int k = 0; k < deleg_count; k++)
+            {
+                public_signing_key = active_delegates[k].signing_key();
+                private_signing_key = get_private_key(Address(public_signing_key));
+
+                p_header->sign(active_delegates[k].name, private_signing_key);
+
+                ++sign_count;
+
+                if (sign_count == ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+                    break;
+            }
+
+            end_time = time_point::now();
+
+            return sign_count;
+        }
+
+        void Wallet::validate_signs(SignedBlockHeader_v2* p_header)const
+        {
+            FC_ASSERT(p_header);
+
+            oAccountEntry dele_entry;
+
+            try{
+                int sign_count = p_header->delegate_signature.size();
+                for (int index = 0; index < sign_count; index++)
+                {
+                    dele_entry = my->_blockchain->get_account_entry(p_header->delegate_signature[index].dele_name);
+                    if (!dele_entry.valid())
+                        FC_CAPTURE_AND_THROW(invalid_delegate, (p_header->delegate_signature[index].dele_name));
+
+                    if (dele_entry->signing_key() != p_header->signee(index))
+                        FC_CAPTURE_AND_THROW(invalid_delegate_signee, (dele_entry->id));
+                }
+            }FC_CAPTURE_AND_RETHROW()
+        }
+        
         
         std::shared_ptr<TransactionBuilder> Wallet::create_transaction_builder() {
             try {
@@ -2053,7 +2266,8 @@ namespace thinkyoung {
                 trx.update_account(current_account->id,
                                    current_account->delegate_pay_rate(),
                                    fc::variant_object(public_data),
-                                   optional<PublicKeyType>());
+                                   optional<PublicKeyType>(),
+                                   optional<uint8_t>());
                 my->authorize_update(required_signatures, current_account);
                 const auto required_fees = get_transaction_fee();
                 
@@ -2122,7 +2336,8 @@ namespace thinkyoung {
                 trx.update_account(current_account->id,
                                    current_account->delegate_pay_rate(),
                                    fc::variant_object(public_data),
-                                   optional<PublicKeyType>());
+                                   optional<PublicKeyType>(),
+                                   optional<uint8_t>());
                 my->authorize_update(required_signatures, current_account);
                 const auto required_fees = get_transaction_fee();
                 
@@ -4370,12 +4585,17 @@ namespace thinkyoung {
             const string& pay_from_account,
             optional<variant> public_data,
             uint8_t delegate_pay_rate,
+            uint8_t delegate_mode,
             bool sign) {
             try {
                 FC_ASSERT(is_unlocked(), "Wallet not unlock!");
                 
                 if (delegate_pay_rate < 100) {
                     FC_THROW_EXCEPTION(invalid_delegate_pay_rate, "invalid_delegate_pay_rate", ("delegate_pay_rate", delegate_pay_rate));
+                }
+
+				if (delegate_mode > 2) {
+                    FC_THROW_EXCEPTION(invalid_delegate_mode, "invalid_delegate_mode", ("delegate_mode", delegate_mode));
                 }
                 
                 auto account = get_account(account_to_update);
@@ -4387,9 +4607,11 @@ namespace thinkyoung {
                 
                 if (delegate_pay_rate <= 100)
                     pay = delegate_pay_rate;
-                    
+
+				optional<uint8_t> odelegate_mode = delegate_mode;
+				
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, public_data, optional<PublicKeyType>(), pay, payer).
+                builder->update_account_registration(account, public_data, optional<PublicKeyType>(), pay, payer, odelegate_mode).
                 finalize();
                 
                 if (sign)
@@ -4425,7 +4647,7 @@ namespace thinkyoung {
                 }
                 
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer).
+                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer, optional<uint8_t>()).
                 finalize();
                 
                 if (sign) {
@@ -4453,7 +4675,7 @@ namespace thinkyoung {
                 fc::ecc::public_key empty_pk;
                 PublicKeyType new_public_key(empty_pk);
                 TransactionBuilderPtr builder = create_transaction_builder();
-                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer).
+                builder->update_account_registration(account, optional<variant>(), new_public_key, optional<ShareType>(), payer, optional<uint8_t>()).
                 finalize();
                 
                 if (sign)
@@ -5312,7 +5534,7 @@ namespace thinkyoung {
                     info["last_scanned_block_num"] = last_scanned_block_num;
                     
                     try {
-                        info["last_scanned_block_timestamp"] = my->_blockchain->get_block_header(last_scanned_block_num).timestamp;
+                        info["last_scanned_block_timestamp"] = my->_blockchain->get_block_header_v2(last_scanned_block_num).timestamp;
                         
                     } catch (...) {
                     }

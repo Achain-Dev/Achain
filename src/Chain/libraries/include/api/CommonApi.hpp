@@ -965,9 +965,10 @@ namespace thinkyoung {
              * @param delegate_pay_rate -1 for non-delegates; otherwise the percent of delegate pay to accept per
              *                          produced block (uint8_t, optional, defaults to -1)
              *
+             * @
              * @return transaction_entry
              */
-            virtual thinkyoung::wallet::WalletTransactionEntry wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data = fc::json::from_string("null").as<fc::variant>(), uint8_t delegate_pay_rate = fc::json::from_string("-1").as<uint8_t>()) = 0;
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data = fc::json::from_string("null").as<fc::variant>(), uint8_t delegate_pay_rate = fc::json::from_string("-1").as<uint8_t>(), uint8_t delegate_mode = fc::json::from_string("0").as<uint8_t>()) = 0;
             /**
              * Updates the specified account's active key and broadcasts the transaction.
              *

@@ -126,7 +126,7 @@ namespace thinkyoung {
                         {
                             try
                             {
-                                info["wallet_last_scanned_block_timestamp"] = _chain_db->get_block_header(last_scanned_block_num).timestamp;
+                                info["wallet_last_scanned_block_timestamp"] = _chain_db->get_block_header_v2(last_scanned_block_num).timestamp;
                             }
                             catch (fc::canceled_exception&)
                             {

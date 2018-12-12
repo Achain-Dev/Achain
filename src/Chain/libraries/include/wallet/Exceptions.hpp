@@ -56,5 +56,6 @@ namespace thinkyoung {
         FC_DECLARE_DERIVED_EXCEPTION(invalid_transaction_imessage_soft_length, thinkyoung::wallet::wallet_exception, 20048, "invalid_transaction_soft_max length");
         FC_DECLARE_DERIVED_EXCEPTION(imessage_size_bigger_than_soft_max_lenth, thinkyoung::wallet::wallet_exception, 20049, "imessage size bigger than soft_max_lenth");
         FC_DECLARE_DERIVED_EXCEPTION(filename_not_regular, thinkyoung::wallet::wallet_exception, 20050, "Filename isn't a regular name!");
+		FC_DECLARE_DERIVED_EXCEPTION(invalid_delegate_mode, thinkyoung::wallet::wallet_exception, 20051, "invalid_delegate_mode");
     }
 } // thinkyoung::wallet

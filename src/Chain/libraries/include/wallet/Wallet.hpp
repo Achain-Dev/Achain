@@ -682,7 +682,7 @@ namespace thinkyoung {
             *
             * @return vector<WalletAccountEntry>
             */
-            vector<WalletAccountEntry> get_my_delegates(uint32_t delegates_to_retrieve = any_delegate_status)const;
+            vector<WalletAccountEntry> get_my_delegates(uint32_t delegates_to_retrieve = any_delegate_status, bool skip_check = false)const;
             
             /**  get_next_producible_block_timestamp
             *
@@ -698,9 +698,33 @@ namespace thinkyoung {
             * @param  header  SignedBlockHeader
             *
             * @return void
+            * caller: block maker
             */
-            void sign_block(SignedBlockHeader& header)const;
+            void sign_block(SignedBlockHeader& header, const AccountEntry& delegate_entry)const;
+
+            void sign_block_v2(SignedBlockHeader_v2& header, const AccountEntry& delegate_entry)const;
+
+
+            /**
+            * sign a block if this wallet controls the key for the active delegates, or throw
+            *
+            * @param  p_header  SignedBlockHeader_v2
+            * @param  is_from_local bool -- where this block form ? local or p2p
+            *
+            * @return uint32_t: delegates count of sign this block
+            * caller:other delegates
+            */
+            uint32_t delegate_sign_block(SignedBlockHeader_v2* p_header, bool is_from_local)const;
             
+            /**
+            * validate all sign, or throw
+            *
+            * @param  p_header  SignedBlockHeader_v2
+            *
+            * caller:other delegates
+            */
+            void validate_signs(SignedBlockHeader_v2* p_header)const;
+
             /**
             * Sign a block based on the input address or public key
             *
@@ -1029,6 +1053,7 @@ namespace thinkyoung {
             * @param  pay_from_account   pay from account name
             * @param  public_data  public data
             * @param  delegate_pay_rate  0-100 or 255 default 255
+            * @param  delegate_mode  0 1
             * @param  sign  bool
             *
             *
@@ -1039,6 +1064,7 @@ namespace thinkyoung {
                 const string& pay_from_account,
                 optional<variant> public_data,
                 uint8_t delegate_pay_rate,
+                uint8_t delegate_mode,
                 bool sign
             );
             /**
