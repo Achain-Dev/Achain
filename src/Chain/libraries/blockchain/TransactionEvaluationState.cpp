@@ -314,10 +314,6 @@ namespace thinkyoung {
         void TransactionEvaluationState::evaluate(const SignedTransaction& trx_arg, bool ignore_state) {
             SignedTransaction result_trx;
 
-            try {
-                trx = trx_arg;
-                bool ignore_check_required_fee = false;
-
                 try {
                     if (_current_state->now() >= trx_arg.expiration) {
                         const auto expired_by_sec = (_current_state->now() - trx_arg.expiration).to_seconds();
@@ -373,11 +369,6 @@ namespace thinkyoung {
                             signed_keys.insert(Address(PtsAddress(key, true, 0)));
                         }
                     }
-
-                    current_op_index = 0;
-                    result_trx = trx_arg;
-
-                    if (trx_arg.operations.size() > 0 && trx_arg.operations.front().type == OperationTypeEnum::transaction_op_type) {
                         std::vector<Operation>::const_iterator opit = trx_arg.operations.begin();
                         evaluate_operation(*opit);
                         operations.push_back(*opit);
@@ -442,9 +433,7 @@ namespace thinkyoung {
                     validation_error = e;
                     throw;
                 }
-            }
 
-            FC_CAPTURE_AND_RETHROW((result_trx))
         }
 
         SignedTransaction TransactionEvaluationState::sandbox_evaluate(const SignedTransaction &trx_arg, bool& ignore_check_required_fee) {
@@ -533,9 +522,7 @@ namespace thinkyoung {
                 }
 
                 return p_result_trx;
-            }
 
-            FC_CAPTURE_AND_RETHROW((trx_arg))
         }
 
         void TransactionEvaluationState::evaluate_operation(const Operation& op) {

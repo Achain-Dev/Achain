@@ -141,7 +141,7 @@ namespace thinkyoung {
         {
             try {
                 const oPropertyEntry entry = get_property_entry(PropertyIdType::last_asset_id);
-                FC_ASSERT(entry.valid(), "Invalid asset entry");
+                FC_ASSERT(entry.valid(), "Invalid ass et entry");
                 return entry->value.as<AssetIdType>();
             } FC_CAPTURE_AND_RETHROW()
         }
@@ -464,7 +464,7 @@ namespace thinkyoung {
 
         int ChainInterface::get_limit(AssetIdType id, ShareType amount)
         {
-            //to do  根据设定设置指定资产指定amount对应的limit值
+            //the limit will depend on the asset .
             if (id != 0)
             {
                 return 0;
@@ -487,7 +487,6 @@ namespace thinkyoung {
 
         Asset ChainInterface::get_contract_register_fee(const Code& code) const
         {
-            //FC_ASSERT(0);//todo 修改成正确的规则
             //vector<string>::const_iterator  abit = code.abi.begin();
             //vector<string>::const_iterator  abit_end = code.abi.end();
             //int length = 0;

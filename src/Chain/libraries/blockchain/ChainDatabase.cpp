@@ -141,12 +141,14 @@ namespace thinkyoung {
             void ChainDatabaseImpl::open_database(const fc::path& data_dir) {
                 try {
                     _block_id_to_full_block.open(data_dir / "raw_chain/block_id_to_block_data_db");
+					_block_id_to_full_block_v2.open(data_dir / "raw_chain/block_id_to_block_data_db_v2");
                     _block_id_to_undo_state.open(data_dir / "index/block_id_to_undo_state");
                     _fork_number_db.open(data_dir / "index/fork_number_db");
                     _fork_db.open(data_dir / "index/fork_db");
                     _revalidatable_future_blocks_db.open(data_dir / "index/future_blocks_db");
                     _block_num_to_id_db.open(data_dir / "raw_chain/block_num_to_id_db");
                     _block_id_to_block_entry_db.open(data_dir / "index/block_id_to_block_entry_db");
+					_block_id_to_block_entry_db_v2.open(data_dir / "index/_block_id_to_block_entry_db_v2");
                     _property_id_to_entry.open(data_dir / "index/property_id_to_entry");
                     _account_id_to_entry.open(data_dir / "index/account_id_to_entry");
                     _account_name_to_id.open(data_dir / "index/account_name_to_id");
@@ -207,12 +209,24 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::clear_invalidation_of_future_blocks() {
                 for (auto block_id_itr = _revalidatable_future_blocks_db.begin(); block_id_itr.valid();) {
+
+                    fc::time_point_sec block_time;
+					try{
                     auto full_data = _block_id_to_full_block.fetch(block_id_itr.key());
+                    	
+                    	block_time = fc::time_point_sec(full_data.timestamp);
+					}
+					catch(...)
+					{
+						auto full_data = _block_id_to_full_block_v2.fetch(block_id_itr.key());
+                    	block_time = fc::time_point_sec(full_data.timestamp);
+					}
+
                     fc::time_point_sec now = blockchain::now();
-                    fc::time_point_sec block_time = fc::time_point_sec(full_data.timestamp);
+                    
                     
                     //int32_t aaa = (now - block_time).to_seconds();
-                    if ((now - block_time).to_seconds() > (2 * 24 * 60 * 60)) { //[CN]Ê±¼ä³¬¹ı2Ìì¾ÍÉ¾³ı[CN]
+                    if ((now - block_time).to_seconds() > (2 * 24 * 60 * 60)) { //[CN]æ—¶é—´è¶…è¿‡2å¤©å°±åˆ é™¤[CN]
                         auto temp_id = block_id_itr.key();
                         ++block_id_itr;
                         _revalidatable_future_blocks_db.remove(temp_id, false);
@@ -377,9 +391,9 @@ namespace thinkyoung {
                 FC_CAPTURE_AND_RETHROW((block_num))
             }
             
-            void ChainDatabaseImpl::clear_pending(const FullBlock& block_data) {
+            void ChainDatabaseImpl::clear_pending(const signed_transactions& trxs, uint32_t block_num) {
                 try {
-                    for (const SignedTransaction& trx : block_data.user_transactions) {
+                    for (const SignedTransaction& trx : trxs) {
                         if (!trx.operations.empty() && trx.operations[0].type == transaction_op_type) {
                             TransactionOperation forward_trx_op = trx.operations[0].as<TransactionOperation>();
                             SignedTransaction forward_trx = forward_trx_op.trx;
@@ -398,7 +412,7 @@ namespace thinkyoung {
                     // during the middle of pushing a block.  If that happens, the database is in an
                     // inconsistent state and it confuses the p2p network code.
                     // We skip this step if we are dealing with blocks prior to the last checkpointed block
-                    if (_head_block_header.block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
+                    if (_head_block_num >= LAST_CHECKPOINT_BLOCK_NUM) {
                         if (!_revalidate_pending.valid() || _revalidate_pending.ready())
                             _revalidate_pending = fc::async([=]() {
                             revalidate_pending();
@@ -406,12 +420,13 @@ namespace thinkyoung {
                     }
                 }
                 
-                FC_CAPTURE_AND_RETHROW((block_data))
+                FC_CAPTURE_AND_RETHROW((block_num))
             }
             
             std::pair<BlockIdType, BlockForkData> ChainDatabaseImpl::recursive_mark_as_linked(const std::unordered_set<BlockIdType>& ids) {
                 BlockForkData longest_fork;
                 uint32_t highest_block_num = 0;
+                uint32_t next_block_num = 0;
                 BlockIdType last_block_id;
                 std::unordered_set<BlockIdType> next_ids = ids;
                 
@@ -427,10 +442,22 @@ namespace thinkyoung {
                         //ilog( "store: ${id} => ${data}", ("id",next_id)("data",entry) );
                         _fork_db.store(next_id, entry);
                         //keep one of the block ids of the current block number being processed (simplify this code)
-                        const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+                        //const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+                        try{
+                            const FullBlock_v2& next_block = _block_id_to_full_block_v2.fetch(next_id);
+
+                            next_block_num = next_block.block_num;
+                        }
+                        catch (fc::exception)
+                        {
+                            const FullBlock& next_block = _block_id_to_full_block.fetch(next_id);
+
+                            next_block_num = next_block.block_num;
+                        }
                         
-                        if (next_block.block_num > highest_block_num) {
-                            highest_block_num = next_block.block_num;
+                        
+                        if (next_block_num > highest_block_num) {
+                            highest_block_num = next_block_num;
                             last_block_id = next_id;
                             longest_fork = entry;
                         }
@@ -483,12 +510,17 @@ namespace thinkyoung {
              *  in the fork which contains the new block, in all of the above cases where the new block is linked;
              *  otherwise, returns the block id and fork data of the new block
              */
-            std::pair<BlockIdType, BlockForkData> ChainDatabaseImpl::store_and_index(const BlockIdType& block_id,
-                    const FullBlock& block_data) {
+            std::pair<BlockIdType, BlockForkData> ChainDatabaseImpl::store_and_index(const BlockIdType& block_id, 
+                const FullBlock_v2& block_data) {
                 try {
+                    BlockIdType prev_blockid;
+					const uint32_t block_num = block_data.block_num;
                     //we should never try to store a block we've already seen (verify not in any of our databases)
 #ifdef _DEBUG
                     if (_block_id_to_full_block.fetch_optional(block_id)) {
+                        FC_CAPTURE_AND_THROW(store_and_index_a_seen_block, ("store_and_index_a_seen_block"));
+                    }
+					if (_block_id_to_full_block_v2.fetch_optional(block_id)) {
                         FC_CAPTURE_AND_THROW(store_and_index_a_seen_block, ("store_and_index_a_seen_block"));
                     }
                     
@@ -499,45 +531,30 @@ namespace thinkyoung {
                         optional<BlockForkData> fork_data = _fork_db.fetch_optional(block_id);
                         assert(!fork_data || !fork_data->is_known);
                         //check block not in parallel_blocks database
-                        vector<BlockIdType> parallel_blocks = fetch_blocks_at_number(block_data.block_num);
+                        vector<BlockIdType> parallel_blocks = fetch_blocks_at_number(block_num);
                         assert(std::find(parallel_blocks.begin(), parallel_blocks.end(), block_id) == parallel_blocks.end());
                     }
-#endif
-                    // first of all store this block at the given block number
-                    _block_id_to_full_block.store(block_id, block_data);
-                    
-                    if (self->get_statistics_enabled()) {
-                        BlockEntry entry;
-                        DigestBlock& temp = entry;
-                        temp = DigestBlock(block_data);
-                        entry.id = block_id;
-                        entry.block_size = block_data.block_size();
-                        entry.latency = blockchain::now() - block_data.timestamp;
-                        entry.syc_timestamp = blockchain::now();
-                        _block_id_to_block_entry_db.store(block_id, entry);
 
-                    }
-                    
                     // update the parallel block list (fork_number_db):
                     // get vector of all blocks with same block number, add this block to that list, then update the database
-                    vector<BlockIdType> parallel_blocks = fetch_blocks_at_number(block_data.block_num);
+                    vector<BlockIdType> parallel_blocks = fetch_blocks_at_number(block_num);
                     parallel_blocks.push_back(block_id);
-                    _fork_number_db.store(block_data.block_num, parallel_blocks);
+                    _fork_number_db.store(block_num, parallel_blocks);
                     // Tell our previous block that we are one of it's next blocks (update previous block's next_blocks set)
                     BlockForkData prev_fork_data;
-                    auto prev_itr = _fork_db.find(block_data.previous);
+                    auto prev_itr = _fork_db.find(prev_blockid);
                     
                     if (prev_itr.valid()) { // we already know about its previous (note: we always know about genesis block)
-                        elog("           we already know about its previous: ${p}", ("p", block_data.previous));
+                        elog("           we already know about its previous: ${p}", ("p", prev_blockid));
                         prev_fork_data = prev_itr.value();
                         
                     } else { //if we don't know about the previous block even as a placeholder, create a placeholder for the previous block (placeholder block defaults as unlinked)
-                        elog("           we don't know about its previous: ${p}", ("p", block_data.previous));
+                        elog("           we don't know about its previous: ${p}", ("p", prev_blockid));
                         prev_fork_data.is_linked = false; //this is only a placeholder, we don't know what its previous block is, so it can't be linked
                     }
                     
                     prev_fork_data.next_blocks.insert(block_id);
-                    _fork_db.store(block_data.previous, prev_fork_data);
+                    _fork_db.store(prev_blockid, prev_fork_data);
                     auto cur_itr = _fork_db.find(block_id);
                     
                     if (cur_itr.valid()) { //if placeholder was previously created for block
@@ -661,33 +678,42 @@ namespace thinkyoung {
                         return; //this is necessary to avoid unnecessarily popping the head block in this case
                         
                     ilog("switch from fork ${id} to ${to_id}", ("id", _head_block_id)("to_id", block_id));
-                    vector<BlockIdType> history = get_fork_history(block_id);
+                    vector<fork_history> history = get_fork_history(block_id);
                     
-                    while (history.back() != _head_block_id) {
+                    while (history.back().block_id != _head_block_id) {
                         ilog("    pop ${id}", ("id", _head_block_id));
                         pop_block();
                     }
                     
                     for (int32_t i = history.size() - 2; i >= 0; --i) {
                         ilog("    extend ${i}", ("i", history[i]));
-                        extend_chain(self->get_block(history[i]));
+                        //extend_chain(self->get_block(history[i]));
+                        if (history[i].block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                        {
+                            extend_chain(self->get_block(history[i].block_id));
+                        }
+                        else
+                        {
+                            extend_chain(self->get_block_v2(history[i].block_id));
+                        }
+                        
                     }
                 }
                 
                 FC_CAPTURE_AND_RETHROW((block_id))
             }
             
-            void ChainDatabaseImpl::apply_transactions(const FullBlock& block_data,
-                    const PendingChainStatePtr& pending_state) {
+            void ChainDatabaseImpl::apply_transactions(const signed_transactions& sign_trxs, 
+            		const uint32_t block_num, const PendingChainStatePtr& pending_state) {
                 try {
                     uint32_t index = 0;
                     vector<std::future<bool>> signature_check_progress;
-                    signature_check_progress.resize(block_data.user_transactions.size());
+                    signature_check_progress.resize(sign_trxs.size());
                     uint32_t trx_num = 0;
                     bool all_trx_check = true;
                     
-                    //¶àÏß³Ì²âÊÔ´úÂë
-                    for (const auto& trx : block_data.user_transactions) {
+                    //å¤šçº¿ç¨‹æµ‹è¯•ä»£ç 
+                    for (const auto& trx : sign_trxs) {
                         TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pending_state.get());
                         trx_eval_state->_skip_signature_check = !self->_verify_transaction_signatures;
                         
@@ -708,6 +734,9 @@ namespace thinkyoung {
                         
                         if (trx_eval_state->skipexec)
                             trx_eval_state->skipexec = !self->get_node_vm_enabled();
+
+						if (!trx_eval_state->skipexec && self->generating_block)
+                            trx_eval_state->skipexec = !self->evaluate_trx_contract;
                             
                         if (trx.result_trx_type == ResultTransactionType::incomplete_result_transaction)
                             trx_eval_state->skipexec = false;
@@ -718,36 +747,36 @@ namespace thinkyoung {
                             const TransactionIdType& trx_id = trx.id();
                             oTransactionEntry entry = pending_state->lookup<TransactionEntry>(trx_id);
                             FC_ASSERT(entry.valid(), "Invalid transaction");
-                            entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(trx_id, *entry);
                             
                         } else if (trx.result_trx_type == ResultTransactionType::incomplete_result_transaction) {
                             const TransactionIdType& trx_id = trx.id();
                             oTransactionEntry entry = pending_state->lookup<TransactionEntry>(trx_id);
                             FC_ASSERT(entry.valid(), "Invalid transaction");
-                            entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(trx_id, *entry);
                             const TransactionIdType& origin_trx_id = trx.operations[0].as<TransactionOperation>().trx.id();
                             oTransactionEntry origin_entry = pending_state->lookup<TransactionEntry>(origin_trx_id);
                             FC_ASSERT(origin_entry.valid(), "Invalid origin transaction");
-                            origin_entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            origin_entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(origin_trx_id, *origin_entry);
                             const TransactionIdType& result_trx_id = trx.result_trx_id;
                             oTransactionEntry result_entry = pending_state->lookup<TransactionEntry>(result_trx_id);
                             FC_ASSERT(result_entry.valid(), "Invalid result transaction");
-                            result_entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            result_entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(result_trx_id, *result_entry);
                             
                         } else if (trx.result_trx_type == ResultTransactionType::complete_result_transaction) {
                             const TransactionIdType& trx_id = trx.id();
                             oTransactionEntry entry = pending_state->lookup<TransactionEntry>(trx_id);
                             FC_ASSERT(entry.valid(), "Invalid transaction");
-                            entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(trx_id, *entry);
                             const TransactionIdType& origin_trx_id = trx.operations[0].as<TransactionOperation>().trx.id();
                             oTransactionEntry origin_entry = pending_state->lookup<TransactionEntry>(origin_trx_id);
                             FC_ASSERT(origin_entry.valid(), "Invalid origin transaction");
-                            origin_entry->chain_location = TransactionLocation(block_data.block_num, trx_num);
+                            origin_entry->chain_location = TransactionLocation(block_num, trx_num);
                             pending_state->store_transaction(origin_trx_id, *origin_entry);
                             
                         } else {
@@ -781,13 +810,12 @@ namespace thinkyoung {
                     //test end
                 }
                 
-                FC_CAPTURE_AND_RETHROW((block_data))
+                FC_CAPTURE_AND_RETHROW((block_num))
             }
             
-            void ChainDatabaseImpl::pay_delegate(const BlockIdType& block_id,
+            BlockEntrySigneeinfo ChainDatabaseImpl::pay_delegate(const BlockIdType& block_id,
                                                  const PublicKeyType& block_signee,
-                                                 const PendingChainStatePtr& pending_state,
-                                                 oBlockEntry& entry)const {
+                                                 const PendingChainStatePtr& pending_state)const {
                 try {
                     oAssetEntry base_asset_entry = pending_state->get_asset_entry(AssetIdType(0));
                     FC_ASSERT(base_asset_entry.valid(), "Invalid asset");
@@ -817,15 +845,20 @@ namespace thinkyoung {
                     delegate_entry->delegate_info->total_paid += accepted_paycheck;
                     pending_state->store_account_entry(*delegate_entry);
                     pending_state->store_asset_entry(*base_asset_entry);
-                    
-                    if (entry.valid()) {
+
+					BlockEntrySigneeinfo sign_info(accepted_new_shares, accepted_collected_fees, destroyed_collected_fees);
+
+					return sign_info;
+					#if 0
+					if (entry.valid()) {
                         entry->signee_shares_issued = accepted_new_shares;
                         entry->signee_fees_collected = accepted_collected_fees;
                         entry->signee_fees_destroyed = destroyed_collected_fees;
                     }
+					#endif
                 }
                 
-                FC_CAPTURE_AND_RETHROW((block_id)(block_signee)(entry))
+                FC_CAPTURE_AND_RETHROW((block_id)(block_signee))
             }
             
             void ChainDatabaseImpl::save_undo_state(const uint32_t block_num,
@@ -849,20 +882,64 @@ namespace thinkyoung {
                 
                 FC_CAPTURE_AND_RETHROW((block_num)(block_id))
             }
-            
-            void ChainDatabaseImpl::verify_header(const DigestBlock& block_digest, const PublicKeyType& block_signee)const {
+
+			//
+            void ChainDatabaseImpl::verify_header(const DigestBlock& block_digest, const PublicKeyType& block_signee)const
+            {
                 try {
                     if (block_digest.block_num > 1 && block_digest.block_num != _head_block_header.block_num + 1)
                         FC_CAPTURE_AND_THROW(block_numbers_not_sequential, (block_digest)(_head_block_header));
+                    if (block_digest.previous != _head_block_id)
+                        FC_CAPTURE_AND_THROW(invalid_previous_block_id, (block_digest)(_head_block_id));
+                    if (block_digest.timestamp.sec_since_epoch() % ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC != 0)
+                        FC_CAPTURE_AND_THROW(invalid_block_time);
+                    if (block_digest.block_num > 1 && block_digest.timestamp <= _head_block_header.timestamp)
+                        FC_CAPTURE_AND_THROW(time_in_past, (block_digest.timestamp)(_head_block_header.timestamp));
+
+                    fc::time_point_sec now = thinkyoung::blockchain::now();
+                    auto delta_seconds = (block_digest.timestamp - now).to_seconds();
+                    if (block_digest.timestamp > (now + ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2))
+                        FC_CAPTURE_AND_THROW(time_in_future, (block_digest.timestamp)(now)(delta_seconds));
+
+                    if (NOT block_digest.validate_digest())
+                        FC_CAPTURE_AND_THROW(invalid_block_digest);
+
+
+                    FC_ASSERT(block_digest.validate_unique(), "Block not unique");
+
+                    auto expected_delegate = self->get_slot_signee(block_digest.timestamp, self->get_active_delegates());
+
+                    if (block_signee != expected_delegate.signing_key())
+                        FC_CAPTURE_AND_THROW(invalid_delegate_signee, (expected_delegate.id));
+                } FC_CAPTURE_AND_RETHROW((block_digest)(block_signee))
+            }
+            
+            //v2
+            PublicKeyType ChainDatabaseImpl::verify_header_v2(const DigestBlock_v2& block_digest)const {
+                PublicKeyType block_signee;
+                try {
+                    bool skip_check = false;
+
+                    if (block_digest.block_num > 1 && block_digest.block_num != _head_block_num + 1)
+                        FC_CAPTURE_AND_THROW(block_numbers_not_sequential, (block_digest)(_head_block_num));
                         
                     if (block_digest.previous != _head_block_id)
                         FC_CAPTURE_AND_THROW(invalid_previous_block_id, (block_digest)(_head_block_id));
                         
                     if (block_digest.timestamp.sec_since_epoch() % ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC != 0)
                         FC_CAPTURE_AND_THROW(invalid_block_time);
-                        
-                    if (block_digest.block_num > 1 && block_digest.timestamp <= _head_block_header.timestamp)
-                        FC_CAPTURE_AND_THROW(time_in_past, (block_digest.timestamp)(_head_block_header.timestamp));
+                    
+                    if (_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    {
+                        if (block_digest.block_num > 1 && block_digest.timestamp <= _head_block_header.timestamp)
+                            FC_CAPTURE_AND_THROW(time_in_past, (block_digest.timestamp)(_head_block_header.timestamp));
+                    }
+                    else
+                    {
+                        if (block_digest.block_num > 1 && block_digest.timestamp <= _head_block_header_v2.timestamp)
+                            FC_CAPTURE_AND_THROW(time_in_past, (block_digest.timestamp)(_head_block_header_v2.timestamp));
+                    }
+                    
                         
                     fc::time_point_sec now = thinkyoung::blockchain::now();
                     auto delta_seconds = (block_digest.timestamp - now).to_seconds();
@@ -874,10 +951,67 @@ namespace thinkyoung {
                         FC_CAPTURE_AND_THROW(invalid_block_digest);
                         
                     FC_ASSERT(block_digest.validate_unique(), "Block not unique");
-                    auto expected_delegate = self->get_slot_signee(block_digest.timestamp, self->get_active_delegates());
+
+                    if (block_digest.block_num > LAST_CHECKPOINT_BLOCK_NUM) {
+                        block_signee = block_digest.signee();
+
+                    }
+                    else {
+                        const auto iter = CHECKPOINT_BLOCKS.find(block_digest.block_num);
+
+                        if (iter != CHECKPOINT_BLOCKS.end() && iter->second != block_digest.id())
+                            FC_CAPTURE_AND_THROW(failed_checkpoint_verification, (block_digest.id())(*iter));
+
+                        // Skip signature validation
+                        block_signee = self->get_slot_signee(block_digest.timestamp, self->get_active_delegates()).signing_key();
+
+                        skip_check = true;
+                    }
+
+                    if (!skip_check)
+                    {
+                        time_point start_time = time_point::now();
+                        // first,check the block_maker's sign:block_digest.delegate_signature[0]
+                        if (block_digest.block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                        {
+                            auto expected_delegate = self->get_slot_signee(block_digest.timestamp, self->get_active_delegates());
+                            if (block_signee != expected_delegate.signing_key())
+                                FC_CAPTURE_AND_THROW(invalid_delegate_signee, (expected_delegate.id));
+                        }
+                        else
+                        {
+                            auto expected_delegate = self->get_slot_signee(block_digest.delegate_pos, self->get_active_delegates());
+                            if (block_signee != expected_delegate.signing_key())
+                                FC_CAPTURE_AND_THROW(invalid_delegate_signee, (expected_delegate.id));
+                        }
+                        
+
+                        time_point end_time = time_point::now();
+
+                        start_time = time_point::now();
+                        auto sign_count = block_digest.delegate_signature.size();
+
+                        if (sign_count < ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+                            FC_CAPTURE_AND_THROW(insufficient_signature, (block_digest.timestamp)(now)(delta_seconds));
+
+                        oAccountEntry dele_entry;
+                        // then,check the other sign
+                        
+                        for (int i = 1; i < sign_count; i++)
+                        {
+                            dele_entry = self->get_account_entry(block_digest.delegate_signature[i].dele_name);
+                            if (!dele_entry.valid())
+                                FC_CAPTURE_AND_THROW(invalid_delegate, (block_digest.delegate_signature[i].dele_name));
+
+                            if (dele_entry->signing_key() != block_digest.signee(i))
+                                FC_CAPTURE_AND_THROW(invalid_delegate_signee, (dele_entry->id));
+                        }
+
+                        end_time = time_point::now();
+                       
+                    }
                     
-                    if (block_signee != expected_delegate.signing_key())
-                        FC_CAPTURE_AND_THROW(invalid_delegate_signee, (expected_delegate.id));
+                    return block_signee;
                 }
                 
                 FC_CAPTURE_AND_RETHROW((block_digest)(block_signee))
@@ -888,9 +1022,23 @@ namespace thinkyoung {
                 try {
                     _head_block_header = block_header;
                     _head_block_id = block_id;
+					_head_block_num = block_header.block_num;
+
+					_head_block_header_v2 = block_header;
                 }
                 
                 FC_CAPTURE_AND_RETHROW((block_header)(block_id))
+            }
+
+			void ChainDatabaseImpl::update_head_block_v2(const SignedBlockHeader_v2& block_header_v2,
+                    const BlockIdType& block_id) {
+                try {
+                    _head_block_header_v2 = block_header_v2;
+                    _head_block_id = block_id;
+                    _head_block_num = block_header_v2.block_num;
+                }
+                
+                FC_CAPTURE_AND_RETHROW((block_header_v2)(block_id))
             }
             
             /**
@@ -905,7 +1053,7 @@ namespace thinkyoung {
              *  Note that produced_block has already been verified by the caller and that updates are
              *  applied to pending_state.
              */
-            void ChainDatabaseImpl::update_delegate_production_info(const BlockHeader& block_header,
+            void ChainDatabaseImpl::update_delegate_production_info(const FullBlock_v2& block_data,
                     const BlockIdType& block_id,
                     const PublicKeyType& block_signee,
                     const PendingChainStatePtr& pending_state)const {
@@ -918,48 +1066,70 @@ namespace thinkyoung {
                     
                     /* Validate secret */
                     if (delegate_info.next_secret_hash.valid()) {
-                        const SecretHashType hash_of_previous_secret = fc::ripemd160::hash(block_header.previous_secret);
+                        const SecretHashType hash_of_previous_secret = fc::ripemd160::hash(block_data.previous_secret);
                         FC_ASSERT(hash_of_previous_secret == *delegate_info.next_secret_hash,
                                   "",
-                                  ("previous_secret", block_header.previous_secret)
+                                  ("previous_secret", block_data.previous_secret)
                                   ("hash_of_previous_secret", hash_of_previous_secret)
                                   ("delegate_entry", delegate_entry));
                     }
                     
                     delegate_info.blocks_produced += 1;
-                    delegate_info.next_secret_hash = block_header.next_secret_hash;
-                    delegate_info.last_block_num_produced = block_header.block_num;
+                    delegate_info.next_secret_hash = block_data.next_secret_hash;
+                    delegate_info.last_block_num_produced = block_data.block_num;
                     pending_state->store_account_entry(*delegate_entry);
                     
                     if (self->get_statistics_enabled()) {
-                        const SlotEntry slot(block_header.timestamp, delegate_id, block_id);
+                        const SlotEntry slot(block_data.timestamp, delegate_id, block_id);
                         pending_state->store_slot_entry(slot);
                     }
                     
                     /* Update production info for missing delegates */
                     uint64_t required_confirmations = self->get_required_confirmations();
-                    time_point_sec block_timestamp;
-                    auto head_block = self->get_head_block();
+
+					const auto& active_delegates = self->get_active_delegates();
+					
+					if (block_data.block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+					{
+						time_point_sec block_timestamp;
+						
+						auto head_block = self->get_head_block();
                     
-                    if (head_block.block_num > 0) block_timestamp = head_block.timestamp + ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
-                    
-                    else block_timestamp = block_header.timestamp;
-                    
-                    const auto& active_delegates = self->get_active_delegates();
-                    
-                    for (; block_timestamp < block_header.timestamp;
+	                    if (head_block.block_num > 0) block_timestamp = head_block.timestamp + ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
+	                    
+	                    else block_timestamp = block_data.timestamp;
+
+						for (; block_timestamp < block_data.timestamp;
                             block_timestamp += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC,
                             required_confirmations += 2) {
                         /* Note: Active delegate list has not been updated yet so we can use the timestamp */
-                        delegate_id = self->get_slot_signee(block_timestamp, active_delegates).id;
-                        delegate_entry = pending_state->get_account_entry(delegate_id);
+                        delegate_entry = self->get_slot_signee(block_timestamp, active_delegates);
                         FC_ASSERT(delegate_entry.valid() && delegate_entry->is_delegate(), "Id got from slot is not a valid delegate id ");
                         delegate_entry->delegate_info->blocks_missed += 1;
                         pending_state->store_account_entry(*delegate_entry);
                         
                         if (self->get_statistics_enabled())
-                            pending_state->store_slot_entry(SlotEntry(block_timestamp, delegate_id));
+                            pending_state->store_slot_entry(SlotEntry(block_timestamp, delegate_entry->id));
+                    	}
+					}
+                    else
+                    {
+                    	auto head_block_v2 = self->get_head_block_v2();
+
+						uint32_t begin = head_block_v2.delegate_pos + 1;
+	                    
+                    	for (; begin < block_data.delegate_pos;
+                            begin += 1,
+                            required_confirmations += 2)
+                        {
+                        	/* Note: Active delegate list has not been updated yet so we can use the timestamp */
+	                        delegate_entry = self->get_slot_signee(begin, active_delegates);
+	                        FC_ASSERT(delegate_entry.valid() && delegate_entry->is_delegate(), "Id got from slot is not a valid delegate id ");
+	                        delegate_entry->delegate_info->blocks_missed += 1;
+	                        pending_state->store_account_entry(*delegate_entry);
+                        }
                     }
+
                     
                     /* Update required confirmation count */
                     required_confirmations -= 1;
@@ -972,12 +1142,11 @@ namespace thinkyoung {
                     pending_state->set_required_confirmations(required_confirmations);
                 }
                 
-                FC_CAPTURE_AND_RETHROW((block_header)(block_id)(block_signee))
+                FC_CAPTURE_AND_RETHROW((block_data)(block_id)(block_signee))
             }
             
-            void ChainDatabaseImpl::update_random_seed(const SecretHashType& new_secret,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& entry)const {
+            fc::ripemd160 ChainDatabaseImpl::update_random_seed(const SecretHashType& new_secret,
+                    const PendingChainStatePtr& pending_state)const {
                 try {
                     const auto current_seed = pending_state->get_current_random_seed();
                     fc::sha512::encoder enc;
@@ -986,10 +1155,10 @@ namespace thinkyoung {
                     const auto& new_seed = fc::ripemd160::hash(enc.result());
                     pending_state->store_property_entry(PropertyIdType::last_random_seed_id, variant(new_seed));
                     
-                    if (entry.valid()) entry->random_seed = new_seed;
+                    return new_seed;
                 }
                 
-                FC_CAPTURE_AND_RETHROW((new_secret)(entry))
+                FC_CAPTURE_AND_RETHROW((new_secret))
             }
             
             void ChainDatabaseImpl::update_active_delegate_list(const uint32_t block_num,
@@ -1060,99 +1229,242 @@ namespace thinkyoung {
                 
                 return ops;
             }
-            
-            /**
+
+			/**
              *  Performs all of the block validation steps and throws if error.
              */
-            void ChainDatabaseImpl::extend_chain(const FullBlock& block_data) {
-                try {
+			void ChainDatabaseImpl::extend_chain(const FullBlock_v2& block_data) {
+				try {
                     const time_point start_time = time_point::now();
-                    const BlockIdType& block_id = block_data.id();
+					const uint32_t block_num = block_data.block_num;
                     BlockSummary summary;
-                    
+                    PublicKeyType block_signee;
+					const BlockIdType block_id = block_data.id();
                     try {
-                        PublicKeyType block_signee;
-                        
-                        if (block_data.block_num > LAST_CHECKPOINT_BLOCK_NUM) {
-                            block_signee = block_data.signee();
-                            
-                        } else {
-                            const auto iter = CHECKPOINT_BLOCKS.find(block_data.block_num);
-                            
-                            if (iter != CHECKPOINT_BLOCKS.end() && iter->second != block_id)
-                                FC_CAPTURE_AND_THROW(failed_checkpoint_verification, (block_id)(*iter));
-                                
-                            // Skip signature validation
-                            block_signee = self->get_slot_signee(block_data.timestamp, self->get_active_delegates()).signing_key();
-                        }
-                        
-                        // NOTE: Secret is validated later in update_delegate_production_info()
-                        verify_header(DigestBlock(block_data), block_signee);
-                        summary.block_data = block_data;
-                        // Create a pending state to track changes that would apply as we evaluate the block
-                        PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(self->shared_from_this());
+						// Create a pending state to track changes that would apply as we evaluate the block
+						PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(self->shared_from_this());
+
+						if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+						{
+						    if (block_num > LAST_CHECKPOINT_BLOCK_NUM)
+							{
+							    block_signee = block_data.signee();
+							}
+							else
+							{
+							    const auto iter = CHECKPOINT_BLOCKS.find(block_data.block_num);
+							    if (iter != CHECKPOINT_BLOCKS.end() && iter->second != block_id)
+								    FC_CAPTURE_AND_THROW(failed_checkpoint_verification, (block_id)(*iter));
+						
+							    // Skip signature validation
+								block_signee = self->get_slot_signee(block_data.timestamp, self->get_active_delegates()).signing_key();
+							}
+							
+                            verify_header(DigestBlock(block_data), block_signee);
+
+							oBlockEntry block_entry;
+                        	if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
+						}
+						else
+						{
+                            block_signee = verify_header_v2(DigestBlock_v2(block_data));
+						}
+
+						summary.block_id = block_id;
+					    summary.block_num = block_num;
                         summary.applied_changes = pending_state;
+
                         /** Increment the blocks produced or missed for all delegates. This must be done
                          *  before applying transactions because it depends upon the current active delegate order.
                          **/
                         update_delegate_production_info(block_data, block_id, block_signee, pending_state);
-                        oBlockEntry block_entry;
-                        
-                        if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
-                        
-                        apply_transactions(block_data, pending_state);
+                        apply_transactions(block_data.user_transactions, block_data.block_num, pending_state);
                         summary.applied_changes->event_vector = pending_state->event_vector;
-                        pay_delegate(block_id, block_signee, pending_state, block_entry);
+                        BlockEntrySigneeinfo sign_info = pay_delegate(block_id, block_signee, pending_state);
                         update_active_delegate_list(block_data.block_num, pending_state);
-                        update_random_seed(block_data.previous_secret, pending_state, block_entry);
-                        save_undo_state(block_data.block_num, block_id, pending_state);
+                        fc::ripemd160 new_seed = update_random_seed(block_data.previous_secret, pending_state);
+
+                        save_undo_state(block_num, block_id, pending_state);
                         self->store_extend_status(block_id, 1);
+
                         // TODO: Verify idempotency
                         pending_state->apply_changes();
+
                         mark_included(block_id, true);
-                        update_head_block(block_data, block_id);
-                        clear_pending(block_data);
-                        _block_num_to_id_db.store(block_data.block_num, block_id);
+
+						if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+						{
+							oBlockEntry block_entry;
                         
-                        if (block_entry.valid()) {
-                            block_entry->processing_time = time_point::now() - start_time;
-                            _block_id_to_block_entry_db.store(block_id, *block_entry);
-                            
+                        	if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
 
-                            auto block_age = blockchain::now() - self->now();
-                            if (block_age.to_seconds() <= 60)
-                            {
-                                if (_blockety_cache.size() > 0)
-                                {
-                                    auto fu = fc::async([=](){ this->batch_write_to_mysqls(); }, "batch_write_block_entry_to_mysqls");
-                                    fu.wait();
-                                    _blockety_cache.clear();
-                                }
-                                else
-                                {
-                                    fc::async([=](){ this->write_to_mysqls(*block_entry); }, "write_block_entry_to_mysql2");   //onebyone insert
-                                }
-                            }
-                            else
-                            {
-                                if (_blockety_cache.size() >=10000)
-                                {
-                                    auto beg_time = time_point::now();
-                                    auto fu = fc::async([=](){ this->batch_write_to_mysqls(); }, "batch_write_block_entry_to_mysqls");
-                                    fu.wait();
-                                    auto t = time_point::now() - beg_time;
-                                    fc_ilog(fc::logger::get("mysql"), " one batch insert of block_entry done , elapsed time : ${t} ", ("t", t.to_seconds() ));
-                                    _blockety_cache.clear();
-                                }
-                                else
-                                { 
-                                    _blockety_cache.push_back(*block_entry);
+							if (block_entry.valid())
+							{
+								block_entry->signee_shares_issued = sign_info.signee_shares_issued;
+		                        block_entry->signee_fees_collected = sign_info.signee_fees_collected;
+		                        block_entry->signee_fees_destroyed = sign_info.signee_fees_destroyed;
+								block_entry->random_seed = new_seed;
 
-                                }
+								block_entry->processing_time = time_point::now() - start_time;
+	                            _block_id_to_block_entry_db.store(block_id, *block_entry);
+							}
+
+                            update_head_block(FullBlock(block_data), block_id);
+						}
+						else
+						{
+							oBlockEntry_v2 block_entry_v2;
+                        
+
                             }
                         }
                         
+                    } catch (const fc::exception& e) {
+                        wlog("error applying block: ${e}", ("e", e.to_detail_string()));
+                        mark_invalid(block_id, e);
                         self->store_extend_status(block_id, 2);
+                        throw;
+                    }
+                    
+                    // Purge expired transactions from unique cache
+                    auto iter = _unique_transactions.begin();
+                    
+                    while (iter != _unique_transactions.end() && iter->expiration <= self->now())
+                        iter = _unique_transactions.erase(iter);
+                        
+                    //Schedule the observer notifications for later; the chain is in a
+                    //non-premptable state right now, and observers may yield.
+                    if ((now() - block_data.timestamp).to_seconds() < ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC)
+                        for (ChainObserver* o : _observers)
+                            fc::async([o, summary] {o->block_applied(summary); }, "call_block_applied_observer");
+                }
+                
+                FC_CAPTURE_AND_RETHROW((block_data))
+			
+			}
+			
+
+			#if 0
+            /**
+             *  Performs all of the block validation steps and throws if error.
+             */
+            void ChainDatabaseImpl::extend_chain(const BlockIdType& block_id, const int32_t block_num) {
+                try {
+                    const time_point start_time = time_point::now();
+                    BlockSummary summary;
+                    PublicKeyType block_signee;
+                    try {
+						// Create a pending state to track changes that would apply as we evaluate the block
+						PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(self->shared_from_this());
+						
+						if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+						{
+						    FullBlock block_data = self->get_block(block_id);
+							assert(block_data.block_num == block_num);
+							
+						    if (block_data.block_num > LAST_CHECKPOINT_BLOCK_NUM)
+							{
+							    block_signee = block_data.signee();
+							}
+							else
+							{
+							    const auto iter = CHECKPOINT_BLOCKS.find(block_data.block_num);
+							    if (iter != CHECKPOINT_BLOCKS.end() && iter->second != block_id)
+								    FC_CAPTURE_AND_THROW(failed_checkpoint_verification, (block_id)(*iter));
+						
+							    // Skip signature validation
+								block_signee = self->get_slot_signee(block_data.timestamp, self->get_active_delegates()).signing_key();
+							}
+							
+							verify_header(DigestBlock(block_data), block_signee);
+
+							/** Increment the blocks produced or missed for all delegates. This must be done
+	                         *  before applying transactions because it depends upon the current active delegate order.
+	                         **/
+	                        update_delegate_production_info(block_data, block_id, block_signee, pending_state);
+	                        oBlockEntry block_entry;
+                        
+                        	if (self->get_statistics_enabled()) block_entry = self->get_block_entry(block_id);
+                        
+                        	apply_transactions(block_data.user_transactions, block_num, pending_state);
+
+							BlockEntrySigneeinfo sign_info = pay_delegate(block_id, block_signee, pending_state);
+	                        fc::ripemd160 new_seed = update_random_seed(block_data.previous_secret, pending_state);
+							if (block_entry.valid())
+							{
+								block_entry->signee_shares_issued = sign_info.signee_shares_issued;
+		                        block_entry->signee_fees_collected = sign_info.signee_fees_collected;
+		                        block_entry->signee_fees_destroyed = sign_info.signee_fees_destroyed;
+								block_entry->random_seed = new_seed;
+							}
+							update_active_delegate_list(block_num, pending_state);
+	                        save_undo_state(block_num, block_id, pending_state);
+	                        self->store_extend_status(block_id, 1);
+	                        // TODO: Verify idempotency
+	                        pending_state->apply_changes();
+	                        mark_included(block_id, true);
+	                        update_head_block(block_data, block_id);
+	                        clear_pending(block_data.user_transactions, block_num);
+	                        _block_num_to_id_db.store(block_num, block_id);
+	                        
+	                        if (block_entry.valid()) {
+	                            block_entry->processing_time = time_point::now() - start_time;
+	                            _block_id_to_block_entry_db.store(block_id, *block_entry);
+	                        }
+	                        
+	                        self->store_extend_status(block_id, 2);
+						}
+						else
+						{
+							FullBlock_v2 block_data_v2 = self->get_block_v2(block_id);
+							assert(block_data_v2.block_num == block_num);
+							
+							block_signee = verify_header_v2(DigestBlock_v2(block_data_v2));
+
+
+							/** Increment the blocks produced or missed for all delegates. This must be done
+	                         *  before applying transactions because it depends upon the current active delegate order.
+	                         **/
+	                        update_delegate_production_info(block_data_v2, block_id, block_signee, pending_state);
+	                        oBlockEntry_v2 block_entry_v2;
+                        
+                        	if (self->get_statistics_enabled()) block_entry_v2 = self->get_block_entry_v2(block_id);
+                        
+                        	apply_transactions(block_data_v2.user_transactions, block_num, pending_state);
+
+							BlockEntrySigneeinfo sign_info = pay_delegate(block_id, block_signee, pending_state);
+	                        fc::ripemd160 new_seed = update_random_seed(block_data.previous_secret, pending_state);
+							if (block_entry_v2.valid())
+							{
+								block_entry_v2->signee_shares_issued = sign_info.signee_shares_issued;
+		                        block_entry_v2->signee_fees_collected = sign_info.signee_fees_collected;
+		                        block_entry_v2->signee_fees_destroyed = sign_info.signee_fees_destroyed;
+								block_entry_v2->random_seed = new_seed;
+							}
+							update_active_delegate_list(block_num, pending_state);
+	                        save_undo_state(block_num, block_id, pending_state);
+	                        self->store_extend_status(block_id, 1);
+	                        // TODO: Verify idempotency
+	                        pending_state->apply_changes();
+	                        mark_included(block_id, true);
+	                        update_head_block_v2(block_data_v2, block_id);
+	                        clear_pending(block_data_v2.user_transactions, block_num);
+	                        _block_num_to_id_db.store(block_num, block_id);
+	                        
+	                        if (block_entry_v2.valid()) {
+	                            block_entry_v2->processing_time = time_point::now() - start_time;
+	                            _block_id_to_block_entry_db_v2.store(block_id, *block_entry_v2);
+	                        }
+	                        
+	                        self->store_extend_status(block_id, 2);
+						}
+                        
+                        //summary
+                        summary.block_id = block_id;
+					    summary.block_num = block_num;
+                        summary.applied_changes = pending_state;
+                        summary.applied_changes->event_vector = pending_state->event_vector;
+                        
                         
                         if (thinkyoung::client::g_client->get_wallet() != nullptr&&thinkyoung::client::g_client->get_wallet()->is_open()) {
                             if (!thinkyoung::client::g_client->get_wallet()->get_my_delegates(thinkyoung::wallet::enabled_delegate_status).empty()) {
@@ -1188,6 +1500,7 @@ namespace thinkyoung {
                 
                 FC_CAPTURE_AND_RETHROW((block_data))
             }
+			#endif
             
             /**
              * Traverse the previous links of all blocks in fork until we find one that is_included
@@ -1195,23 +1508,35 @@ namespace thinkyoung {
              * The last item in the result will be the only block id that is already included in
              * the blockchain.
              */
-            std::vector<BlockIdType> ChainDatabaseImpl::get_fork_history(const BlockIdType& id) {
+            std::vector<fork_history> ChainDatabaseImpl::get_fork_history(const BlockIdType& id) {
                 try {
-                    std::vector<BlockIdType> history;
-                    history.push_back(id);
-                    BlockIdType next_id = id;
+                    std::vector<fork_history> history;
+                    history.push_back(fork_history(id, self->get_block_num(id)));
+					BlockIdType previous;
+					uint32_t head_block_num = 0;
+
+					//first,get the id's block
+					try{
+						auto header = self->get_block_header(id);
+						previous = header.previous;
+						head_block_num = header.block_num;
+					}catch(...)
+					{
+						auto header = self->get_block_header_v2(id);
+						previous = header.previous;
+						head_block_num = header.block_num;
+					}
                     
                     while (true) {
-                        auto header = self->get_block_header(next_id);
-                        //ilog( "header: ${h}", ("h",header) );
-                        history.push_back(header.previous);
-                        
-                        if (header.previous == BlockIdType()) {
+
+						history.push_back(fork_history(previous, head_block_num - 1));
+						
+                        if (previous == BlockIdType()) {
                             ilog("return: ${h}", ("h", history));
                             return history;
                         }
                         
-                        auto prev_fork_data = _fork_db.fetch(header.previous);
+                        auto prev_fork_data = _fork_db.fetch(previous);
                         /// this shouldn't happen if the database invariants are properly maintained
                         FC_ASSERT(prev_fork_data.is_linked, "we hit a dead end, this fork isn't really linked!");
                         
@@ -1220,7 +1545,21 @@ namespace thinkyoung {
                             return history;
                         }
                         
-                        next_id = header.previous;
+
+						head_block_num--;
+
+						if (head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+						{
+							auto header = self->get_block_header(previous);
+							previous = header.previous;
+							head_block_num = header.block_num;
+						}
+						else
+						{
+							auto header = self->get_block_header_v2(previous);
+							previous = header.previous;
+							head_block_num = header.block_num;
+						}
                     }
                     
                     ilog("${h}", ("h", history));
@@ -1232,18 +1571,22 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::pop_block() {
                 try {
+					BlockIdType previous_block_id;
                     assert(_head_block_header.block_num != 0);
-                    
-                    if (_head_block_header.block_num == 0) {
-                        elog("attempting to pop block 0");
-                        return;
-                    }
-                    
+
                     // update the is_included flag on the fork data
                     mark_included(_head_block_id, false);
                     // update the block_num_to_block_id index
-                    _block_num_to_id_db.remove(_head_block_header.block_num);
-                    auto previous_block_id = _head_block_header.previous;
+                    _block_num_to_id_db.remove(_head_block_num);
+					if (_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+					{
+						previous_block_id = _head_block_header.previous;
+					}
+					else
+					{
+						previous_block_id = _head_block_header_v2.previous;
+					}
+					
                     const auto undo_iter = _block_id_to_undo_state.unordered_find(_head_block_id);
                     FC_ASSERT(undo_iter != _block_id_to_undo_state.unordered_end(), "_block_id_to_undo_state is empty");
                     const auto& undo_state = undo_iter->second;
@@ -1251,12 +1594,24 @@ namespace thinkyoung {
                     undo_state_ptr->set_prev_state(self->shared_from_this());
                     undo_state_ptr->apply_changes();
                     _head_block_id = previous_block_id;
+					_head_block_num = _head_block_num - 1;
                     
                     if (_head_block_id == BlockIdType())
                         _head_block_header = SignedBlockHeader();
                         
                     else
-                        _head_block_header = self->get_block_header(_head_block_id);
+                    {
+                    	if (_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    	{
+                    		_head_block_header = self->get_block_header(_head_block_id);
+							_head_block_header_v2 = SignedBlockHeader_v2();
+                    	}
+						else
+						{
+							_head_block_header_v2 = self->get_block_header_v2(_head_block_id);
+						}
+                    }
+                        
                         
                     //Schedule the observer notifications for later; the chain is in a
                     //non-premptable state right now, and observers may yield.
@@ -1269,10 +1624,23 @@ namespace thinkyoung {
             
             void ChainDatabaseImpl::repair_block(BlockIdType block_id) {
                 try {
-                    auto full_block = self->get_block(block_id);
+					BlockIdType previous_block_id;
+					uint32_t block_num = 0;
+
+					try{
+						auto full_block = self->get_block(block_id);
+						previous_block_id = full_block.previous;
+						block_num = full_block.block_num;
+					}
+					catch(...)
+					{
+						auto full_block = self->get_block_v2(block_id);
+						previous_block_id = full_block.previous;
+						block_num = full_block.block_num;
+					}
+                    
                     mark_included(block_id, false);
-                    _block_num_to_id_db.remove(full_block.block_num);
-                    auto previous_block_id = full_block.previous;
+                    _block_num_to_id_db.remove(block_num);
                     const auto undo_iter = _block_id_to_undo_state.unordered_find(block_id);
                     FC_ASSERT(undo_iter != _block_id_to_undo_state.unordered_end(), "_block_id_to_undo_state is empty");
                     const auto& undo_state = undo_iter->second;
@@ -1285,7 +1653,17 @@ namespace thinkyoung {
                         _head_block_header = SignedBlockHeader();
                         
                     else
-                        _head_block_header = self->get_block_header(_head_block_id);
+                    {
+                    	if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    	{
+                    		_head_block_header = self->get_block_header(_head_block_id);
+                    	}
+						else
+						{
+							_head_block_header_v2 = self->get_block_header_v2(_head_block_id);
+						}
+                    }
+                        
                         
                     for (ChainObserver* o : _observers)
                         fc::async([o, undo_state_ptr] { o->state_changed(undo_state_ptr); }, "call_state_changed_observer");
@@ -1358,6 +1736,7 @@ namespace thinkyoung {
             :my(new detail::ChainDatabaseImpl()) {
             my->self = this;
             generating_block = false;
+            evaluate_trx_contract = false;
         }
         
         ChainDatabase::~ChainDatabase() {
@@ -1435,8 +1814,17 @@ namespace thinkyoung {
                         my->_block_num_to_id_db.last(head_block_num, head_block_id);
                         
                         if (head_block_num > 0) {
-                            my->_head_block_id = head_block_id;;
-                            my->_head_block_header = get_block_header(head_block_id);
+                            my->_head_block_num = head_block_num;
+                            my->_head_block_id = head_block_id;
+
+                            if (my->_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                            {
+                                my->_head_block_header = get_block_header(head_block_id);
+                            }
+                            else
+                            {
+                                my->_head_block_header_v2 = get_block_header_v2(head_block_id);
+                            }
                         }
                         
                         my->populate_indexes();
@@ -1449,11 +1837,22 @@ namespace thinkyoung {
                             if (!fc::is_directory(data_dir / "raw_chain/block_id_to_data_original"))
                                 fc::rename(data_dir / "raw_chain/block_id_to_block_data_db", data_dir / "raw_chain/block_id_to_data_original");
                         }
+
+                        if (fc::is_directory(data_dir / "raw_chain/block_id_to_block_data_db_v2")) {
+                            if (!fc::is_directory(data_dir / "raw_chain/block_id_to_data_original_v2"))
+                                fc::rename(data_dir / "raw_chain/block_id_to_block_data_db_v2", data_dir / "raw_chain/block_id_to_data_original_v2");
+                        }
+
                         
                         // During replay we implement stop-and-copy garbage collection on the raw blocks
                         decltype(my->_block_id_to_full_block) block_id_to_data_original;
                         block_id_to_data_original.open(data_dir / "raw_chain/block_id_to_data_original");
-                        const size_t original_size = fc::directory_size(data_dir / "raw_chain/block_id_to_data_original");
+                        size_t original_size = fc::directory_size(data_dir / "raw_chain/block_id_to_data_original");
+
+                        decltype(my->_block_id_to_full_block_v2) block_id_to_data_original_v2;
+                        block_id_to_data_original_v2.open(data_dir / "raw_chain/block_id_to_data_original_v2");
+                        original_size += fc::directory_size(data_dir / "raw_chain/block_id_to_data_original_v2");
+
                         my->open_database(data_dir);
                         store_property_entry(PropertyIdType::database_version, variant(ALP_BLOCKCHAIN_DATABASE_VERSION));
                         const auto toggle_leveldb = [this](const bool enabled) {
@@ -1501,7 +1900,7 @@ namespace thinkyoung {
                         const auto total_blocks = num_to_id.size();
                         const auto genesis_time = get_genesis_timestamp();
                         const auto start_time = blockchain::now();
-                        const auto insert_block = [&](const FullBlock& block) {
+                        const auto insert_block = [&](const FullBlock_v2& block) {
                             if (blocks_indexed % 200 == 0) {
                                 float progress;
                                 
@@ -1537,6 +1936,9 @@ namespace thinkyoung {
                             if (num_to_id.empty()) {
                                 for (auto block_itr = block_id_to_data_original.begin(); block_itr.valid(); ++block_itr)
                                     insert_block(block_itr.value());
+
+                                for (auto block_itr = block_id_to_data_original_v2.begin(); block_itr.valid(); ++block_itr)
+                                    insert_block(block_itr.value());
                                     
                             } else {
                                 const uint32_t last_known_block_num = num_to_id.crbegin()->first;
@@ -1545,15 +1947,27 @@ namespace thinkyoung {
                                     my->_min_undo_block = last_known_block_num - ALP_BLOCKCHAIN_MAX_UNDO_HISTORY;
                                     
                                 for (const auto& num_id : num_to_id) {
-                                    const auto oblock = block_id_to_data_original.fetch_optional(num_id.second);
-                                    
-                                    if (oblock.valid()) insert_block(*oblock);
+
+                                    if (num_id.first < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                                    {
+                                        const auto oblock = block_id_to_data_original.fetch_optional(num_id.second);
+
+                                        if (oblock.valid()) insert_block(*oblock);
+                                    }
+                                    else
+                                    {
+                                        const auto oblock = block_id_to_data_original_v2.fetch_optional(num_id.second);
+
+                                        if (oblock.valid()) insert_block(*oblock);
+                                    }
                                 }
                             }
                             
                         } catch (thinkyoung::blockchain::store_and_index_a_seen_block&  e) {
                             block_id_to_data_original.close();
                             fc::remove_all(data_dir / "raw_chain/block_id_to_data_original");
+                            block_id_to_data_original_v2.close();
+                            fc::remove_all(data_dir / "raw_chain/block_id_to_data_original_v2");
                             fc::remove_all(data_dir / "index");
                             exit(0);
                         }
@@ -1562,7 +1976,10 @@ namespace thinkyoung {
                         toggle_leveldb(true);
                         block_id_to_data_original.close();
                         fc::remove_all(data_dir / "raw_chain/block_id_to_data_original");
-                        const size_t final_size = fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db");
+                        block_id_to_data_original_v2.close();
+                        fc::remove_all(data_dir / "raw_chain/block_id_to_data_original_v2");
+                        const size_t final_size = fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db")
+                            + fc::directory_size(data_dir / "raw_chain/block_id_to_block_data_db_v2");
                         std::cout << "\rSuccessfully replayed " << blocks_indexed << " blocks in "
                                   << (blockchain::now() - start_time).to_seconds() << " seconds.                          "
                                   "\nBlockchain size changed from "
@@ -1604,12 +2021,14 @@ namespace thinkyoung {
             try {
                 my->_pending_transaction_db.close();
                 my->_block_id_to_full_block.close();
+			    my->_block_id_to_full_block_v2.close();
                 my->_block_id_to_undo_state.close();
                 my->_fork_number_db.close();
                 my->_fork_db.close();
                 my->_revalidatable_future_blocks_db.close();
                 my->_block_num_to_id_db.close();
                 my->_block_id_to_block_entry_db.close();
+				my->_block_id_to_block_entry_db_v2.close();
                 my->_property_id_to_entry.close();
                 my->_account_id_to_entry.close();
                 my->_account_name_to_id.close();
@@ -1643,7 +2062,7 @@ namespace thinkyoung {
         }
         
         AccountEntry ChainDatabase::get_block_signee(const BlockIdType& block_id)const {
-            auto block_header = get_block_header(block_id);
+            auto block_header = get_block_header_v2(block_id);
             auto delegate_entry = get_account_entry(Address(block_header.signee()));
             FC_ASSERT(delegate_entry.valid() && delegate_entry->is_delegate(), "Invalid delegate!");
             return *delegate_entry;
@@ -1667,6 +2086,20 @@ namespace thinkyoung {
             }
             
             FC_CAPTURE_AND_RETHROW((timestamp)(ordered_delegates))
+        }
+
+		AccountEntry ChainDatabase::get_slot_signee(const uint32_t index,
+                const std::vector<AccountIdType>& ordered_delegates)const {
+            try {
+                auto pos = index % ALP_BLOCKCHAIN_NUM_DELEGATES;
+                auto delegate_id = ordered_delegates[pos];
+                auto delegate_entry = get_account_entry(delegate_id);
+                FC_ASSERT(delegate_entry.valid(), "Invalid account entry");
+                FC_ASSERT(delegate_entry->is_delegate(), "Not a delegate ");
+                return *delegate_entry;
+            }
+            
+            FC_CAPTURE_AND_RETHROW((index)(ordered_delegates))
         }
         
         optional<time_point_sec> ChainDatabase::get_next_producible_block_timestamp(const vector<AccountIdType>& delegate_ids)const {
@@ -1715,11 +2148,16 @@ namespace thinkyoung {
                     trx_eval_state->skipexec = !get_node_vm_enabled();
                     
                 trx_eval_state->throw_exec_exception = throw_exec_exception;
+
+				//check if the delegate is class_b_delegate
+                if (!trx_eval_state->skipexec && generating_block)
+                    trx_eval_state->skipexec = !evaluate_trx_contract;
                 
                 //the local machine which create a contract transaction, will start virtual machine and will execute the contract  
                 if (trx_eval_state->skipexec && contract_vm_exec)
                     trx_eval_state->skipexec = !contract_vm_exec;
-                    
+
+                
                 if (trx_eval_state->origin_trx_basic_verify(trx) == false)
                     FC_CAPTURE_AND_THROW(illegal_transaction, (trx));
                     
@@ -1806,9 +2244,41 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((block_num))
         }
+
+		//SignedBlockHeader_v2
+		SignedBlockHeader_v2 ChainDatabase::get_block_header_v2(const BlockIdType& block_id)const {
+            try {
+
+				try{
+					return get_block_v2(block_id);
+				}
+				catch(fc::exception&)
+				{
+					return get_block(block_id);
+				}
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_id))
+        }
+        
+        SignedBlockHeader_v2 ChainDatabase::get_block_header_v2(uint32_t block_num)const {
+            try {
+
+				if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+				{
+					return get_block_header(get_block_id(block_num));
+				}
+				
+                return get_block_header_v2(get_block_id(block_num));
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_num))
+        }
         
         oBlockEntry ChainDatabase::get_block_entry(const BlockIdType& block_id) const {
             try {
+
+				// if can not find the value via the key, throw exception
                 oBlockEntry entry = my->_block_id_to_block_entry_db.fetch_optional(block_id);
                 
                 if (!entry.valid()) {
@@ -1817,6 +2287,33 @@ namespace thinkyoung {
                         entry = BlockEntry();
                         DigestBlock& temp = *entry;
                         temp = DigestBlock(block_data);
+
+                        entry->id = block_id;
+                        entry->block_size = block_data.block_size();
+                    } catch (const fc::exception&) {
+                    }
+                }
+                
+                return entry;
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_id))
+        }
+		//v2
+		oBlockEntry_v2 ChainDatabase::get_block_entry_v2(const BlockIdType& block_id) const {
+            try {
+                oBlockEntry_v2 entry = my->_block_id_to_block_entry_db_v2.fetch_optional(block_id);
+                
+                if (!entry.valid()) {
+                    try {
+
+                        const FullBlock_v2 block_data = get_block_v2(block_id);
+                        entry = BlockEntry_v2();
+                        
+                        DigestBlock_v2& temp = *entry;
+
+						temp = DigestBlock_v2(block_data);
+
                         entry->id = block_id;
                         entry->block_size = block_data.block_size();
                         
@@ -1833,6 +2330,14 @@ namespace thinkyoung {
         oBlockEntry ChainDatabase::get_block_entry(uint32_t block_num) const {
             try {
                 return get_block_entry(get_block_id(block_num));
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_num))
+        }
+		//v2
+		oBlockEntry_v2 ChainDatabase::get_block_entry_v2(uint32_t block_num) const {
+            try {
+                return get_block_entry_v2(get_block_id(block_num));
             }
             
             FC_CAPTURE_AND_RETHROW((block_num))
@@ -1900,17 +2405,73 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW()
         }
+
+		//v2
+		DigestBlock_v2 ChainDatabase::get_block_digest_v2(const BlockIdType& block_id)const {
+            try {
+                return DigestBlock_v2(get_block_v2(block_id));
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_id))
+        }
+        
+        DigestBlock_v2 ChainDatabase::get_block_digest_v2(uint32_t block_num)const {
+            try {
+                return get_block_digest_v2(get_block_id(block_num));
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_num))
+        }
+		
+		FullBlock_v2 ChainDatabase::get_block_v2(const BlockIdType& block_id)const {
+            try {
+                return my->_block_id_to_full_block_v2.fetch(block_id);
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_id))
+        }
+        
+        FullBlock_v2 ChainDatabase::get_block_v2(uint32_t block_num)const {
+            try {
+				if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+				{
+					return get_block(get_block_id(block_num));
+				}
+				
+                return get_block_v2(get_block_id(block_num));
+            }
+            
+            FC_CAPTURE_AND_RETHROW((block_num))
+        }
+        
+        SignedBlockHeader_v2 ChainDatabase::get_head_block_v2()const {
+            try {
+                return my->_head_block_header_v2;
+            }
+            
+            FC_CAPTURE_AND_RETHROW()
+        }
+
+        fc::time_point_sec ChainDatabase::get_head_block_time()const {
+            try {
+                if (my->_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                    return my->_head_block_header.timestamp;
+                return my->_head_block_header_v2.timestamp;
+            }
+
+            FC_CAPTURE_AND_RETHROW()
+        }
         
         uint32_t ChainDatabase::find_block_num(fc::time_point_sec &time)const {
             try {
                 uint32_t start = 1, end = get_head_block_num();
-                auto start_block_time = get_block_header(start).timestamp;
+                auto start_block_time = get_block_header_v2(start).timestamp;
                 
                 if (start_block_time >= time) {
                     return start;
                 }
                 
-                auto end_block_time = get_block_header(end).timestamp;
+                auto end_block_time = get_block_header_v2(end).timestamp;
                 
                 if (end_block_time <= time) {
                     return end;
@@ -1925,7 +2486,7 @@ namespace thinkyoung {
                         mid++;
                     }
                     
-                    auto mid_block_time = get_block_header(mid).timestamp;
+                    auto mid_block_time = get_block_header_v2(mid).timestamp;
                     
                     if (mid_block_time > time) {
                         end = mid;
@@ -1948,20 +2509,29 @@ namespace thinkyoung {
          *
          *  Returns the block_fork_data of the new block, not necessarily the head block
          */
-        BlockForkData ChainDatabase::push_block(const FullBlock& block_data) {
+        BlockForkData ChainDatabase::push_block(const FullBlock_v2& block_data) {
             try {
-                uint32_t head_block_num = get_head_block_num();
+				const uint32_t block_num = block_data.block_num;
+				const uint32_t head_block_num = get_head_block_num();
+				BlockIdType block_id = block_data.id();
+			
+				//if the block num is less than ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM
+				if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+				{
+					FullBlock block_vi(block_data);
+					block_id = block_vi.id();
+				}
                 
                 if (head_block_num > ALP_BLOCKCHAIN_MAX_UNDO_HISTORY &&
-                        block_data.block_num <= (head_block_num - ALP_BLOCKCHAIN_MAX_UNDO_HISTORY)) {
+                        block_num <= (head_block_num - ALP_BLOCKCHAIN_MAX_UNDO_HISTORY)) {
                     elog("block ${new_block_hash} (number ${new_block_num}) is on a fork older than "
                          "our undo history would allow us to switch to (current head block is number ${head_block_num}, undo history is ${undo_history})",
-                         ("new_block_hash", block_data.id())("new_block_num", block_data.block_num)
+                         ("new_block_hash", block_id)("new_block_num", block_num)
                          ("head_block_num", head_block_num)("undo_history", ALP_BLOCKCHAIN_MAX_UNDO_HISTORY));
                     FC_THROW_EXCEPTION(block_older_than_undo_history,
                                        "block ${new_block_hash} (number ${new_block_num}) is on a fork older than "
                                        "our undo history would allow us to switch to (current head block is number ${head_block_num}, undo history is ${undo_history})",
-                                       ("new_block_hash", block_data.id())("new_block_num", block_data.block_num)
+                                       ("new_block_hash", block_id)("new_block_num", block_num)
                                        ("head_block_num", head_block_num)("undo_history", ALP_BLOCKCHAIN_MAX_UNDO_HISTORY));
                 }
                 
@@ -1974,7 +2544,6 @@ namespace thinkyoung {
                 // but we also need to ensure the wallet, blockchain, delegate, &c. loops don't
                 // see partially-applied blocks
                 ASSERT_TASK_NOT_PREEMPTED();
-                const BlockIdType& block_id = block_data.id();
                 optional<BlockForkData> fork_data = get_block_fork_data(block_id);
                 
                 if (fork_data.valid() && fork_data->is_known) return *fork_data;
@@ -1998,8 +2567,17 @@ namespace thinkyoung {
                 while(highest_unchecked_block_number > 0)
                 */
                 if (longest_fork.second.can_link()) {
-                    FullBlock longest_fork_block = my->_block_id_to_full_block.fetch(longest_fork.first);
-                    uint32_t highest_unchecked_block_number = longest_fork_block.block_num;
+
+					uint32_t highest_unchecked_block_number;
+                    try{
+                        FullBlock longest_fork_block = my->_block_id_to_full_block.fetch(longest_fork.first);
+						highest_unchecked_block_number = longest_fork_block.block_num;
+                    }
+					catch(fc::exception&)
+					{
+						FullBlock_v2 longest_fork_block_v2 = my->_block_id_to_full_block_v2.fetch(longest_fork.first);
+						highest_unchecked_block_number = longest_fork_block_v2.block_num;
+					}
                     
                     if (highest_unchecked_block_number > head_block_num) {
                         do {
@@ -2043,19 +2621,28 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((block_data))
         }
-        
-        std::vector<BlockIdType> ChainDatabase::get_fork_history(const BlockIdType& id) {
-            return my->get_fork_history(id);
+
+        std::vector<fork_history> ChainDatabase::get_fork_history(const BlockIdType& id) {
+
+			return my->get_fork_history(id);  
         }
         
         /** return the timestamp from the head block */
         fc::time_point_sec ChainDatabase::now()const {
-            if (my->_head_block_header.block_num <= 0) { /* Genesis */
+            if (my->_head_block_num <= 0) { /* Genesis */
                 auto slot_number = blockchain::get_slot_number(blockchain::now());
                 return blockchain::get_slot_start_time(slot_number - 1);
             }
+
+			if (my->_head_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+			{
+				return my->_head_block_header.timestamp;
+			}
+			else
+			{
+				return my->_head_block_header_v2.timestamp;
+			}
             
-            return my->_head_block_header.timestamp;
         }
         
         AssetIdType ChainDatabase::get_asset_id(const string& symbol)const {
@@ -2099,7 +2686,7 @@ namespace thinkyoung {
                 } else {
                     // if 10*N blocks ago is longer than 10*N*INTERVAL_SEC ago then we missed blocks, calculate
                     // in terms of percentage time rather than percentage blocks.
-                    const auto starting_time = get_block_header(head_num - ALP_BLOCKCHAIN_NUM_DELEGATES).timestamp;
+                    const auto starting_time = get_block_header_v2(head_num - ALP_BLOCKCHAIN_NUM_DELEGATES).timestamp;
                     const auto expected_production = (now - starting_time).to_seconds() / ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
                     return 100 * double(ALP_BLOCKCHAIN_NUM_DELEGATES) / expected_production;
                 }
@@ -2274,20 +2861,18 @@ namespace thinkyoung {
                 
                 TransactionEvaluationStatePtr eval_state = evaluate_transaction(trx, relay_fee, contract_vm_exec, false, cache);
                 const ShareType fees = eval_state->get_fees() + eval_state->alt_fees_paid.amount;
-                
-                //if( fees < my->_relay_fee )
-                //   FC_CAPTURE_AND_THROW( insufficient_relay_fee, (fees)(my->_relay_fee) );
+
                 /*
-                ´úÀíÔÚÊÕµ½¿éµÄÊ±ºòÔÚ¶ÔºÏÔ¼µ÷ÓÃ½á¹û½øĞĞĞ£Ñé
-                µ«ÊÇÕâÀï²¢²»»áÔÚÑé¿éµÄÊ±ºò±»µ÷ÓÃ£¬Òò´Ë²¢²»ĞèÒª¶ÔºÏÔ¼µ÷ÓÃ½»Ò×²úÉúµÄ½á¹ûÓë½»Ò×ÖĞĞ¯´øµÄ½á¹û½øĞĞ¶Ô±È
-                ÕâÀïĞèÒªµÄÈç¹ûÓĞ½á¹û½»Ò×£¬¾Í°Ñ½á¹û½»Ò×´æÏÂ
+                ä»£ç†åœ¨æ”¶åˆ°å—çš„æ—¶å€™åœ¨å¯¹åˆçº¦è°ƒç”¨ç»“æœè¿›è¡Œæ ¡éªŒ
+                ä½†æ˜¯è¿™é‡Œå¹¶ä¸ä¼šåœ¨éªŒå—çš„æ—¶å€™è¢«è°ƒç”¨ï¼Œå› æ­¤å¹¶ä¸éœ€è¦å¯¹åˆçº¦è°ƒç”¨äº¤æ˜“äº§ç”Ÿçš„ç»“æœä¸äº¤æ˜“ä¸­æºå¸¦çš„ç»“æœè¿›è¡Œå¯¹æ¯”
+                è¿™é‡Œéœ€è¦çš„å¦‚æœæœ‰ç»“æœäº¤æ˜“ï¼Œå°±æŠŠç»“æœäº¤æ˜“å­˜ä¸‹
                 */
                 if (eval_state->p_result_trx.operations.size() > 0) {
                     eval_state->p_result_trx.operations.resize(0);
                 }
                 
                 my->_pending_fee_index[fee_index(fees, trx_id)] = eval_state;
-                my->_pending_transaction_db.store(trx_id, trx);//½á¹û½»Ò×²»±£´æµ½pendingdbÖĞ
+                my->_pending_transaction_db.store(trx_id, trx);//ç»“æœäº¤æ˜“ä¸ä¿å­˜åˆ°pendingdbä¸­
                 return eval_state;
             }
             
@@ -2306,73 +2891,170 @@ namespace thinkyoung {
         }
         
         
-        
-        
-        FullBlock ChainDatabase::generate_block(const time_point_sec block_timestamp, const DelegateConfig& config) {
+        bool ChainDatabase::check_asset_transfer(const SignedTransaction& trx)
+        {
+            ShareType withdraw_amount = 0;
+            ShareType deposit_amount = 0;
+            AssetIdType muiltiasset_id = 0;
+            AssetIdType muiltiasset_id_w = 0;
+            uint32_t deposit_num = 0;
+            BalanceIdType withdraw_id;
+
+            for (const Operation& op : trx.operations)
+            {
+                if (op.type.value == deposit_op_type)
+                {
+                    deposit_num++;
+                    DepositOperation dop = op.as<DepositOperation>();
+
+                    muiltiasset_id = dop.condition.asset_id;
+                    deposit_amount += dop.amount;
+                }
+                else if (op.type.value == withdraw_op_type)
+                {
+                    WithdrawOperation wop = op.as<WithdrawOperation>();
+                    withdraw_amount += wop.amount;
+
+                    //get BalanceEntry
+                    const auto oBalance = get_balance_entry(wop.balance_id);
+
+                    if (!oBalance.valid())
+                        return false;
+
+                    //get asset_id of withdraw balance
+                    auto id = oBalance->asset_id();
+
+                    //check if the withdraw op is muitl_asset transfer
+                    if (id != 0)
+                    {
+                        //check if has several withdraw ops, and the asset_ids of these ops are different
+                        if ((muiltiasset_id_w != 0) && (muiltiasset_id_w != id))
+                            return false;
+
+                        muiltiasset_id_w = id;
+                    }
+                }
+                else if (op.type.value == imessage_memo_op_type || op.type.value == define_slate_op_type)
+                {
+                    continue;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+
+            if (deposit_num > 1)
+                return false;
+
+            if (withdraw_amount < deposit_amount + 1000)
+                return false;
+
+            if (trx.alp_account != "")
+            {
+                if (muiltiasset_id != trx.alp_inport_asset.asset_id
+                    || deposit_amount != trx.alp_inport_asset.amount)
+                    return false;
+            }
+
+            //if withdraw asset is not the same as deposit asset, the trx is illegal
+            if (muiltiasset_id != muiltiasset_id_w)
+                return false;
+
+            return true;
+        }
+
+        void ChainDatabase::pack_trx(const DelegateConfig& config, signed_transactions& trxs, size_t block_size)
+        {
             try {
+                const set<OperationTypeEnum> skip_pack_op = 
+                { register_contract_op_type,
+                upgrade_contract_op_type,
+                destroy_contract_op_type,
+                call_contract_op_type,
+                transfer_contract_op_type };
+                bool skip_flag = false;
                 const time_point start_time = time_point::now();
                 const PendingChainStatePtr pending_state = std::make_shared<PendingChainState>(shared_from_this());
-                const SignedBlockHeader head_block = get_head_block();
-                // Initialize block
-                FullBlock new_block;
-                size_t block_size = new_block.block_size();
-                
-                if (config.block_max_transaction_count > 0 && config.block_max_size > block_size) {
+
+                if (config.block_max_transaction_count > 0 && config.block_max_size > block_size)
+                {
                     // Evaluate pending transactions
                     const vector<TransactionEvaluationStatePtr> pending_trx = get_pending_transactions();
-                    
+
                     for (const TransactionEvaluationStatePtr& item : pending_trx) {
                         // Check block production time limit
                         if (time_point::now() - start_time >= config.block_max_production_time)
                             break;
-                            
+
+                        skip_flag = false;
+
                         const SignedTransaction& new_transaction = item->trx;
-                        
+
                         try {
                             // Check transaction size limit
                             size_t transaction_size = new_transaction.data_size();
-                            
+
                             if (transaction_size > config.transaction_max_size) {
                                 wlog("Excluding transaction ${id} of size ${size} because it exceeds transaction size limit ${limit}",
-                                     ("id", new_transaction.id())("size", transaction_size)("limit", config.transaction_max_size));
+                                    ("id", new_transaction.id())("size", transaction_size)("limit", config.transaction_max_size));
                                 continue;
                             }
-                            
+
                             // Check block size limit
                             if (block_size + transaction_size > config.block_max_size) {
                                 wlog("Excluding transaction ${id} of size ${size} because block would exceed block size limit ${limit}",
-                                     ("id", new_transaction.id())("size", transaction_size)("limit", config.block_max_size));
+                                    ("id", new_transaction.id())("size", transaction_size)("limit", config.block_max_size));
                                 continue;
                             }
-                            
+
                             // Check transaction blacklist
                             if (!config.transaction_blacklist.empty()) {
                                 const TransactionIdType id = new_transaction.id();
-                                
+
                                 if (config.transaction_blacklist.count(id) > 0) {
                                     wlog("Excluding blacklisted transaction ${id}", ("id", id));
                                     continue;
                                 }
                             }
-                            
+
                             // Check operation blacklist
                             if (!config.operation_blacklist.empty()) {
                                 optional<OperationTypeEnum> blacklisted_op;
-                                
+
                                 for (const Operation& op : new_transaction.operations) {
                                     if (config.operation_blacklist.count(op.type) > 0) {
                                         blacklisted_op = op.type;
                                         break;
                                     }
                                 }
-                                
+
                                 if (blacklisted_op.valid()) {
                                     wlog("Excluding transaction ${id} because of blacklisted operation ${op}",
-                                         ("id", new_transaction.id())("op", *blacklisted_op));
+                                        ("id", new_transaction.id())("op", *blacklisted_op));
                                     continue;
                                 }
                             }
+
+                            if (check_asset_transfer(new_transaction) == false)
+                                continue;
                             
+                            //check if package contract_trx
+                            if (evaluate_trx_contract == false)
+                            {
+                                for (const Operation& op : new_transaction.operations) 
+                                {
+                                    if (skip_pack_op.count(op.type) > 0)
+                                    {
+                                        skip_flag = true;
+                                        break;
+                                    }
+                                }
+
+                                if (skip_flag)
+                                    continue;
+                            }
+
                             // Validate transaction
                             auto origin_trx_state = std::make_shared<PendingChainState>(pending_state);
                             auto res_trx_state = std::make_shared<PendingChainState>(pending_state);
@@ -2384,7 +3066,7 @@ namespace thinkyoung {
                                 trx_eval_state->_skip_signature_check = true;
                                 trx_eval_state->skipexec = false;
                                 trx_eval_state->evaluate(new_transaction);
-                                
+
                                 if (trx_eval_state->p_result_trx.operations.size() > 0) {
                                     auto result_eval_state = std::make_shared<TransactionEvaluationState>(res_trx_state.get());
                                     result_eval_state->_enforce_canonical_signatures = config.transaction_canonical_signatures_required;
@@ -2393,90 +3075,107 @@ namespace thinkyoung {
                                     result_eval_state->skipexec = true;
                                     result_eval_state->evaluate(trx_eval_state->p_result_trx);
                                     const ImessageIdType iMessageLength = trx_eval_state->imessage_length;
-                                    
+
                                     if (iMessageLength > config.transaction_imessage_max_soft_length) {
                                         continue;
                                     }
-                                    
+
                                     ShareType imessage_fee = 0;
-                                    
+
                                     if (iMessageLength > ALP_BLOCKCHAIN_MAX_FREE_MESSAGE_SIZE) {
                                         imessage_fee = config.transaction_imessage_min_fee_coe * (iMessageLength - ALP_BLOCKCHAIN_MAX_FREE_MESSAGE_SIZE);
                                     }
-                                    
+
                                     // Check transaction fee limit
                                     const ShareType transaction_fee = result_eval_state->get_fees(0) + result_eval_state->alt_fees_paid.amount;
-                                    
+
                                     if (transaction_fee < config.transaction_min_fee + imessage_fee) {
                                         wlog("Excluding transaction ${id} with fee ${fee} because it does not meet transaction fee limit ${limit}",
-                                             ("id", trx_eval_state->p_result_trx.id())("fee", transaction_fee)("limit", config.transaction_min_fee));
+                                            ("id", trx_eval_state->p_result_trx.id())("fee", transaction_fee)("limit", config.transaction_min_fee));
                                         continue;
                                     }
-                                    
-                                    //Ô­Ê¼½»Ò×²úÉúµÄ½á¹û½»Ò×´óĞ¡³¬¹ı´úÀíÉèÖÃµÄ½»Ò×´óĞ¡ÉÏÏŞ£¬Ôò¹¹½¨Ò»¸ö²»ÍêÕûµÄ½á¹û½»Ò×£¬
-                                    //Ô­Ê¼½»Ò×ÒÔ¼°ÍêÕûµÄ½á¹û½»Ò×µÄ½»Ò×id°üº¬ÔÚÕâ¸ö²»ÍêÕûµÄ½á¹û½»Ò×ÖĞ
+
+                                    //åŸå§‹äº¤æ˜“äº§ç”Ÿçš„ç»“æœäº¤æ˜“å¤§å°è¶…è¿‡ä»£ç†è®¾ç½®çš„äº¤æ˜“å¤§å°ä¸Šé™ï¼Œåˆ™æ„å»ºä¸€ä¸ªä¸å®Œæ•´çš„ç»“æœäº¤æ˜“ï¼Œ
+                                    //åŸå§‹äº¤æ˜“ä»¥åŠå®Œæ•´çš„ç»“æœäº¤æ˜“çš„äº¤æ˜“idåŒ…å«åœ¨è¿™ä¸ªä¸å®Œæ•´çš„ç»“æœäº¤æ˜“ä¸­
                                     if (trx_eval_state->p_result_trx.data_size() > config.transaction_max_size) {
                                         SignedTransaction result_trx = trx_eval_state->p_result_trx;
                                         result_trx.result_trx_id = result_trx.id();
                                         result_trx.result_trx_type = ResultTransactionType::incomplete_result_transaction;
                                         result_trx.operations.resize(1);
                                         trx = result_trx;
-                                        
-                                    } else {
+
+                                    }
+                                    else {
                                         SignedTransaction result_trx = trx_eval_state->p_result_trx;
                                         result_trx.result_trx_id = result_trx.id();
                                         result_trx.result_trx_type = ResultTransactionType::complete_result_transaction;
                                         trx = result_trx;
                                     }
-                                    
-                                } else {
+
+                                }
+                                else {
                                     const ImessageIdType iMessageLength = trx_eval_state->imessage_length;
-                                    
+
                                     if (iMessageLength > config.transaction_imessage_max_soft_length) {
                                         continue;
                                     }
-                                    
+
                                     ShareType imessage_fee = 0;
-                                    
+
                                     if (iMessageLength > ALP_BLOCKCHAIN_MAX_FREE_MESSAGE_SIZE) {
                                         imessage_fee = config.transaction_imessage_min_fee_coe * (iMessageLength - ALP_BLOCKCHAIN_MAX_FREE_MESSAGE_SIZE);
                                     }
-                                    
+
                                     // Check transaction fee limit
                                     const ShareType transaction_fee = trx_eval_state->get_fees(0) + trx_eval_state->alt_fees_paid.amount;
-                                    
+
                                     if (transaction_fee < config.transaction_min_fee + imessage_fee) {
                                         wlog("Excluding transaction ${id} with fee ${fee} because it does not meet transaction fee limit ${limit}",
-                                             ("id", new_transaction.id())("fee", transaction_fee)("limit", config.transaction_min_fee));
+                                            ("id", new_transaction.id())("fee", transaction_fee)("limit", config.transaction_min_fee));
                                         continue;
                                     }
                                 }
                             }
-                            
+
                             // Check block size limit
                             if (block_size + transaction_size > config.block_max_size) {
                                 wlog("Excluding transaction ${id} of size ${size} because block would exceed block size limit ${limit}",
-                                     ("id", new_transaction.id())("size", transaction_size)("limit", config.block_max_size));
+                                    ("id", new_transaction.id())("size", transaction_size)("limit", config.block_max_size));
                                 continue;
                             }
-                            
+
                             pending_trx_state->apply_changes();
-                            new_block.user_transactions.push_back(trx);
+                            trxs.push_back(trx);
                             block_size += trx.data_size();
-                            
+
                             // Check block transaction count limit
-                            if (new_block.user_transactions.size() >= config.block_max_transaction_count)
+                            if (trxs.size() >= config.block_max_transaction_count)
                                 break;
-                                
-                        } catch (const fc::canceled_exception&) {
+
+                        }
+                        catch (const fc::canceled_exception&) {
                             throw;
-                            
-                        } catch (const fc::exception& e) {
+
+                        }
+                        catch (const fc::exception& e) {
                             wlog("Pending transaction was found to be invalid in context of block\n${trx}\n${e}",
-                                 ("trx", fc::json::to_pretty_string(new_transaction))("e", e.to_detail_string()));
+                                ("trx", fc::json::to_pretty_string(new_transaction))("e", e.to_detail_string()));
                         }
                     }
                 }
+            }FC_CAPTURE_AND_RETHROW((config))
+        }
+        
+        
+        
+        FullBlock ChainDatabase::generate_block(const time_point_sec block_timestamp, const DelegateConfig& config) {
+            try {
+
+                const SignedBlockHeader head_block = get_head_block();
+                // Initialize block
+                FullBlock new_block;
+                
+                pack_trx(config, new_block.user_transactions, new_block.block_size());
                 
                 // Populate block header
                 new_block.previous = head_block.block_num > 0 ? head_block.id() : BlockIdType();
@@ -2486,6 +3185,28 @@ namespace thinkyoung {
                 return new_block;
             }
             
+            FC_CAPTURE_AND_RETHROW((block_timestamp)(config))
+        }
+
+        FullBlock_v2 ChainDatabase::generate_block_v2(const time_point_sec block_timestamp, const uint32_t pos, const DelegateConfig& config) {
+            try {
+                // Initialize block
+                FullBlock_v2 new_block_v2;
+
+                new_block_v2.block_num = my->_head_block_num + 1;
+
+                pack_trx(config, new_block_v2.user_transactions, new_block_v2.block_size());
+
+                // Populate block header
+                new_block_v2.previous = my->_head_block_num > 0 ? my->_head_block_id : BlockIdType();
+                new_block_v2.block_num = my->_head_block_num + 1;
+                new_block_v2.timestamp = block_timestamp;
+				new_block_v2.delegate_pos = pos;
+                new_block_v2.transaction_digest = DigestBlock_v2(new_block_v2).calculate_transaction_digest();
+
+                return new_block_v2;
+            }
+
             FC_CAPTURE_AND_RETHROW((block_timestamp)(config))
         }
         
@@ -2527,15 +3248,21 @@ namespace thinkyoung {
             try {
                 if (block_id == BlockIdType()) return 0;
                 
-                return get_block(block_id).block_num;
+                try{
+                    return get_block(block_id).block_num;
+                }
+                catch (fc::exception&)
+                {
+                    return get_block_v2(block_id).block_num;
+                }
             }
-            
             FC_CAPTURE_AND_RETHROW((block_id))
         }
         
         uint32_t ChainDatabase::get_head_block_num()const {
             try {
-                return my->_head_block_header.block_num;
+                //return my->_head_block_header.block_num;
+                return my->_head_block_num;
             }
             
             FC_CAPTURE_AND_RETHROW()
@@ -2785,16 +3512,16 @@ namespace thinkyoung {
                             forks.push_back(fork);
                         }
                         
-                        //fork_blocks[get_block_num(iter.key())] = forks;   Ô­À´´úÂë
+                        //fork_blocks[get_block_num(iter.key())] = forks;   åŸæ¥ä»£ç 
                         
                         /*
-                        ÔÚÊı¾İÎÄ¼ş´íÎóÊ±»á³öÏÖ_fork_dbÖĞ´æÔÚµÄfork_data,´ËÊ±Ö±½Ó get_block_num(iter.key()) »á³öÏÖÕÒ²»µ½µÄ×´¿ö
-                        ÔÚÎ´×÷ÅĞ¶ÏÊ±»áÒì³£ÖĞ¶Ï³ÌĞòµ¼ÖÂÎŞ·¨×Ô¶¯»Ö¸´
-                        ¼ì²âµ½Òì³£ºóÏÈÖØ½¨index,¿ÉÒÔĞŞ¸´²¿·Ö×´¿ö
-                        µ«Èô_block_id_to_full_blockÖĞ´æÔÚblocknum²»Á¬ĞøµÄ¿éÈç1,3,È±µÚ2¿é,
-                        ÔÚ²»»ñÈ¡µ½È±Ê§¿éµÄÇé¿öÏÂÎŞ·¨×Ô¶¯»Ö¸´.
-                        ¶ÔÓÚfull_dbÖĞ²»´æÔÚµÄ¿é²»·µ»ØforkĞÅÏ¢Ò²Ã»Ê²Ã´Ó°Ïì
-                        ¿ÉÒÔ¿¼ÂÇÅĞ¶ÏÊÇ·ñis_known,Èç¹û²»´æÔÚÔò²»·µ»Ø¸ÃforkĞÅÏ¢£¬Ò²²»Å×³öÒì³££¬ÉèÖÃÏÂ´ÎÖØ½¨index,·µ»Ø,µÈ´ı³ÌĞò½øĞĞ¿éÍ¬²½
+                        åœ¨æ•°æ®æ–‡ä»¶é”™è¯¯æ—¶ä¼šå‡ºç°_fork_dbä¸­å­˜åœ¨çš„fork_data,æ­¤æ—¶ç›´æ¥ get_block_num(iter.key()) ä¼šå‡ºç°æ‰¾ä¸åˆ°çš„çŠ¶å†µ
+                        åœ¨æœªä½œåˆ¤æ–­æ—¶ä¼šå¼‚å¸¸ä¸­æ–­ç¨‹åºå¯¼è‡´æ— æ³•è‡ªåŠ¨æ¢å¤
+                        æ£€æµ‹åˆ°å¼‚å¸¸åå…ˆé‡å»ºindex,å¯ä»¥ä¿®å¤éƒ¨åˆ†çŠ¶å†µ
+                        ä½†è‹¥_block_id_to_full_blockä¸­å­˜åœ¨blocknumä¸è¿ç»­çš„å—å¦‚1,3,ç¼ºç¬¬2å—,
+                        åœ¨ä¸è·å–åˆ°ç¼ºå¤±å—çš„æƒ…å†µä¸‹æ— æ³•è‡ªåŠ¨æ¢å¤.
+                        å¯¹äºfull_dbä¸­ä¸å­˜åœ¨çš„å—ä¸è¿”å›forkä¿¡æ¯ä¹Ÿæ²¡ä»€ä¹ˆå½±å“
+                        å¯ä»¥è€ƒè™‘åˆ¤æ–­æ˜¯å¦is_known,å¦‚æœä¸å­˜åœ¨åˆ™ä¸è¿”å›è¯¥forkä¿¡æ¯ï¼Œä¹Ÿä¸æŠ›å‡ºå¼‚å¸¸ï¼Œè®¾ç½®ä¸‹æ¬¡é‡å»ºindex,è¿”å›,ç­‰å¾…ç¨‹åºè¿›è¡Œå—åŒæ­¥
                         */
                         if (iter.value().is_known) {
                             fork_blocks[get_block_num(iter.key())] = forks;

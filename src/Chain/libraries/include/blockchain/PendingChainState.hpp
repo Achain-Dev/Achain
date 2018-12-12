@@ -147,7 +147,7 @@ namespace thinkyoung {
             * @return uint32_t
             */
             virtual uint32_t               get_head_block_num()const override;
-            virtual SignedBlockHeader      get_block_header(const BlockIdType&)const;
+            virtual SignedBlockHeader_v2      get_block_header_v2(const BlockIdType&)const;
             virtual fc::time_point_sec     get_head_block_timestamp()const override;
 
             virtual BlockIdType               get_block_id(uint32_t block_num)const;

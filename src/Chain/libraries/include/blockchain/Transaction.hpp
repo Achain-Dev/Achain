@@ -97,7 +97,8 @@ namespace thinkyoung {
             void update_account(AccountIdType account_id,
                                 uint8_t delegate_pay_rate,
                                 const optional<variant>& public_data,
-                                const optional<PublicKeyType>& active);
+                                const optional<PublicKeyType>& active,
+                                const optional<uint8_t>& delegate_mode);
                                 
             void create_asset(const string& symbol,
                               const string& name,

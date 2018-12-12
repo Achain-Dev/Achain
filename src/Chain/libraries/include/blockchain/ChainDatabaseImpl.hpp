@@ -34,6 +34,7 @@ namespace thinkyoung {
             BlockIdType id;
             int version;
         };
+
         namespace detail
         {
             class ChainDatabaseImpl
@@ -87,19 +88,21 @@ namespace thinkyoung {
                 /**  store_and_index
                 * Store a block into database and  organize related data
                 * @param  block_id  id of the block
-                * @param  block_data  FullBlock
+                * @param  block_data
                 *
                 * @return std::pair<BlockIdType,
                 */
-                std::pair<BlockIdType, BlockForkData>   store_and_index(const BlockIdType& id, const FullBlock& blk);
+
+                std::pair<BlockIdType, BlockForkData>   store_and_index(const BlockIdType& block_id, 
+            					const FullBlock_v2& block_data);
 
                 /**  clear_pending
                 * Remove transactions which are contained in specified block and start a revalidating procedure
-                * @param  block_data  FullBlock
+                * @param  signed_transactions  trxs
                 *
                 * @return void
                 */
-                void                                        clear_pending(const FullBlock& block_data);
+                void clear_pending(const signed_transactions& trxs, uint32_t block_num);
                 /*
                 * revalidate transactions in pending database
                 *
@@ -131,7 +134,10 @@ namespace thinkyoung {
                 * @return void
                 */
 
-                void                                        extend_chain(const FullBlock& blk);
+                void                                        extend_chain(const FullBlock_v2& block_data);
+
+				//v2
+				void  extend_chain_v2(const FullBlock_v2& blk);
                 /**  get_fork_history
                 * Traverse the previous links of all blocks in fork until we find one that is_included
                 *
@@ -142,7 +148,7 @@ namespace thinkyoung {
                 *
                 * @return std::vector<BlockIdType>
                 */
-                vector<BlockIdType>                       get_fork_history(const BlockIdType& id);
+                vector<fork_history>                       get_fork_history(const BlockIdType& id);
                 /**  pop_block
                 *
                 * Pop the headblock from current chain and undo changes which are made by the head block
@@ -207,23 +213,25 @@ namespace thinkyoung {
                 /**  verify_header
                 * Verify signee of the block
                 * @param  block_digest  DigestBlock
-                * @param  block_signee  PublicKeyType
                 *
-                * @return void
+                * @return PublicKeyType
                 */
-                void                                        verify_header(const DigestBlock& block_digest,
-                    const PublicKeyType& block_signee)const;
+
+				void verify_header(const DigestBlock& block_digest, const PublicKeyType& block_signee)const;
+				
+				//v2
+				PublicKeyType  verify_header_v2(const DigestBlock_v2& block_digest)const;
 
                 /**  update_delegate_production_info
                 * Update production info for signing delegate
-                * @param  block_header  BlockHeader
+                * @param  FullBlock_v2  BlockHeader
                 * @param  block_id  BlockIdType
                 * @param  block_signee  public key of signing delegate
                 * @param  pending_state  PendingChainStatePtr
                 *
                 * @return void
                 */
-                void                                        update_delegate_production_info(const BlockHeader& BlockHeader,
+                void                                        update_delegate_production_info(const FullBlock_v2& BlockHeader,
                     const BlockIdType& block_id,
                     const PublicKeyType& block_signee,
                     const PendingChainStatePtr& pending_state)const;
@@ -233,27 +241,25 @@ namespace thinkyoung {
                 * @param  block_id  BlockIdType
                 * @param  block_signee  public key of the delegate to be paid
                 * @param  pending_state  PendingChainStatePtr
-                * @param  entry  oBlockEntry
                 *
-                * @return void
+                * @return BlockEntrySigneeinfo
                 */
-                void                                        pay_delegate(const BlockIdType& block_id,
+                BlockEntrySigneeinfo   pay_delegate(const BlockIdType& block_id,
                     const PublicKeyType& block_signee,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
+                    const PendingChainStatePtr& pending_state)const;
 
                 // void                                        execute_markets( const time_point_sec timestamp,
                 //                                                              const pending_chain_state_ptr& pending_state )const;
 
                 /**  apply_transactions
                 * Apply transactions contained in the block
-                * @param  block_data   the block that contains transactions
+                * @param  sign_trxs   the block contains transactions
                 * @param  pending_state  PendingChainStatePtr
                 *
                 * @return void
                 */
-                void                                        apply_transactions(const FullBlock& block_data,
-                    const PendingChainStatePtr& pending_state);
+                void apply_transactions(const signed_transactions& sign_trxs, 
+            		const uint32_t block_num, const PendingChainStatePtr& pending_state);
 
                 /**  update_active_delegate_list
                 * Get a list of active delegate that would participate in generating blocks in next round
@@ -269,14 +275,16 @@ namespace thinkyoung {
                 * Caculate the random seed based on a secret and the random seed
                 * @param  new_secret
                 * @param  pending_state  PendingChainStatePtr
-                * @param  entry  oBlockEntry
                 *
-                * @return void
+                * @return ripemd160
                 */
-                void                                        update_random_seed(const SecretHashType& new_secret,
-                    const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
+                fc::ripemd160 update_random_seed(const SecretHashType& new_secret,
+                    const PendingChainStatePtr& pending_state)const;
 
+				//v2
+				void  update_random_seed_v2(const SecretHashType& new_secret,
+					const PendingChainStatePtr& pending_state, oBlockEntry_v2& block_entry)const;
+					
                 /**  save_undo_state
                 * Save current state and block_id into undo_state map
                 * @param  block_num   number of the block
@@ -298,11 +306,15 @@ namespace thinkyoung {
                 */
                 void                                        update_head_block(const SignedBlockHeader& block_header,
                     const BlockIdType& block_id);
+				//v2
+				void ChainDatabaseImpl::update_head_block_v2(const SignedBlockHeader_v2& block_header_v2,
+                    const BlockIdType& block_id);
 
+				//v2
                 void                                        pay_delegate_v2(const BlockIdType& block_id,
                     const PublicKeyType& block_signee,
                     const PendingChainStatePtr& pending_state,
-                    oBlockEntry& block_entry)const;
+                    oBlockEntry_v2& block_entry)const;
 
                 void                                        pay_delegate_v1(const BlockIdType& block_id,
                     const PublicKeyType& block_signee,
@@ -347,6 +359,7 @@ namespace thinkyoung {
                 fc::mutex                                                                   _push_block_mutex;
                 ShareType															_block_per_account_reword_amount = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
                 thinkyoung::db::LevelMap<BlockIdType, FullBlock>                               _block_id_to_full_block;
+                thinkyoung::db::LevelMap<BlockIdType, FullBlock_v2>                               _block_id_to_full_block_v2;
                 thinkyoung::db::fast_level_map<BlockIdType, PendingChainState>                 _block_id_to_undo_state;
 
                 thinkyoung::db::LevelMap<uint32_t, vector<BlockIdType>>                         _fork_number_db; // All siblings
@@ -357,10 +370,13 @@ namespace thinkyoung {
                 thinkyoung::db::LevelMap<uint32_t, BlockIdType>                                 _block_num_to_id_db; // Current chain
 
                 thinkyoung::db::LevelMap<BlockIdType, BlockEntry>                             _block_id_to_block_entry_db; // Statistics
+                thinkyoung::db::LevelMap<BlockIdType, BlockEntry_v2>                             _block_id_to_block_entry_db_v2; // Statistics
 
                 /* Current primary state */
                 BlockIdType                                                               _head_block_id;
+                uint64_t                                                                  _head_block_num;
                 SignedBlockHeader                                                         _head_block_header;
+                SignedBlockHeader_v2                                                         _head_block_header_v2;
 
                 thinkyoung::db::fast_level_map<uint8_t, PropertyEntry>                           _property_id_to_entry;
 

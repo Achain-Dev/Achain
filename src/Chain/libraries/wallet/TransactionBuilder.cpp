@@ -58,11 +58,12 @@ TransactionBuilder& TransactionBuilder::update_account_registration(const Wallet
         optional<variant> public_data,
         optional<PublicKeyType> active_key,
         optional<uint8_t> delegate_pay,
-        optional<WalletAccountEntry> paying_account) {
+        optional<WalletAccountEntry> paying_account,
+        optional<uint8_t> delegate_mode) {
     if (account.registration_date == fc::time_point_sec())
         FC_THROW_EXCEPTION(unknown_account, "Account is not registered! Cannot update registration.");
         
-    FC_ASSERT(public_data || active_key || delegate_pay, "Nothing to do!");
+    FC_ASSERT(public_data || active_key || delegate_pay || delegate_mode, "Nothing to do!");
     //Check at the beginning that we actually have the keys required to sign this thing.
     //Work on a copy so if we fail later, we haven't changed required_signatures.
     auto working_required_signatures = required_signatures;
@@ -124,8 +125,14 @@ TransactionBuilder& TransactionBuilder::update_account_registration(const Wallet
         entry.memo = "Update " + account.name + "'s active key";
         transaction_entry.ledger_entries.push_back(entry);
     }
-    
-    trx.update_account(account.id, *delegate_pay, public_data, active_key);
+
+    if (delegate_mode)
+    {
+        FC_ASSERT(!(account.is_delegate() &&
+            (account.delegate_info->delegate_mode != *delegate_mode)), "Pay mode can not be update!");
+    }
+
+    trx.update_account(account.id, *delegate_pay, public_data, active_key, delegate_mode);
     
     if (public_data) {
         LedgerEntry entry;
@@ -211,7 +218,7 @@ TransactionBuilder& TransactionBuilder::deposit_asset_to_address(const WalletAcc
             FC_THROW_EXCEPTION(invalid_asset_amount, "Cannot deposit a negative amount!");
             
         trx.deposit(to_addr, amount);
-        deduct_balance(payer.owner_key, amount);
+        //deduct_balance(payer.owner_key, amount);
         LedgerEntry entry;
         entry.from_account = payer.owner_key;
         entry.amount = amount;
@@ -239,7 +246,7 @@ TransactionBuilder& TransactionBuilder::deposit_asset_to_multisig(
         info.required = m;
         info.owners = set<Address>(addresses.begin(), addresses.end());
         trx.deposit_multisig(info, amount);
-        deduct_balance(payer->owner_key, amount + fee);
+        //deduct_balance(payer->owner_key, amount + fee);
         LedgerEntry entry;
         entry.from_account = payer->owner_key;
         entry.amount = amount;

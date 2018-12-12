@@ -840,6 +840,38 @@ namespace thinkyoung {
              */
             virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_address(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
             /**
+             * transfer to an address with mutisig.
+             *
+             * @param amount_to_transfer the amount of shares to transfer (string, required)
+             * @param asset_symbol the asset to transfer (asset_symbol, required)
+             * @param from_account_name the source account to draw the shares from (account_name, required)
+             * @param to_address the address or pubkey to transfer to (string, required)
+             * @param address_for_signature1 the address or pubkey to sign (string, required)
+             * @param address_for_signature2 the address or pubkey to sign (string, required)
+             * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
+             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
+             *                 optional, defaults to "vote_recommended")
+             *
+             * @return transaction_entry
+             */
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_to_mutisig(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const std::string& address_for_signature1, const std::string& address_for_signature2, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            /**
+             * Do a simple (non-TITAN) transfer to an address.
+             *
+             * @param amount_to_transfer the amount of shares to transfer (string, required)
+             * @param asset_symbol the asset to transfer (asset_symbol, required)
+             * @param from_account_name the source account to draw the shares from (account_name, required)
+             * @param address_for_signature1 the source account to draw the shares from (string, required)
+             * @param address_for_signature2 the source account to draw the shares from (string, required)
+             * @param to_address the address or pubkey to transfer to (string, required)
+             * @param memo_message a memo to store with the transaction (information, optional, defaults to "")
+             * @param strategy enumeration [vote_none | vote_all | vote_random | vote_recommended] (vote_strategy,
+             *                 optional, defaults to "vote_recommended")
+             *
+             * @return transaction_entry
+             */
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_transfer_from_mutisig(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& address_for_signature1, const std::string& address_for_signature2, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>(), const thinkyoung::wallet::VoteStrategy& strategy = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) = 0;
+            /**
              * Sends given amount to the given account.
              *
              * @param amount_to_transfer the amount of shares to transfer (string, required)
@@ -933,9 +965,10 @@ namespace thinkyoung {
              * @param delegate_pay_rate -1 for non-delegates; otherwise the percent of delegate pay to accept per
              *                          produced block (uint8_t, optional, defaults to -1)
              *
+             * @
              * @return transaction_entry
              */
-            virtual thinkyoung::wallet::WalletTransactionEntry wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data = fc::json::from_string("null").as<fc::variant>(), uint8_t delegate_pay_rate = fc::json::from_string("-1").as<uint8_t>()) = 0;
+            virtual thinkyoung::wallet::WalletTransactionEntry wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data = fc::json::from_string("null").as<fc::variant>(), uint8_t delegate_pay_rate = fc::json::from_string("-1").as<uint8_t>(), uint8_t delegate_mode = fc::json::from_string("0").as<uint8_t>()) = 0;
             /**
              * Updates the specified account's active key and broadcasts the transaction.
              *
@@ -1995,8 +2028,6 @@ namespace thinkyoung {
              * @param script_id id of local script want to delete with (string, required)
              */
             virtual void delete_event_handler(const std::string& contract_id_str, const std::string& event_type, const std::string& script_id) = 0;
-            
-            virtual void set_local_pending_num(const uint32_t local_pending_num) = 0;
         };
 
     }

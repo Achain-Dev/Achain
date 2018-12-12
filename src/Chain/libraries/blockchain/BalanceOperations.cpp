@@ -47,16 +47,17 @@ namespace thinkyoung {
                 
                 if (!cur_entry.valid()) {
                     cur_entry = BalanceEntry(this->condition);
-                    
-                    if (this->condition.type == withdraw_escrow_type)
-                        cur_entry->meta_data = variant_object("creating_transaction_id", eval_state.trx.id());
                 }
                 
-                auto owner = cur_entry->owner();
-                
-                if (owner.valid()) {
-                    if (!eval_state.deposit_address.insert(*owner).second) {
-                        FC_CAPTURE_AND_THROW(deposit_to_one_address_twice, (*owner));
+                auto owners = cur_entry->owners();
+
+                if (!owners.empty()) {
+                    for (const Address& addr : owners)
+                    {
+                        //check the deposit_op
+                        if (!eval_state.deposit_address.insert(addr).second) {
+                            FC_CAPTURE_AND_THROW(deposit_to_one_address_twice, (addr));
+                        }
                     }
                 }
                 
@@ -83,13 +84,6 @@ namespace thinkyoung {
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
                 
-                if (asset_rec->is_restricted()) {
-                    for (const auto& owner : cur_entry->owners()) {
-                        // TODO
-                        //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
-                    }
-                }
-                eval_state.deposit_balance_id = condition.get_address();//deposit   balance_id
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
             
@@ -289,7 +283,9 @@ namespace thinkyoung {
             FC_CAPTURE_AND_RETHROW((*this));
         }
         
-        void UpdateBalanceVoteOperation::evaluate(TransactionEvaluationState& eval_state)const {
+
+        void UpdateBalanceVoteOperation::evaluate(TransactionEvaluationState& eval_state)const { }
+  #if 0      
             try {
                 FC_ASSERT(false, "Disable UpdateBalanceVoteOperation!");
                 auto current_balance_entry = eval_state._current_state->get_balance_entry(this->balance_id);
@@ -387,6 +383,7 @@ namespace thinkyoung {
             
             FC_CAPTURE_AND_RETHROW((*this))
         }
+#endif
         
         BalanceIdType DepositContractOperation::balance_id()const {
             return condition.get_address();
@@ -440,18 +437,7 @@ namespace thinkyoung {
                 cur_entry->last_update = eval_state._current_state->now();
                 const oAssetEntry asset_rec = eval_state._current_state->get_asset_entry(cur_entry->condition.asset_id);
                 FC_ASSERT(asset_rec.valid(), "Invalid asset entry");
-                
-                // if( eval_state._current_state->get_head_block_num() >= ALP_V0_6_0_FORK_BLOCK_NUM )
-                //{
-                //FC_ASSERT( !eval_state._current_state->is_fraudulent_asset( *asset_rec ) );
-                //}
-                if (asset_rec->is_restricted()) {
-                    for (const auto& owner : cur_entry->owners()) {
-                        // TODO
-                        //FC_ASSERT( eval_state._current_state->get_authorization(asset_rec->id, owner) );
-                    }
-                }
-                eval_state.deposit_balance_id = condition.get_address();
+
                 eval_state._current_state->store_balance_entry(*cur_entry);
             }
             

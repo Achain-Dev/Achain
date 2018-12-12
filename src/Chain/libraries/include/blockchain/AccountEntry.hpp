@@ -14,6 +14,14 @@ namespace thinkyoung {
             multisig_account = 2
         };
 
+        //hierarchical delegate mode
+        enum DelegateMode
+        {
+            class_a_delegate = 0,
+            class_b_delegate = 1,
+            class_invalid_delegate = 2
+        };
+
         struct MultisigMetaInfo
         {
             static const AccountType type = multisig_account;
@@ -61,6 +69,7 @@ namespace thinkyoung {
 
             uint32_t                          blocks_produced = 0;
             uint32_t                          blocks_missed = 0;
+            uint8_t                      delegate_mode = class_a_delegate;
         };
         typedef fc::optional<DelegateStats> odelegate_stats;
 
@@ -189,6 +198,7 @@ FC_REFLECT_ENUM(thinkyoung::blockchain::AccountType,
     (total_burned)
     (blocks_produced)
     (blocks_missed)
+    (delegate_mode)
     )
     FC_REFLECT(thinkyoung::blockchain::VoteDel,
     (votes)

@@ -21,9 +21,6 @@
 #include <rpc/RpcClient.hpp>
 #include <rpc/RpcServer.hpp>
 
-//#include <thinkyoung/mail/server.hpp>
-
-
 #include <fc/log/file_appender.hpp>
 #include <fc/log/logger.hpp>
 #include <fc/log/logger_config.hpp>
@@ -356,6 +353,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         fc::path get_wallet_dir(const program_options::variables_map& option_variables, const fc::path& default_path) {
             try {
                 fc::path wallet_dir;
@@ -372,6 +370,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         void load_and_configure_chain_database(const fc::path& datadir,
                                                const program_options::variables_map& option_variables) {
             try {
@@ -500,13 +499,11 @@ namespace thinkyoung {
         }
         
         namespace detail {
-            //should this function be moved to rpc server eventually? probably...
             void ClientImpl::configure_rpc_server(Config& cfg,
                                                   const program_options::variables_map& option_variables) {
                 if (option_variables.count("server") || option_variables.count("daemon") || cfg.rpc.enable) {
                     // the user wants us to launch the RPC server.
-                    // First, override any config parameters they
-                    // thinkyoung::rpc::rpc_server::config rpc_config(cfg.rpc);
+                    // First, override any config parameters they // thinkyoung::rpc::rpc_server::config rpc_config(cfg.rpc);
                     if (option_variables.count("rpcuser"))
                         cfg.rpc.rpc_user = option_variables["rpcuser"].as<string>();
                         
@@ -640,53 +637,181 @@ namespace thinkyoung {
                     
                 return _wallet->delete_account(account_name);
             }
+
+            bool ClientImpl::is_my_delegate(const AccountIdType account_id, const vector<WalletAccountEntry>& my_delegates) const
+            {
+                for (const auto& delegate_entry : my_delegates)
+                    if (delegate_entry.id == account_id)
+                        return true;
+            }
+
+			bool ClientImpl::get_next_block_maker(const time_point_sec& now,
+                optional<time_point_sec>& next_time,
+                const vector<WalletAccountEntry>& my_active_delegates,
+                AccountEntry& delegate_entry,
+                uint32_t& pos)const
+            {
+            	bool is_turn = false;
+				uint32_t skip_distance = 0;
+				uint32_t delegate_pos = ALP_DELEGATE_POS_INVALID;
+				time_point_sec head_time = _chain_db->get_head_block().timestamp;
+			
+                //get current active delegates on the chain
+                const vector<AccountIdType> active_delegate_ids = _chain_db->get_active_delegates();
+
+				//if the new block is v1_mode,get block maker via time_slot
+                if (_chain_db->get_head_block_num() < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                {
+                    //is_v1_mode = true;
+                    next_time = _wallet->get_next_producible_block_timestamp(my_active_delegates);
+                    if (next_time.valid() && *next_time <= now)
+                    {
+						is_turn = true;
+						//get the block maker
+                        delegate_entry = _chain_db->get_slot_signee(*next_time, active_delegate_ids);
+
+                        delegate_pos = blockchain::get_slot_number(*next_time) % ALP_BLOCKCHAIN_NUM_DELEGATES;
+                    }
+                }
+                else
+                {
+                    //is_v1_mode = false;
+
+					//get the time difference
+					head_time = _chain_db->get_head_block_v2().timestamp;
+					auto time_d = now - head_time;
+
+					//if the time difference is bigger than 2 min,the skip the next maker's turn
+                    skip_distance = (time_d.to_seconds()) / ALP_DELEGATE_SKIP_TIME;
+
+					//get the pos of current block maker at active_delegate_ids on the chain
+				    delegate_pos = ((_chain_db->get_head_block_v2()).delegate_pos + skip_distance + 1) % ALP_BLOCKCHAIN_NUM_DELEGATES;
+					//check current block maker is belong to this local wallet or not
+                    if (is_my_delegate(active_delegate_ids[delegate_pos], my_active_delegates))
+                    {
+                    	is_turn = true;
+						//get the block maker
+                    	delegate_entry = *(_chain_db->get_account_entry(active_delegate_ids[delegate_pos]));
+                    }
+
+					//need 
+					auto time_temp = (now.sec_since_epoch() / ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC) * ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
+
+					if (time_temp <= head_time.sec_since_epoch())
+					{
+						time_temp += ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC;
+					}
+
+					next_time = optional<time_point_sec>(time_temp);
+
+                }
+
+				pos = delegate_pos;
+
+				return is_turn;
+				
+            }
+			
             void ClientImpl::delegate_loop() {
+                bool is_turn = false;
+				bool if_class_a = false;
+                optional<time_point_sec> next_block_time;
+				AccountEntry delegate_entry;
+				uint32_t pos = 0;
+                uint32_t block_num = 0;
                 if (!_wallet->is_open() || _wallet->is_locked())
                     return;
-                    
-                vector<WalletAccountEntry> enabled_delegates = _wallet->get_my_delegates(enabled_delegate_status);
-                
-                if (enabled_delegates.empty())
-                    return;
-                    
-                const auto now = blockchain::now();
-                ilog("Starting delegate loop at time: ${t}", ("t", now));
+
+				_chain_db->generating_block = false;
+				_chain_db->evaluate_trx_contract = false;
+				
+				const auto now = blockchain::now();
+				ilog("Starting delegate loop at time: ${t}", ("t", now));
+
+				try{
+                    vector<WalletAccountEntry> my_active_delegates = _wallet->get_my_delegates(enabled_delegate_status);
+
+					//if the my_active_delegates is empty, the client can not generate blocks
+	                if (my_active_delegates.empty())
+	                    return;
+					
+					is_turn = get_next_block_maker(now, next_block_time, my_active_delegates, delegate_entry, pos);
+
+					//check if has class_a_delegate
+					for (const auto& item : my_active_delegates)
+                    {
+                        if (item.delegate_info->delegate_mode == class_a_delegate)
+                        {
+                            //if one of these delegates is class_a_delegate
+                            if_class_a = true;
+                            break;
+                        }
+                    }
+					
+				}
+				catch(...)
+				{
+					return;
+				}
+
+				_wallet->_generating_block = true;
+                _chain_db->generating_block = true;
+                _chain_db->evaluate_trx_contract = if_class_a;
                 _chain_db->_verify_transaction_signatures = true;
-                
+				
+
                 if (_delegate_loop_first_run) {
                     set_target_connections(ALP_NET_DELEGATE_DESIRED_CONNECTIONS);
                     _delegate_loop_first_run = false;
                 }
                 
-                _chain_db->generating_block = false;
-                const auto next_block_time = _wallet->get_next_producible_block_timestamp(enabled_delegates);
-                
-                if (next_block_time.valid()) {
-                    _wallet->_generating_block = true;
-                    _chain_db->generating_block = true;
+                // if my turn
+                if (is_turn) {
+                    
                     ilog("Producing block at time: ${t}", ("t", *next_block_time));
                     
-                    if (*next_block_time <= now) {
-                        try {
-                            _delegate_config.validate();
-                            FC_ASSERT(network_get_connection_count() >= _delegate_config.network_min_connection_count,
-                                      "Client must have ${count} connections before you may produce blocks!",
-                                      ("count", _delegate_config.network_min_connection_count));
-                            FC_ASSERT(_wallet->is_unlocked(), "Wallet must be unlocked to produce blocks!");
+                    try {
+                        _delegate_config.validate();
+                        FC_ASSERT(network_get_connection_count() >= _delegate_config.network_min_connection_count,
+                                    "Client must have ${count} connections before you may produce blocks!",
+                                    ("count", _delegate_config.network_min_connection_count));
+                        FC_ASSERT(_wallet->is_unlocked(), "Wallet must be unlocked to produce blocks!");
+                        if (_chain_db->get_head_block_num() < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+                        {
                             FC_ASSERT((now - *next_block_time) < fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC),
-                                      "You missed your slot at time: ${t}!", ("t", *next_block_time));
-                            FullBlock next_block = _chain_db->generate_block(*next_block_time, _delegate_config);
-                            _wallet->sign_block(next_block);
-                            on_new_block(next_block, next_block.id(), false);
-                            _p2p_node->broadcast(BlockMessage(next_block));
-                            ilog("Produced block #${n}!", ("n", next_block.block_num));
-                            
-                        } catch (const fc::canceled_exception&) {
-                            throw;
-                            
-                        } catch (const fc::exception& e) {
-                            _exception_db.store(e);
+                                "You missed your slot at time: ${t}!", ("t", *next_block_time));
                         }
+
+						//if the new block num is less than ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM,sign it with block maker only
+						//ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM - 1: current head_block num is 1 less than the new blok num
+                        if (_chain_db->get_head_block_num() < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM - 1)
+						{
+                            FullBlock next_block = _chain_db->generate_block(*next_block_time, _delegate_config);
+                            _wallet->sign_block(next_block, delegate_entry);
+                            on_new_block(next_block, next_block.id(), false, true);
+
+                            _p2p_node->broadcast(BlockMessage(next_block));
+
+                            block_num = next_block.block_num;
+						}
+						else
+						{
+                            FullBlock_v2 next_block_v2 = _chain_db->generate_block_v2(*next_block_time, pos, _delegate_config);
+                            _wallet->sign_block_v2(next_block_v2, delegate_entry);
+                            on_new_block(next_block_v2, next_block_v2.id(), false, true);
+
+                            _p2p_node->broadcast(BlockMessage_v2(next_block_v2));
+
+                             block_num = next_block_v2.block_num;
+						}
+                            
+                        ilog("Produced block #${n}!", ("n", block_num));
+                            
+                    } catch (const fc::canceled_exception&) {
+                        throw;
+                            
+                    } catch (const fc::exception& e) {
+                        _exception_db.store(e);
                     }
                 }
                 
@@ -782,6 +907,7 @@ namespace thinkyoung {
                     "local_pending");
                 }
             }
+
             void ClientImpl::fork_update_time_loop() {
                 uint32_t fork_num = _chain_db->get_fork_list_num();
                 uint32_t fork_pre_num = _chain_db->get_forkdb_num();
@@ -791,6 +917,7 @@ namespace thinkyoung {
                     _chain_db->set_forkdb_num(fork_num);
                 }
             }
+
             thinkyoung::blockchain::PublicKeyType ClientImpl::wallet_get_account_owner_publickey(const std::string& account_name) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
@@ -798,6 +925,7 @@ namespace thinkyoung {
                     
                 return _wallet->get_owner_public_key(account_name);
             }
+  
             void ClientImpl::cancel_rebroadcast_pending_loop() {
                 try {
                     _rebroadcast_pending_loop_done.cancel_and_wait(__FUNCTION__);
@@ -875,17 +1003,71 @@ namespace thinkyoung {
                 fc::time_point::now() + fc::seconds((int64_t)(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 1.3)),
                 "rebroadcast_pending");
             }
+
+            void ClientImpl::update_sync_status(bool include)
+            {
+                fc::time_point_sec now = blockchain::now();
+                fc::time_point_sec head_block_timestamp = _chain_db->now();
+
+                if (_cli
+                    && include
+                    && (now - head_block_timestamp) > fc::minutes(5)
+                    && _last_sync_status_message_time < (now - fc::seconds(30))) {
+                    std::ostringstream message;
+                    message << "--- syncing with p2p network, our last block is "
+                        << fc::get_approximate_relative_time_string(head_block_timestamp, now, " old");
+                    ulog(message.str());
+                    uint32_t current_head_block_num = _chain_db->get_head_block_num();
+
+                    if (_last_sync_status_message_time >(now - fc::seconds(60)) &&
+                        _last_sync_status_head_block != 0 &&
+                        current_head_block_num > _last_sync_status_head_block) {
+                        uint32_t seconds_since_last_status_message = (uint32_t)((fc::time_point(now) - _last_sync_status_message_time).count() / fc::seconds(1).count());
+                        uint32_t blocks_since_last_status_message = current_head_block_num - _last_sync_status_head_block;
+                        double current_sync_speed_in_blocks_per_sec = (double)blocks_since_last_status_message / seconds_since_last_status_message;
+                        _sync_speed_accumulator(current_sync_speed_in_blocks_per_sec);
+                        double average_sync_speed = boost::accumulators::rolling_mean(_sync_speed_accumulator);
+                        std::ostringstream speed_message;
+
+                        if (average_sync_speed > 0) {
+                            double remaining_seconds_to_sync = _remaining_items_to_sync / average_sync_speed;
+                            speed_message << "--- currently syncing at ";
+
+                            if (average_sync_speed >= 10.)
+                                speed_message << (int)average_sync_speed << " blocks/sec, ";
+
+                            else if (average_sync_speed >= 0.1)
+                                speed_message << std::setprecision(2) << average_sync_speed << " blocks/sec, ";
+
+                            else
+                                speed_message << (int)(1. / average_sync_speed) << " sec/block, ";
+
+                            speed_message << fc::get_approximate_relative_time_string(fc::time_point::now(), fc::time_point::now() + fc::seconds((int64_t)remaining_seconds_to_sync), "") << " remaining";
+
+                        }
+                        else
+                            speed_message << "--- currently syncing at an imperceptible rate";
+
+                        ulog(speed_message.str());
+                    }
+
+                    _last_sync_status_message_time = now;
+                    _last_sync_status_head_block = current_head_block_num;
+                    _last_sync_status_message_indicated_in_sync = false;
+                }
+            }
             
             ///////////////////////////////////////////////////////
             // Implement chain_client_delegate                   //
             ///////////////////////////////////////////////////////
-            BlockForkData ClientImpl::on_new_block(const FullBlock& block,
+            BlockForkData ClientImpl::on_new_block(const FullBlock_v2& block,
                                                    const BlockIdType& block_id,
-                                                   bool sync_mode) {
+                                                   bool sync_mode, bool is_from_local) {
                 try {
+					const uint32_t block_num = block.block_num;
                     // delay until we want to accept the block
                     while ((this->_debug_stop_before_block_num >= 1) &&
-                            (block.block_num >= this->_debug_stop_before_block_num)) {
+                            (block_num >= this->_debug_stop_before_block_num)) {
                         fc::usleep(fc::microseconds(1000000));
                     }
                     
@@ -910,61 +1092,50 @@ namespace thinkyoung {
                             return *fork_data;
                             
                         } else {
-                            BlockForkData result = _chain_db->push_block(block);
+							if (block_num >= ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+							{
+                                //use FullBlock.id store unsign block
+                                FullBlock unsign_block = block;
+                                const BlockIdType unsign_id = unsign_block.id();
+
+								//if the block from network, then sign this block by my delegates
+                                if (!is_from_local)
+                                {
+                                	//delete the temp block first
+                                	try{
+                                        get_unsign_block(unsign_id, 1);
+                                        remove_unsign_block(unsign_id, 1);
+									}
+                                	catch (fc::exception)
+                                	{}
+                                    _wallet->delegate_sign_block((SignedBlockHeader_v2*)(&block), is_from_local);
+                                }
+
+
+                                if (!is_from_local)
+                                    _p2p_node->broadcast(BlockMessage_v2(block));
+
+								//get the count of signs
+			                    uint32_t sign_count = block.delegate_signature.size();
+
+								//if the count of sign less than ALP_BLOCKCHAIN_SIGN_COUNT_MAX
+	                            if (sign_count < ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+			                    {
+                                    store_unsign_block(unsign_id, block_id, block);
+	                                return BlockForkData();
+							    }
+							}
+
+							BlockForkData result = _chain_db->push_block(block);
+                            
                             
                             if (sync_mode && !result.is_linked)
                                 FC_THROW_EXCEPTION(thinkyoung::blockchain::unlinkable_block, "The blockchain accepted this block, but it isn't linked");
                                 
                             ilog("After push_block, current head block is ${num}", ("num", _chain_db->get_head_block_num()));
-                            fc::time_point_sec now = blockchain::now();
-                            fc::time_point_sec head_block_timestamp = _chain_db->now();
                             
-                            if (_cli
-                                    && result.is_included
-                                    && (now - head_block_timestamp) > fc::minutes(5)
-                                    && _last_sync_status_message_time < (now - fc::seconds(30))) {
-                                std::ostringstream message;
-                                message << "--- syncing with p2p network, our last block is "
-                                        << fc::get_approximate_relative_time_string(head_block_timestamp, now, " old");
-                                ulog(message.str());
-                                uint32_t current_head_block_num = _chain_db->get_head_block_num();
-                                
-                                if (_last_sync_status_message_time >(now - fc::seconds(60)) &&
-                                        _last_sync_status_head_block != 0 &&
-                                        current_head_block_num > _last_sync_status_head_block) {
-                                    uint32_t seconds_since_last_status_message = (uint32_t)((fc::time_point(now) - _last_sync_status_message_time).count() / fc::seconds(1).count());
-                                    uint32_t blocks_since_last_status_message = current_head_block_num - _last_sync_status_head_block;
-                                    double current_sync_speed_in_blocks_per_sec = (double)blocks_since_last_status_message / seconds_since_last_status_message;
-                                    _sync_speed_accumulator(current_sync_speed_in_blocks_per_sec);
-                                    double average_sync_speed = boost::accumulators::rolling_mean(_sync_speed_accumulator);
-                                    std::ostringstream speed_message;
-                                    
-                                    if (average_sync_speed > 0) {
-                                        double remaining_seconds_to_sync = _remaining_items_to_sync / average_sync_speed;
-                                        speed_message << "--- currently syncing at ";
-                                        
-                                        if (average_sync_speed >= 10.)
-                                            speed_message << (int)average_sync_speed << " blocks/sec, ";
-                                            
-                                        else if (average_sync_speed >= 0.1)
-                                            speed_message << std::setprecision(2) << average_sync_speed << " blocks/sec, ";
-                                            
-                                        else
-                                            speed_message << (int)(1. / average_sync_speed) << " sec/block, ";
-                                            
-                                        speed_message << fc::get_approximate_relative_time_string(fc::time_point::now(), fc::time_point::now() + fc::seconds((int64_t)remaining_seconds_to_sync), "") << " remaining";
-                                        
-                                    } else
-                                        speed_message << "--- currently syncing at an imperceptible rate";
-                                        
-                                    ulog(speed_message.str());
-                                }
-                                
-                                _last_sync_status_message_time = now;
-                                _last_sync_status_head_block = current_head_block_num;
-                                _last_sync_status_message_indicated_in_sync = false;
-                            }
-                            
+                            update_sync_status(result.is_included);
+
                             return result;
                         }
                     }
@@ -979,7 +1150,72 @@ namespace thinkyoung {
                     throw;
                 }
             }
-            
+
+#if 0
+            //v2
+            BlockForkData ClientImpl::on_new_block_v2(const FullBlock_v2& block,
+                const BlockIdType& block_id,
+                bool sync_mode) {
+                try {
+                    // delay until we want to accept the block
+                    while ((this->_debug_stop_before_block_num >= 1) &&
+                        (block.block_num >= this->_debug_stop_before_block_num)) {
+                        fc::usleep(fc::microseconds(1000000));
+                    }
+
+                    _sync_mode = sync_mode;
+
+                    if (sync_mode && _remaining_items_to_sync > 0)
+                        --_remaining_items_to_sync;
+
+                    try {
+                        FC_ASSERT(!_simulate_disconnect);
+                        ilog("Received a new block from the p2p network, current head block is ${num}, "
+                            "new block is ${block}, current head block is ${num}",
+                            ("num", _chain_db->get_head_block_num())("block", block)("num", _chain_db->get_head_block_num()));
+                        fc::optional<BlockForkData> fork_data = _chain_db->get_block_fork_data(block_id);
+
+                        if (fork_data && fork_data->is_known) {
+                            if (sync_mode && !fork_data->is_linked)
+                                FC_THROW_EXCEPTION(thinkyoung::blockchain::unlinkable_block,
+                                "The blockchain already has this block, but it isn't linked");
+
+                            ilog("The block we just received is one I've already seen, ignoring it");
+                            return *fork_data;
+
+                        }
+                        else {
+
+                            //check the count of signature
+                            int sign_count = _wallet->delegate_sign_block((SignedBlockHeader_v2*)(&block), false);
+                            if (sign_count < ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
+                                return BlockForkData();
+
+                            BlockForkData result = _chain_db->push_block_v2(block);
+
+                            if (sync_mode && !result.is_linked)
+                                FC_THROW_EXCEPTION(thinkyoung::blockchain::unlinkable_block, "The blockchain accepted this block, but it isn't linked");
+
+                            ilog("After push_block, current head block is ${num}", ("num", _chain_db->get_head_block_num()));
+
+                            update_sync_status(result.is_included);
+
+                            return result;
+                        }
+                    }
+
+                    FC_RETHROW_EXCEPTIONS(warn, "Error pushing block ${block_number} - ${block_id}",
+                        ("block_id", block.id())
+                        ("block_number", block.block_num)
+                        ("block", block));
+
+                }
+                catch (const fc::exception& e) {
+                    _exception_db.store(e);
+                    throw;
+                }
+            }
+#endif
             bool ClientImpl::on_new_transaction(const SignedTransaction& trx) {
                 try {
                     // throws exception if invalid trx, don't override limits
@@ -1000,7 +1236,8 @@ namespace thinkyoung {
             
             //client supply this method for node , item could be block or trx
             bool ClientImpl::has_item(const thinkyoung::net::ItemId& id) {
-                if (id.item_type == block_message_type) {
+                if (id.item_type == block_message_type
+                    || id.item_type == block_message_type_v2) {
                     return _chain_db->is_known_block(id.item_hash);
                 }
                 
@@ -1060,9 +1297,26 @@ namespace thinkyoung {
                             
                             ilog("CLIENT: just received block ${id}", ("id", block_message_to_handle.block.id()));
                             thinkyoung::blockchain::BlockIdType old_head_block = _chain_db->get_head_block_id();
-                            BlockForkData fork_data = on_new_block(block_message_to_handle.block, block_message_to_handle.block_id, sync_mode);
+                            BlockForkData fork_data = on_new_block(block_message_to_handle.block, block_message_to_handle.block_id, sync_mode, false);
                             return fork_data.is_included ^ (block_message_to_handle.block.previous == old_head_block);  // TODO is this right?
                         }
+
+						case block_message_type_v2:{
+
+							/**/
+							BlockMessage_v2 block_message_to_handle_v2(message_to_handle.as<BlockMessage_v2>());
+							
+							if (block_message_to_handle_v2.block.block_size() > ALP_BLOCKCHAIN_MAX_BLOCK_SIZE) {
+                                wlog("block message ${hash} size ${size}, block size ${blocksize} is out of the max block size range",
+                                     ("hash", message_to_handle.id())
+                                     ("size", message_to_handle.size)
+                                     ("blocksize", block_message_to_handle_v2.block.block_size()));
+                                return false;
+                            }
+							BlockForkData fork_data = on_new_block(block_message_to_handle_v2.block, block_message_to_handle_v2.block_id, sync_mode, false);
+							thinkyoung::blockchain::BlockIdType old_head_block = _chain_db->get_head_block_id();
+							return fork_data.is_included ^ (block_message_to_handle_v2.block.previous == old_head_block);  // TODO is this right?
+						}
                         
                         case trx_message_type: {
                             TrxMessage trx_message_to_handle(message_to_handle.as<TrxMessage>());
@@ -1112,7 +1366,8 @@ namespace thinkyoung {
                     uint32_t& remaining_item_count,
                     uint32_t limit /* = 2000 */) {
                 // limit = 20; // for testing
-                FC_ASSERT(item_type == thinkyoung::client::block_message_type);
+                FC_ASSERT(item_type == thinkyoung::client::block_message_type || item_type == thinkyoung::client::block_message_type_v2);
+
                 
                 // assume anything longer than our limit is an attacker (limit is currently ~26 items)
                 if (blockchain_synopsis.size() > _blockchain_synopsis_size_limit)
@@ -1199,11 +1454,11 @@ namespace thinkyoung {
             std::vector<thinkyoung::net::ItemHashType> ClientImpl::get_blockchain_synopsis(uint32_t item_type,
                     const thinkyoung::net::ItemHashType& reference_point /* = thinkyoung::net::item_hash_t() */,
                     uint32_t number_of_blocks_after_reference_point /* = 0 */) {
-                FC_ASSERT(item_type == thinkyoung::client::block_message_type);
+                FC_ASSERT(item_type == thinkyoung::client::block_message_type || item_type == thinkyoung::client::block_message_type_v2);
                 std::vector<thinkyoung::net::ItemHashType> synopsis;
                 uint32_t high_block_num = 0;
                 uint32_t non_fork_high_block_num = 0;
-                std::vector<BlockIdType> fork_history;
+                std::vector<fork_history> history;
                 
                 if (reference_point != thinkyoung::net::ItemHashType()) {
                     // the node is asking for a summary of the block chain up to a specified
@@ -1220,12 +1475,12 @@ namespace thinkyoung {
                         } else {
                             // block is a block we know about, but it is on a fork
                             try {
-                                fork_history = _chain_db->get_fork_history(reference_point);
-                                assert(fork_history.size() >= 2);
-                                assert(fork_history.front() == reference_point);
-                                BlockIdType last_non_fork_block = fork_history.back();
-                                fork_history.pop_back();
-                                boost::reverse(fork_history);
+                                history = _chain_db->get_fork_history(reference_point);
+                                assert(history.size() >= 2);
+                                assert(history.front().block_id == reference_point);
+                                BlockIdType last_non_fork_block = history.back().block_id;
+                                history.pop_back();
+                                boost::reverse(history);
                                 
                                 try {
                                     if (last_non_fork_block == BlockIdType())
@@ -1238,8 +1493,8 @@ namespace thinkyoung {
                                     assert(!"get_fork_history() returned a history that doesn't link to the main chain");
                                 }
                                 
-                                high_block_num = non_fork_high_block_num + fork_history.size();
-                                assert(high_block_num == _chain_db->get_block_header(fork_history.back()).block_num);
+                                high_block_num = non_fork_high_block_num + history.size();
+                                assert(high_block_num == history.back().block_num);
                                 
                             } catch (const fc::exception& e) {
                                 // unable to get fork history for some reason.  maybe not linked?
@@ -1273,10 +1528,10 @@ namespace thinkyoung {
                     // if it's <= non_fork_high_block_num, we grab it from the main blockchain;
                     // if it's not, we pull it from the fork history
                     if (low_block_num <= non_fork_high_block_num)
-                        synopsis.push_back(_chain_db->get_block(low_block_num).id());
+                        synopsis.push_back(_chain_db->get_block_v2(low_block_num).id());
                         
                     else
-                        synopsis.push_back(fork_history[low_block_num - non_fork_high_block_num - 1]);
+                        synopsis.push_back(history[low_block_num - non_fork_high_block_num - 1].block_id);
                         
                     low_block_num += ((true_high_block_num - low_block_num + 2) / 2);
                 } while (low_block_num <= high_block_num);
@@ -1287,12 +1542,31 @@ namespace thinkyoung {
             
             //client supply item for on_fetch_items_message from other peer.  item could be block or trx
             thinkyoung::net::Message ClientImpl::get_item(const thinkyoung::net::ItemId& id) {
-                if (id.item_type == block_message_type) {
-                    //   uint32_t block_number = _chain_db->get_block_num(id.item_hash);
-                    thinkyoung::client::BlockMessage block_message_to_send(_chain_db->get_block(id.item_hash));
-                    FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
-                    //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
-                    return block_message_to_send;
+                if (id.item_type == block_message_type || id.item_type == block_message_type_v2)
+                {
+                    try{
+                        thinkyoung::client::BlockMessage block_message_to_send(_chain_db->get_block(id.item_hash));
+                        FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                        //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                        return block_message_to_send;
+                    }
+                    catch (fc::exception)
+                    {
+                        try
+                        {
+                            thinkyoung::client::BlockMessage_v2 block_message_to_send(get_unsign_block(id.item_hash, 2));
+                            FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                            //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                            return block_message_to_send;
+                        }
+                        catch (fc::exception)
+                        {
+                            thinkyoung::client::BlockMessage_v2 block_message_to_send(_chain_db->get_block_v2(id.item_hash));
+                            FC_ASSERT(id.item_hash == block_message_to_send.block_id); //.id());
+                            //   block_message_to_send.signature = block_message_to_send.block.delegate_signature;
+                            return block_message_to_send;
+                        }
+                    }
                 }
                 
                 if (id.item_type == trx_message_type) {
@@ -1388,7 +1662,17 @@ namespace thinkyoung {
             }
             
             uint32_t ClientImpl::get_block_number(const thinkyoung::net::ItemHashType& block_id) {
-                return _chain_db->get_block_num(block_id);
+
+				try{
+                    return _chain_db->get_block_num(block_id);
+                }
+				catch(...)
+				{
+					auto block = get_unsign_block(block_id, 2);
+
+                    return block.block_num;
+				}
+                
             }
             
             fc::time_point_sec ClientImpl::get_block_time(const thinkyoung::net::ItemHashType& block_id) {
@@ -1399,14 +1683,21 @@ namespace thinkyoung {
                 
                 // else they're asking about a specific block
                 try {
-                    return _chain_db->get_block_header(block_id).timestamp;
+                    return _chain_db->get_block_header_v2(block_id).timestamp;
                     
                 } catch (const fc::canceled_exception&) {
                     throw;
                     
                 } catch (const fc::exception&) {
+
+				    try{
+                        return get_unsign_block(block_id, 2).timestamp;
+                    }
+				    catch(...)
+                    {
                     return fc::time_point_sec::min();
                 }
+            }
             }
             
             fc::time_point_sec ClientImpl::get_blockchain_now() {
@@ -1436,11 +1727,11 @@ namespace thinkyoung {
                 // if we have no connections, don't warn about the head block too old --
                 //   we should already be warning about no connections
                 // if we're syncing, don't warn, we wouldn't be syncing if the head block weren't old
-                if (_chain_db->get_head_block().timestamp < thinkyoung::blockchain::now() - fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2) &&
+                if (_chain_db->get_head_block_time() < thinkyoung::blockchain::now() - fc::seconds(ALP_BLOCKCHAIN_BLOCK_INTERVAL_SEC * 2) &&
                         !_sync_mode &&
                         _p2p_node->get_connection_count() > 0 &&
                         _notifier)
-                    _notifier->notify_head_block_too_old(_chain_db->get_head_block().timestamp);
+                        _notifier->notify_head_block_too_old(_chain_db->get_head_block_time());
                     
                 if (!_blocks_too_old_monitor_done.canceled())
                     _blocks_too_old_monitor_done = fc::schedule([=]() {
@@ -1458,6 +1749,60 @@ namespace thinkyoung {
                     wlog("Unexpected exception thrown while canceling blocks_too_old_monitor(): ${e}", ("e", e.to_detail_string()));
                 }
             }
+
+			void ClientImpl::store_unsign_block(const BlockIdType& block_id1, const BlockIdType& block_id2, const FullBlock_v2& block_data) {
+	            try {
+					_unsign_blocks.insert(unsign_block(block_id1, block_id2, block_data));
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id1))
+	        }
+
+	        void ClientImpl::remove_unsign_block(const BlockIdType& block_id, uint32_t mode) {
+	            try {
+	                // first of all store this block at the given block number
+	                if (mode == 1)
+	                {
+	                	Id1Index &idex = _unsign_blocks.get<mode1_index>();
+	                	idex.erase(idex.find(block_id));
+	                }
+					else
+					{
+						Id2Index &idex = _unsign_blocks.get<mode2_index>();
+						idex.erase(idex.find(block_id));
+					}
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id))
+	        }
+
+	        const FullBlock_v2 ClientImpl::get_unsign_block(const BlockIdType& block_id, uint32_t mode) {
+	            try {
+	                // first of all store this block at the given block number
+	                if (mode == 1)
+	                {
+                        Id1Index &iter1 = _unsign_blocks.get<mode1_index>();
+                        auto block_iter = iter1.find(block_id);
+
+                        if (block_iter != iter1.end())
+						{
+                            return block_iter->block;
+						}
+	                }
+					else
+					{
+                        Id2Index &iter2 = _unsign_blocks.get<mode2_index>();
+                        auto block_iter = iter2.find(block_id);
+
+                        if (block_iter != iter2.end())
+                        {
+                            return block_iter->block;
+                        }
+					}
+	                
+	                throw "no unsign block";
+
+	            }
+	            FC_CAPTURE_AND_RETHROW((block_id))
+	        }
             
         } // end namespace detail
         
@@ -1600,7 +1945,9 @@ namespace thinkyoung {
         
         void Client::start_networking(std::function<void()> network_started_callback) {
             //Start chain_downloader if there are chain_servers to connect to; otherwise, just start p2p immediately
+            //now,achain do not surpport chain_servers mode,so this branch won't go through
             if (!my->_config.chain_servers.empty()) {
+				#if 0
                 thinkyoung::net::ChainDownloader* chain_downloader = new thinkyoung::net::ChainDownloader();
                 
                 for (const auto& server : my->_config.chain_servers)
@@ -1626,6 +1973,7 @@ namespace thinkyoung {
                     
                     if (network_started_callback) network_started_callback();
                 });
+				#endif
                 
             } else {
                 connect_to_p2p_network();
@@ -1633,19 +1981,7 @@ namespace thinkyoung {
                 if (network_started_callback) network_started_callback();
             }
         }
-        
-        //RPC server and CLI configuration rules:
-        //if daemon mode requested
-        //  start RPC server only (no CLI input)
-        //else
-        //  start RPC server if requested
-        //  start CLI
-        //  if input log
-        //    cli.processs_commands in input log
-        //    wait till finished
-        //  set input stream to cin
-        //  cli.process_commands from cin
-        //  wait till finished
+
         void Client::configure_from_command_line(int argc, char** argv) {
             if (argc == 0 && argv == nullptr) {
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
@@ -1683,7 +2019,6 @@ namespace thinkyoung {
             }
             
             // this just clears the database if the command line says
-            // TODO: rename it to smething better
             load_and_configure_chain_database(datadir, option_variables);
             fc::optional<fc::path> genesis_file_path;
             
@@ -1728,22 +2063,20 @@ namespace thinkyoung {
             
             accept_incoming_p2p_connections(option_variables["accept-incoming-connections"].as<bool>());
             
-            // else we use the default set in thinkyoung::net::node
-            
             //initialize cli
             if (option_variables.count("daemon") || my->_config.ignore_console) {
                 std::cout << "Running in daemon mode, ignoring console\n";
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
                 my->_cli->set_daemon_mode(true);
                 
-            } else { //we will accept input from the console
-                //if user wants us to execute a command script log for the CLI,
-                //  extract the commands and put them in a temporary input stream to pass to the CLI
+            } else { 
+                //we will accept input from the console
                 if (option_variables.count("input-log")) {
                     std::vector<string> input_logs = option_variables["input-log"].as< std::vector<string> >();
                     string input_commands;
                     
                     for (const auto& input_log : input_logs)
+                        //extract the commands and put them in a temporary input stream to pass to the CLI
                         input_commands += extract_commands_from_log_file(input_log);
                         
                     my->_command_script_holder.reset(new std::stringstream(input_commands));
@@ -1752,13 +2085,10 @@ namespace thinkyoung {
                 const fc::path console_log_file = datadir / "console.log";
                 
                 if (option_variables.count("log-commands") <= 0) {
-                    /* Remove any console logs for security */
                     fc::remove_all(console_log_file);
-                    /* Don't create a log file, just output to console */
                     my->_cli = new thinkyoung::cli::Cli(this, my->_command_script_holder.get(), &std::cout);
                     
                 } else {
-                    /* Tee cli output to the console and a log file */
                     ulog("Logging commands to: ${file}", ("file", console_log_file.string()));
                     my->_console_log.open(console_log_file.string());
                     my->_tee_device.reset(new TeeDevice(std::cout, my->_console_log));;
@@ -1772,8 +2102,7 @@ namespace thinkyoung {
             if (option_variables.count("stop-before-block"))
                 my->_debug_stop_before_block_num = option_variables["stop-before-block"].as<uint32_t>();
                 
-            // start listening.  this just finds a port and binds it, it doesn't start
-            // accepting connections until connect_to_p2p_network()
+            // start listening.  this just finds a port and binds it, it doesn't start ,accepting connections until connect_to_p2p_network()
             listen_to_p2p_network();
             
             if (option_variables["upnp"].as<bool>()) {
@@ -1932,11 +2261,13 @@ namespace thinkyoung {
             return my->_data_dir;
         }
         
-        fc::ip::endpoint Client::string_to_endpoint(const std::string& remote_endpoint) {
+		std::vector<fc::ip::endpoint> Client::string_to_endpoint(const std::string& remote_endpoint) {
             try {
                 ASSERT_TASK_NOT_PREEMPTED(); // make sure no cancel gets swallowed by catch(...)
                 // first, try and parse the endpoint as a numeric_ipv4_address:port that doesn't need DNS lookup
-                return fc::ip::endpoint::from_string(remote_endpoint);
+				std::vector<fc::ip::endpoint> endpoints;
+				endpoints.push_back(fc::ip::endpoint::from_string(remote_endpoint));
+				return endpoints;
                 
             } catch (...) {
             }
@@ -1952,8 +2283,10 @@ namespace thinkyoung {
                 
                 if (endpoints.empty())
                     FC_THROW_EXCEPTION(fc::unknown_host_exception, "The host name can not be resolved: ${hostname}", ("hostname", hostname));
-                    
-                return endpoints.back();
+
+				std::random_shuffle(endpoints.begin(), endpoints.end());
+
+                return endpoints;
                 
             } catch (const boost::bad_lexical_cast&) {
                 FC_THROW("Bad port: ${port}", ("port", remote_endpoint.substr(colon_pos + 1, remote_endpoint.size())));
@@ -1961,52 +2294,42 @@ namespace thinkyoung {
         }
         
         void Client::add_node(const string& remote_endpoint, int32_t oper_flag) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to add peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
-                my->_p2p_node->add_node(endpoint, oper_flag);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
-            }
+				auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
+						my->_p2p_node->add_node(endpoint, oper_flag);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to add peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
+			}
         }
 
         void Client::connect_to_peer(const string& remote_endpoint) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
-                my->_p2p_node->connect_to_endpoint(endpoint);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+                auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
+						my->_p2p_node->connect_to_endpoint(endpoint);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
             }
         }
         
@@ -2016,9 +2339,17 @@ namespace thinkyoung {
         
         void Client::connect_to_p2p_network() {
             thinkyoung::net::ItemId head_item_id;
-            head_item_id.item_type = thinkyoung::client::block_message_type;
             uint32_t last_block_num = my->_chain_db->get_head_block_num();
             
+            if (last_block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
+            {
+                head_item_id.item_type = thinkyoung::client::block_message_type;
+            }
+            else
+            {
+                head_item_id.item_type = thinkyoung::client::block_message_type_v2;
+            }
+
             if (last_block_num == (uint32_t)-1)
                 head_item_id.item_hash = thinkyoung::net::ItemHashType();
                 
