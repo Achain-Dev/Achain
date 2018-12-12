@@ -3010,6 +3010,78 @@ namespace thinkyoung {
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
 
+        thinkyoung::wallet::WalletTransactionEntry CommonApiClient::wallet_transfer_to_mutisig(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const std::string& address_for_signature1, const std::string& address_for_signature2, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>() */)
+        {
+            ilog("received RPC call: wallet_transfer_to_mutisig(${amount_to_transfer}, ${asset_symbol}, ${from_account_name}, ${to_address}, ${address_for_signature1}, ${address_for_signature2}, ${memo_message}, ${strategy})", ("amount_to_transfer", amount_to_transfer)("asset_symbol", asset_symbol)("from_account_name", from_account_name)("to_address", to_address)("address_for_signature1", address_for_signature1)("address_for_signature2", address_for_signature2)("memo_message", memo_message)("strategy", strategy));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(amount_to_transfer) );
+                args.push_back( fc::variant(asset_symbol) );
+                args.push_back( fc::variant(from_account_name) );
+                args.push_back( fc::variant(to_address) );
+                args.push_back( fc::variant(address_for_signature1) );
+                args.push_back( fc::variant(address_for_signature2) );
+                args.push_back( fc::variant(memo_message) );
+                args.push_back( fc::variant(strategy) );
+                call_id = glog->log_call_started( this, "wallet_transfer_to_mutisig", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call wallet_transfer_to_mutisig finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::wallet::WalletTransactionEntry result =             get_impl()->wallet_transfer_to_mutisig(amount_to_transfer, asset_symbol, from_account_name, to_address, address_for_signature1, address_for_signature2, memo_message, strategy);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "wallet_transfer_to_mutisig", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
+        thinkyoung::wallet::WalletTransactionEntry CommonApiClient::wallet_transfer_from_mutisig(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& address_for_signature1, const std::string& address_for_signature2, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>() */)
+        {
+            ilog("received RPC call: wallet_transfer_from_mutisig(${amount_to_transfer}, ${asset_symbol}, ${from_account_name}, ${address_for_signature1}, ${address_for_signature2}, ${to_address}, ${memo_message}, ${strategy})", ("amount_to_transfer", amount_to_transfer)("asset_symbol", asset_symbol)("from_account_name", from_account_name)("address_for_signature1", address_for_signature1)("address_for_signature2", address_for_signature2)("to_address", to_address)("memo_message", memo_message)("strategy", strategy));
+            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
+            uint64_t call_id = 0;
+            fc::variants args;
+            if( glog != NULL )
+            {
+                args.push_back( fc::variant(amount_to_transfer) );
+                args.push_back( fc::variant(asset_symbol) );
+                args.push_back( fc::variant(from_account_name) );
+                args.push_back( fc::variant(address_for_signature1) );
+                args.push_back( fc::variant(address_for_signature2) );
+                args.push_back( fc::variant(to_address) );
+                args.push_back( fc::variant(memo_message) );
+                args.push_back( fc::variant(strategy) );
+                call_id = glog->log_call_started( this, "wallet_transfer_from_mutisig", args );
+            }
+
+            struct scope_exit
+            {
+                fc::time_point start_time;
+                scope_exit() : start_time(fc::time_point::now()) {}
+                ~scope_exit() { dlog("RPC call wallet_transfer_from_mutisig finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000)); }
+            } execution_time_logger;
+            try
+            {
+                thinkyoung::wallet::WalletTransactionEntry result =             get_impl()->wallet_transfer_from_mutisig(amount_to_transfer, asset_symbol, from_account_name, address_for_signature1, address_for_signature2, to_address, memo_message, strategy);
+                if( call_id != 0 )
+                    glog->log_call_finished( call_id, this, "wallet_transfer_from_mutisig", args, fc::variant(result) );
+
+                return result;
+            }
+            FC_RETHROW_EXCEPTIONS(warn, "")
+        }
+
         thinkyoung::wallet::WalletTransactionEntry CommonApiClient::wallet_transfer_to_public_account(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_account_name, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy /* = fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>() */)
         {
             ilog("received RPC call: wallet_transfer_to_public_account(${amount_to_transfer}, ${asset_symbol}, ${from_account_name}, ${to_account_name}, ${memo_message}, ${strategy})", ("amount_to_transfer", amount_to_transfer)("asset_symbol", asset_symbol)("from_account_name", from_account_name)("to_account_name", to_account_name)("memo_message", memo_message)("strategy", strategy));
@@ -6999,38 +7071,6 @@ namespace thinkyoung {
             }
             FC_RETHROW_EXCEPTIONS(warn, "")
         }
-        
-        void CommonApiClient::set_local_pending_num(const uint32_t local_pending_num) {
-            ilog("received RPC call: set_local_pending_num(${local_pending_num})", ("local_pending_num", local_pending_num));
-            thinkyoung::api::GlobalApiLogger* glog = thinkyoung::api::GlobalApiLogger::get_instance();
-            uint64_t call_id = 0;
-            fc::variants args;
-            
-            if( glog != NULL ) {
-                args.push_back( fc::variant(local_pending_num) );
-                call_id = glog->log_call_started( this, "local_pending_num", args );
-            }
-            
-            struct scope_exit {
-                fc::time_point start_time;
-                scope_exit() : start_time(fc::time_point::now()) {}
-                ~scope_exit() {
-                    dlog("RPC call set_local_pending_num finished in ${time} ms", ("time", (fc::time_point::now() - start_time).count() / 1000));
-                }
-            } execution_time_logger;
-            
-            try {
-                std::nullptr_t result = nullptr;
-                get_impl()->set_local_pending_num(local_pending_num);
-                
-                if( call_id != 0 )
-                    glog->log_call_finished( call_id, this, "local_pending_num", args, fc::variant(result) );
-                    
-                return;
-            }
-            
-            FC_RETHROW_EXCEPTIONS(warn, "")
-        }
-        
+
     }
 } // end namespace thinkyoung::rpc_stubs
