@@ -24,6 +24,11 @@ namespace thinkyoung
                     FC_CAPTURE_AND_THROW(event_parameter_length_over_limit, ("the parameter length of event function is over limit"));
 
                 eval_state.event_vector.push_back(*this);
+
+                //formysql
+                eval_state.event_type = event_type;
+                eval_state.event_args = event_param;
+
             } FC_CAPTURE_AND_RETHROW((*this))
         }
 

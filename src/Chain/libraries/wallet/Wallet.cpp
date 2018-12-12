@@ -135,6 +135,7 @@ namespace thinkyoung {
                 trx.operations.emplace_back(TransferContractOperation(to_contract_address, asset_to_transfer, asset_for_exec, transaction_fee, from, balances));
             }
             
+
             void WalletImpl::withdraw_to_transaction(
                 const Asset& amount_to_withdraw,
                 const string& from_account_name,
@@ -1950,7 +1951,7 @@ namespace thinkyoung {
                 //get the head_block, find its maker
                 SignedBlockHeader header = my->_blockchain->get_head_block();
 
-                //  这里是否需要优化？  在块里携带本次产块代理的index�?
+                //  è¿éæ¯å¦éè¦ä¼åï¼  å¨åéæºå¸¦æ¬æ¬¡äº§åä»£ççindexï¼?
                 for (int i = 0; i < active_len; i++)
                 {
                     if (header.delegate_signature[0].dele_name ==
@@ -3075,7 +3076,7 @@ namespace thinkyoung {
             } else
                 required_signatures.insert(owner_address);
                 
-            ContractIdType contract_id = trx.register_contract(contract_code, owner_public_key, asset_limit, fee, balances); //插入合约注册op
+            ContractIdType contract_id = trx.register_contract(contract_code, owner_public_key, asset_limit, fee, balances); //æå¥åçº¦æ³¨åop
             FC_ASSERT(register_fee.asset_id == 0, "register fee must be ACT");
             FC_ASSERT(margin.asset_id == 0, "register fee must be ACT");
             FC_ASSERT(fee.asset_id == 0, "register fee must be ACT");
@@ -3167,7 +3168,7 @@ namespace thinkyoung {
             } else
                 required_signatures.insert(caller_address);
                 
-            trx.call_contract(contract, method, arguments, caller_public_key, asset_limit, fee, balances); //插入合约调用op
+            trx.call_contract(contract, method, arguments, caller_public_key, asset_limit, fee, balances); //æå¥åçº¦è°ç¨op
             FC_ASSERT(fee.asset_id == 0, "register fee must be ACT");
             trx.expiration = blockchain::now() + get_transaction_expiration();
             my->sign_transaction(trx, required_signatures);

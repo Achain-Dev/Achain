@@ -1,5 +1,7 @@
 #include <blockchain/AccountEntry.hpp>
 #include <blockchain/ChainInterface.hpp>
+#include <sstream>
+#include <string>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -207,6 +209,82 @@ namespace thinkyoung {
                     }
                 }
             } FC_CAPTURE_AND_RETHROW((id))
+        }
+
+        std::string AccountEntry::compose_insert_sql()
+        {
+            if (is_delegate() && (delegate_info->blocks_produced > 0) && (delegate_info->blocks_produced % 100 != 0))
+            {
+                return "NOEXECUTEMARK";
+
+            }
+            std::string sqlstr_beging = "INSERT INTO account_entry VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " last_update=values(last_update),";
+            sqlstr_ending += " votes_for=values(votes_for),";
+            sqlstr_ending += " pay_rate=values(pay_rate),";
+            sqlstr_ending += " pay_balance=values(pay_balance),";
+            sqlstr_ending += " total_paid=values(total_paid),";
+            sqlstr_ending += " blocks_produced=values(blocks_produced),";
+            sqlstr_ending += " blocks_missed=values(blocks_missed),";
+            sqlstr_ending += " account_type=values(account_type),";
+            sqlstr_ending += " meta_data=values(meta_data);";
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "(";
+            sqlss << id << ",'";
+            sqlss << name << "','";
+            sqlss << owner_address().AddressToString() << "','";
+            sqlss << std::string(owner_key) << "',";
+            sqlss << "STR_TO_DATE('" << registration_date.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";//expiration
+            sqlss << "STR_TO_DATE('" << last_update.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";//expiration
+            if (is_delegate())
+            {
+                sqlss << delegate_info->votes_for << ",";
+                int pr = delegate_info->pay_rate;   //char to number
+                sqlss << pr << ",";
+                sqlss << delegate_info->pay_balance << ",";
+                sqlss << delegate_info->total_paid << ",";
+                sqlss << delegate_info->blocks_produced << ",";
+                sqlss << delegate_info->blocks_missed << ",";
+            }
+            else
+            {
+                sqlss << "null,";
+                sqlss << "null,";
+                sqlss << "null,";
+                sqlss << "null,";
+                sqlss << "null,";
+                sqlss << "null,";
+            }
+            if (meta_data.valid())
+            {
+                sqlss << "'";
+                sqlss << std::string(meta_data->type) << "',";
+
+                if (meta_data->data.size() > 0)
+                {
+                    sqlss << "'";
+                    for (auto datachar : meta_data->data)
+                    {
+                        sqlss << datachar;
+                    }
+                    sqlss << "'";
+                }
+                else
+                {
+                    sqlss << "null";
+                }
+            }
+            else
+            {
+                sqlss << "null,";
+                sqlss << "null";
+            }
+
+            sqlss << ") ";
+            sqlss << sqlstr_ending;
+            return sqlss.str();
         }
 
     }

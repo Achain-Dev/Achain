@@ -23,6 +23,9 @@
 #include <blockchain/api_extern.hpp>
 #include <thread>
 #include <blockchain/ContractOperations.hpp>
+#include "mysql/MysqlHand.h"
+
+
 namespace thinkyoung {
     namespace blockchain {
     
@@ -170,6 +173,8 @@ namespace thinkyoung {
                     _request_to_result_iddb.open(data_dir / "index/_request_to_result_iddb");
                     _contract_to_trx_iddb.open(data_dir / "index/_contract_to_trx_iddb");
                     _trx_to_contract_iddb.open(data_dir / "index/_trx_to_contract_iddb");
+
+                    MysqlHand::init_all_instance();
                     _pending_trx_state = std::make_shared<PendingChainState>(self->shared_from_this());
                     clear_invalidation_of_future_blocks();
                 }
@@ -221,7 +226,7 @@ namespace thinkyoung {
                     
                     
                     //int32_t aaa = (now - block_time).to_seconds();
-                    if ((now - block_time).to_seconds() > (2 * 24 * 60 * 60)) { //[CN] ±º‰≥¨π˝2ÃÏæÕ…æ≥˝[CN]
+                    if ((now - block_time).to_seconds() > (2 * 24 * 60 * 60)) { //[CN]Êó∂Èó¥Ë∂ÖËøá2Â§©Â∞±Âà†Èô§[CN]
                         auto temp_id = block_id_itr.key();
                         ++block_id_itr;
                         _revalidatable_future_blocks_db.remove(temp_id, false);
@@ -529,45 +534,6 @@ namespace thinkyoung {
                         vector<BlockIdType> parallel_blocks = fetch_blocks_at_number(block_num);
                         assert(std::find(parallel_blocks.begin(), parallel_blocks.end(), block_id) == parallel_blocks.end());
                     }
-#endif				
-					if (block_num < ALP_BLOCKCHAIN_V2_FORK_BLOCK_NUM)
-					{
-						// first of all store this block at the given block number
-						const FullBlock block_data_1(block_data);
-                    	_block_id_to_full_block.store(block_id, block_data_1);
-
-						if (self->get_statistics_enabled()) {
-	                        BlockEntry entry;
-	                        DigestBlock& temp = entry;
-	                        temp = DigestBlock(block_data_1);
-	                        entry.id = block_id;
-	                        entry.block_size = block_data_1.block_size();
-	                        entry.latency = blockchain::now() - block_data_1.timestamp;
-	                        _block_id_to_block_entry_db.store(block_id, entry);
-                    	}
-
-                        prev_blockid = block_data_1.previous;
-					}
-					else
-					{
-						// first of all store this block at the given block number
-                    	_block_id_to_full_block_v2.store(block_id, block_data);
-
-						if (self->get_statistics_enabled()) {
-                            if (block_data.delegate_signature.size() >= ALP_BLOCKCHAIN_SIGN_COUNT_MAX)
-                            {
-	                            BlockEntry_v2 entry_v2;
-	                            DigestBlock_v2& temp = entry_v2;
-	                            temp = DigestBlock_v2(block_data);
-	                            entry_v2.id = block_id;
-	                            entry_v2.block_size = block_data.block_size();
-	                            entry_v2.latency = blockchain::now() - block_data.timestamp;
-	                            _block_id_to_block_entry_db_v2.store(block_id, entry_v2);
-                    	    }
-                    	}
-
-                        prev_blockid = block_data.previous;
-					}
 
                     // update the parallel block list (fork_number_db):
                     // get vector of all blocks with same block number, add this block to that list, then update the database
@@ -746,7 +712,7 @@ namespace thinkyoung {
                     uint32_t trx_num = 0;
                     bool all_trx_check = true;
                     
-                    //∂‡œﬂ≥Ã≤‚ ‘¥˙¬Î
+                    //Â§öÁ∫øÁ®ãÊµãËØï‰ª£Á†Å
                     for (const auto& trx : sign_trxs) {
                         TransactionEvaluationStatePtr trx_eval_state = std::make_shared<TransactionEvaluationState>(pending_state.get());
                         trx_eval_state->_skip_signature_check = !self->_verify_transaction_signatures;
@@ -1349,34 +1315,7 @@ namespace thinkyoung {
 						{
 							oBlockEntry_v2 block_entry_v2;
                         
-                        	if (self->get_statistics_enabled()) block_entry_v2 = self->get_block_entry_v2(block_id);
 
-							if (block_entry_v2.valid())
-							{
-								block_entry_v2->signee_shares_issued = sign_info.signee_shares_issued;
-		                        block_entry_v2->signee_fees_collected = sign_info.signee_fees_collected;
-		                        block_entry_v2->signee_fees_destroyed = sign_info.signee_fees_destroyed;
-								block_entry_v2->random_seed = new_seed;
-
-								block_entry_v2->processing_time = time_point::now() - start_time;
-	                            _block_id_to_block_entry_db_v2.store(block_id, *block_entry_v2);
-							}
-
-                            update_head_block_v2(block_data, block_id);
-						}
-                        clear_pending(block_data.user_transactions, block_num);
-                        _block_num_to_id_db.store(block_num, block_id);
-                        self->store_extend_status(block_id, 2);
-                        
-                        if (thinkyoung::client::g_client->get_wallet() != nullptr&&thinkyoung::client::g_client->get_wallet()->is_open()) {
-                            if (!thinkyoung::client::g_client->get_wallet()->get_my_delegates(thinkyoung::wallet::enabled_delegate_status).empty()) {
-                                auto fee = thinkyoung::client::g_client->get_delegate_config().transaction_min_fee;
-                                _relay_fee = fee > ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE ? fee : ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE;
-                                
-                            } else {
-                                auto fee = thinkyoung::client::g_client->get_wallet()->get_transaction_fee();
-                                _relay_fee = fee.amount > ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE ? fee.amount : ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE;
-                                //_relay_fee = ALP_BLOCKCHAIN_DEFAULT_RELAY_FEE;
                             }
                         }
                         
@@ -1732,7 +1671,66 @@ namespace thinkyoung {
                 
                 FC_CAPTURE_AND_RETHROW()
             }
-        } // namespace detail
+
+            template<class T >
+            void  ChainDatabaseImpl::write_to_mysqls(T en)
+            {
+                //std::string sqlstr = en.compose_insert_sql();
+                if (!MysqlHand::get_instance()->run_insert_sql(en.compose_insert_sql()))
+                {
+                    assert(false);
+                }
+            }
+            template<class T >
+            void  ChainDatabaseImpl::batch_write_to_mysqls(std::vector<T> & ety_cache)
+            {
+
+                //batch insert sql
+                std::stringstream sqlss;
+                sqlss << T::sqlstr_beging;
+                for (auto etry_itr = ety_cache.begin(); etry_itr != ety_cache.end(); etry_itr++)
+                {
+                    sqlss << etry_itr->compose_insert_sql_value();
+                    if (etry_itr == (ety_cache.end() - 1))
+                    {
+                        break;
+                    }
+                    sqlss << ",";
+                }
+                sqlss << T::sqlstr_ending;
+
+                if (!MysqlHand::get_instance()->run_insert_sql(sqlss.str()))
+                {
+                    assert(false);
+                }
+                fc_ilog(fc::logger::get("mysql"), " one batch insert ! records : ${recs} ", ("recs", ety_cache.size()));
+            }
+
+
+            void  ChainDatabaseImpl::batch_write_to_mysqls()
+            {
+
+                //batch insert sql
+                std::stringstream sqlss;
+                sqlss << BlockEntry::sqlstr_beging;
+                for (auto blockety = _blockety_cache.begin(); blockety != _blockety_cache.end(); blockety++)
+                {
+                    sqlss << blockety->compose_insert_sql_value();
+                    if (blockety == (_blockety_cache.end() - 1))
+                    {
+                        break;
+                    }
+                    sqlss << ",";
+                }
+                sqlss << BlockEntry::sqlstr_ending;
+
+                if (!MysqlHand::get_instance()->run_insert_sql(sqlss.str()))
+                {
+                    assert(false);
+                }
+                fc_ilog(fc::logger::get("mysql"), " one batch insert of block_entry ! records : ${recs} ", ("recs", _blockety_cache.size()));
+            }
+} // namespace detail
         
         ChainDatabase::ChainDatabase()
             :my(new detail::ChainDatabaseImpl()) {
@@ -2865,16 +2863,16 @@ namespace thinkyoung {
                 const ShareType fees = eval_state->get_fees() + eval_state->alt_fees_paid.amount;
 
                 /*
-                ¥˙¿Ì‘⁄ ’µΩøÈµƒ ±∫Ú‘⁄∂‘∫œ‘ºµ˜”√Ω·π˚Ω¯–––£—È
-                µ´ «’‚¿Ô≤¢≤ªª·‘⁄—ÈøÈµƒ ±∫Ú±ªµ˜”√£¨“Ú¥À≤¢≤ª–Ë“™∂‘∫œ‘ºµ˜”√Ωª“◊≤˙…˙µƒΩ·π˚”ÎΩª“◊÷––Ø¥¯µƒΩ·π˚Ω¯––∂‘±»
-                ’‚¿Ô–Ë“™µƒ»Áπ˚”–Ω·π˚Ωª“◊£¨æÕ∞—Ω·π˚Ωª“◊¥Êœ¬
+                ‰ª£ÁêÜÂú®Êî∂Âà∞ÂùóÁöÑÊó∂ÂÄôÂú®ÂØπÂêàÁ∫¶Ë∞ÉÁî®ÁªìÊûúËøõË°åÊ†°È™å
+                ‰ΩÜÊòØËøôÈáåÂπ∂‰∏ç‰ºöÂú®È™åÂùóÁöÑÊó∂ÂÄôË¢´Ë∞ÉÁî®ÔºåÂõ†Ê≠§Âπ∂‰∏çÈúÄË¶ÅÂØπÂêàÁ∫¶Ë∞ÉÁî®‰∫§Êòì‰∫ßÁîüÁöÑÁªìÊûú‰∏é‰∫§Êòì‰∏≠Êê∫Â∏¶ÁöÑÁªìÊûúËøõË°åÂØπÊØî
+                ËøôÈáåÈúÄË¶ÅÁöÑÂ¶ÇÊûúÊúâÁªìÊûú‰∫§ÊòìÔºåÂ∞±ÊääÁªìÊûú‰∫§ÊòìÂ≠ò‰∏ã
                 */
                 if (eval_state->p_result_trx.operations.size() > 0) {
                     eval_state->p_result_trx.operations.resize(0);
                 }
                 
                 my->_pending_fee_index[fee_index(fees, trx_id)] = eval_state;
-                my->_pending_transaction_db.store(trx_id, trx);//Ω·π˚Ωª“◊≤ª±£¥ÊµΩpendingdb÷–
+                my->_pending_transaction_db.store(trx_id, trx);//ÁªìÊûú‰∫§Êòì‰∏ç‰øùÂ≠òÂà∞pendingdb‰∏≠
                 return eval_state;
             }
             
@@ -2891,7 +2889,6 @@ namespace thinkyoung {
             
             return trxs;
         }
-<<<<<<< HEAD
         
         
         bool ChainDatabase::check_asset_transfer(const SignedTransaction& trx)
@@ -3098,8 +3095,8 @@ namespace thinkyoung {
                                         continue;
                                     }
 
-                                    //‘≠ ºΩª“◊≤˙…˙µƒΩ·π˚Ωª“◊¥Û–°≥¨π˝¥˙¿Ì…Ë÷√µƒΩª“◊¥Û–°…œœﬁ£¨‘ÚππΩ®“ª∏ˆ≤ªÕÍ’˚µƒΩ·π˚Ωª“◊£¨
-                                    //‘≠ ºΩª“◊“‘º∞ÕÍ’˚µƒΩ·π˚Ωª“◊µƒΩª“◊id∞¸∫¨‘⁄’‚∏ˆ≤ªÕÍ’˚µƒΩ·π˚Ωª“◊÷–
+                                    //ÂéüÂßã‰∫§Êòì‰∫ßÁîüÁöÑÁªìÊûú‰∫§ÊòìÂ§ßÂ∞èË∂ÖËøá‰ª£ÁêÜËÆæÁΩÆÁöÑ‰∫§ÊòìÂ§ßÂ∞è‰∏äÈôêÔºåÂàôÊûÑÂª∫‰∏Ä‰∏™‰∏çÂÆåÊï¥ÁöÑÁªìÊûú‰∫§ÊòìÔºå
+                                    //ÂéüÂßã‰∫§Êòì‰ª•ÂèäÂÆåÊï¥ÁöÑÁªìÊûú‰∫§ÊòìÁöÑ‰∫§ÊòìidÂåÖÂê´Âú®Ëøô‰∏™‰∏çÂÆåÊï¥ÁöÑÁªìÊûú‰∫§Êòì‰∏≠
                                     if (trx_eval_state->p_result_trx.data_size() > config.transaction_max_size) {
                                         SignedTransaction result_trx = trx_eval_state->p_result_trx;
                                         result_trx.result_trx_id = result_trx.id();
@@ -3515,16 +3512,16 @@ namespace thinkyoung {
                             forks.push_back(fork);
                         }
                         
-                        //fork_blocks[get_block_num(iter.key())] = forks;   ‘≠¿¥¥˙¬Î
+                        //fork_blocks[get_block_num(iter.key())] = forks;   ÂéüÊù•‰ª£Á†Å
                         
                         /*
-                        ‘⁄ ˝æ›Œƒº˛¥ÌŒÛ ±ª·≥ˆœ÷_fork_db÷–¥Ê‘⁄µƒfork_data,¥À ±÷±Ω” get_block_num(iter.key()) ª·≥ˆœ÷’“≤ªµΩµƒ◊¥øˆ
-                        ‘⁄Œ¥◊˜≈–∂œ ±ª·“Ï≥£÷–∂œ≥Ã–Úµº÷¬Œﬁ∑®◊‘∂Øª÷∏¥
-                        ºÏ≤‚µΩ“Ï≥£∫Ûœ»÷ÿΩ®index,ø…“‘–ﬁ∏¥≤ø∑÷◊¥øˆ
-                        µ´»Ù_block_id_to_full_block÷–¥Ê‘⁄blocknum≤ª¡¨–¯µƒøÈ»Á1,3,»±µ⁄2øÈ,
-                        ‘⁄≤ªªÒ»°µΩ»± ßøÈµƒ«Èøˆœ¬Œﬁ∑®◊‘∂Øª÷∏¥.
-                        ∂‘”⁄full_db÷–≤ª¥Ê‘⁄µƒøÈ≤ª∑µªÿfork–≈œ¢“≤√ª ≤√¥”∞œÏ
-                        ø…“‘øº¬«≈–∂œ «∑Òis_known,»Áπ˚≤ª¥Ê‘⁄‘Ú≤ª∑µªÿ∏√fork–≈œ¢£¨“≤≤ª≈◊≥ˆ“Ï≥££¨…Ë÷√œ¬¥Œ÷ÿΩ®index,∑µªÿ,µ»¥˝≥Ã–ÚΩ¯––øÈÕ¨≤Ω
+                        Âú®Êï∞ÊçÆÊñá‰ª∂ÈîôËØØÊó∂‰ºöÂá∫Áé∞_fork_db‰∏≠Â≠òÂú®ÁöÑfork_data,Ê≠§Êó∂Áõ¥Êé• get_block_num(iter.key()) ‰ºöÂá∫Áé∞Êâæ‰∏çÂà∞ÁöÑÁä∂ÂÜµ
+                        Âú®Êú™‰ΩúÂà§Êñ≠Êó∂‰ºöÂºÇÂ∏∏‰∏≠Êñ≠Á®ãÂ∫èÂØºËá¥Êó†Ê≥ïËá™Âä®ÊÅ¢Â§ç
+                        Ê£ÄÊµãÂà∞ÂºÇÂ∏∏ÂêéÂÖàÈáçÂª∫index,ÂèØ‰ª•‰øÆÂ§çÈÉ®ÂàÜÁä∂ÂÜµ
+                        ‰ΩÜËã•_block_id_to_full_block‰∏≠Â≠òÂú®blocknum‰∏çËøûÁª≠ÁöÑÂùóÂ¶Ç1,3,Áº∫Á¨¨2Âùó,
+                        Âú®‰∏çËé∑ÂèñÂà∞Áº∫Â§±ÂùóÁöÑÊÉÖÂÜµ‰∏ãÊó†Ê≥ïËá™Âä®ÊÅ¢Â§ç.
+                        ÂØπ‰∫éfull_db‰∏≠‰∏çÂ≠òÂú®ÁöÑÂùó‰∏çËøîÂõûfork‰ø°ÊÅØ‰πüÊ≤°‰ªÄ‰πàÂΩ±Âìç
+                        ÂèØ‰ª•ËÄÉËôëÂà§Êñ≠ÊòØÂê¶is_known,Â¶ÇÊûú‰∏çÂ≠òÂú®Âàô‰∏çËøîÂõûËØ•fork‰ø°ÊÅØÔºå‰πü‰∏çÊäõÂá∫ÂºÇÂ∏∏ÔºåËÆæÁΩÆ‰∏ãÊ¨°ÈáçÂª∫index,ËøîÂõû,Á≠âÂæÖÁ®ãÂ∫èËøõË°åÂùóÂêåÊ≠•
                         */
                         if (iter.value().is_known) {
                             fork_blocks[get_block_num(iter.key())] = forks;
@@ -3983,6 +3980,7 @@ namespace thinkyoung {
         
         void ChainDatabase::account_insert_into_id_map(const AccountIdType id, const AccountEntry& entry) {
             my->_account_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_account_entry_to_mysql");
         }
         
         void ChainDatabase::account_insert_into_name_map(const string& name, const AccountIdType id) {
@@ -4031,6 +4029,7 @@ namespace thinkyoung {
         
         void ChainDatabase::asset_insert_into_id_map(const AssetIdType id, const AssetEntry& entry) {
             my->_asset_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_asset_entry_to_mysql");
         }
         
         void ChainDatabase::asset_insert_into_symbol_map(const string& symbol, const AssetIdType id) {
@@ -4071,6 +4070,8 @@ namespace thinkyoung {
         
         void ChainDatabase::balance_insert_into_id_map(const BalanceIdType& id, const BalanceEntry& entry) {
             my->_balance_id_to_entry.store(id, entry);
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_balance_entry_to_mysql");
+
         }
         
         void ChainDatabase::balance_erase_from_id_map(const BalanceIdType& id) {
@@ -4092,7 +4093,8 @@ namespace thinkyoung {
         
         void ChainDatabase::transaction_insert_into_id_map(const TransactionIdType& id, const TransactionEntry& entry) {
             my->_transaction_id_to_entry.store(id, entry);
-            
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_trx_entry_to_mysql");
+
             if (get_statistics_enabled()) {
                 const auto scan_address = [&](const Address& addr) {
                     auto ids = my->_address_to_transaction_ids.fetch_optional(addr);
@@ -4154,6 +4156,41 @@ namespace thinkyoung {
         
         void ChainDatabase::slot_insert_into_index_map(const SlotIndex index, const SlotEntry& entry) {
             my->_slot_index_to_entry.store(index, entry);
+
+
+            auto block_age = blockchain::now() - this->now();
+            if (block_age.to_seconds() <= 60)
+            {
+                if (my->_slotety_cache.size() > 0)
+                {
+                    auto fu = fc::async([=](){ my->batch_write_to_mysqls(my->_slotety_cache); }, "batch_write_slot_entry_to_mysqls");
+                    fu.wait();
+                    my->_slotety_cache.clear();
+                }
+                else
+                {
+                    fc::async([=](){ my->write_to_mysqls(entry); }, "write_slot_entry_to_mysql");   //onebyone insert
+                }
+            }
+            else
+            {
+                if (my->_slotety_cache.size() >= 1000)
+                {
+                    auto beg_time = time_point::now();
+                    auto fu = fc::async([=](){ my->batch_write_to_mysqls(my->_slotety_cache); }, "batch_write_slot_entry_to_mysqls");
+                    fu.wait();
+                    auto t = time_point::now() - beg_time;
+                    fc_ilog(fc::logger::get("mysql"), " one batch insert of slot_entry done , elapsed time : ${t} ", ("t", t.to_seconds()));
+                    my->_slotety_cache.clear();
+                }
+                else
+                {
+                    my->_slotety_cache.push_back(entry);
+                }
+            }
+
+            fc::async([=](){ my->write_to_mysqls(entry); }, "write_slot_entry_to_mysql");
+
         }
         
         void ChainDatabase::slot_insert_into_timestamp_map(const time_point_sec timestamp, const AccountIdType delegate_id) {
@@ -4493,6 +4530,8 @@ namespace thinkyoung {
         
         void ChainDatabase::contract_insert_into_id_map(const ContractIdType& id, const ContractEntry& info) {
             my->_contract_id_to_entry.store(id, info);
+            fc::async([=](){ my->write_to_mysqls(info); }, "write_contract_entry_to_mysql");
+
         }
         
         void ChainDatabase::contractstorage_insert_into_id_map(const ContractIdType& id, const ContractStorageEntry& storage) {
@@ -4526,6 +4565,7 @@ namespace thinkyoung {
         
         void thinkyoung::blockchain::ChainDatabase::contract_store_resultid_by_reqestid(const TransactionIdType & req, const ResultTIdEntry & res) {
             my->_request_to_result_iddb.store(req, res);
+            fc::async([=](){ my->write_to_mysqls(res); }, "write_result_to_origin_trx_id_to_mysql");
         }
         
         void thinkyoung::blockchain::ChainDatabase::contract_erase_resultid_by_reqestid(const TransactionIdType & req) {
@@ -4592,6 +4632,6 @@ namespace thinkyoung {
             
             return vec_contract;
         }
-        
+
     }
 } // thinkyoung::blockchain

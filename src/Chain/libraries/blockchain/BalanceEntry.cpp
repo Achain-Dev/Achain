@@ -1,6 +1,7 @@
 #include <blockchain/BalanceEntry.hpp>
 #include <blockchain/ChainInterface.hpp>
 #include <blockchain/Exceptions.hpp>
+#include <sstream>
 
 namespace thinkyoung {
     namespace blockchain {
@@ -97,6 +98,31 @@ namespace thinkyoung {
                     db.balance_erase_from_id_map(id);
             } FC_CAPTURE_AND_RETHROW((id))
         }
+        std::string BalanceEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO balance_entry VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " owner=values(owner),";
+            sqlstr_ending += " balance=values(balance),";
+            sqlstr_ending += " deposit_date=values(deposit_date),";
+            sqlstr_ending += " last_update=values(last_update),";
+            sqlstr_ending += " meta_data=values(meta_data);";
 
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "('";
+            sqlss << id().AddressToString() << "',";
+            sqlss << condition.asset_id << ",";
+            sqlss << condition.slate_id << ",'";
+            sqlss << std::string(condition.type) << "','";       
+            sqlss << std::string(condition.balance_type) << "','";
+           
+            sqlss << restricted_owner->AddressToString() << "',";
+            sqlss << balance << ",";
+            sqlss << "STR_TO_DATE('" << deposit_date.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),";
+            sqlss << "STR_TO_DATE('" << last_update.to_iso_string() << "','%Y-%m-%d T %H:%i:%s'),'";
+            sqlss << meta_data.as_string() << "')";
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+        }
     }
 } // thinkyoung::blockchain

@@ -165,6 +165,10 @@ namespace thinkyoung
                 BalanceIdType margin_balance_id = eval_state._current_state->get_balanceid(entry->id, WithdrawBalanceTypes::withdraw_margin_type);
                 oBalanceEntry margin_balance_entry = eval_state._current_state->get_balance_entry(margin_balance_id);
 
+                eval_state.contract_id = id;
+                eval_state.transaction_fee = transaction_fee;  //for mysql
+
+
                 FC_ASSERT(margin_balance_entry.valid(), "invalid margin balance id");
                 FC_ASSERT(margin_balance_entry->asset_id() == 0, "invalid margin balance asset type");
 
@@ -360,6 +364,9 @@ namespace thinkyoung
                     FC_CAPTURE_AND_THROW(missing_signature, ("destroy contract need owner's signature"));
 
                 eval_state.contract_operator = entry->owner;
+
+                eval_state.contract_id = id;
+                eval_state.transaction_fee = transaction_fee;
 
                 // always deposit contract  margin to contract owner(contract destroyer)
                 BalanceIdType margin_balance_id = eval_state._current_state->get_balanceid(entry->id, WithdrawBalanceTypes::withdraw_margin_type);
@@ -662,6 +669,9 @@ namespace thinkyoung
                 FC_CAPTURE_AND_THROW(code_hash_error, ("code hash not match"));
             eval_state._current_state->store_contract_entry(entry);
 
+            eval_state.contract_id = get_contract_id();  //formysql
+            eval_state.transaction_fee = transaction_fee;
+
             //记录合约注册者
             eval_state.contract_operator = owner;
 
@@ -805,7 +815,10 @@ namespace thinkyoung
                 }
 
                 eval_state.required_fees = transaction_fee;
-
+                eval_state.contract_id = contract;
+                eval_state.contract_method = method;
+                eval_state.contract_args = args;
+                eval_state.transaction_fee = transaction_fee;
                 if (!eval_state.skipexec)
                 {
                     lua::lib::GluaStateScope scope;
@@ -930,6 +943,7 @@ namespace thinkyoung
                 entry.register_time = register_time;
                 entry.trx_id = eval_state.trx.id();
                 entry.owner = owner;
+                eval_state.contract_id = contract_id;
                 eval_state._current_state->store_contract_entry(entry);
                 eval_state._current_state->store<ContractinTrxEntry>(entry.trx_id, contract_id);
                 eval_state._current_state->store<ContractTrxEntry>(contract_id, entry.trx_id);
@@ -980,6 +994,10 @@ namespace thinkyoung
 
                     eval_state.required_fees = transaction_fee;
                 }
+
+                eval_state.transaction_fee = transaction_fee;
+                eval_state.contract_id = contract_id;  
+                eval_state.trx_amount= transfer_amount.amount/100000;//formysql
 
                 if (!has_on_deposit)
                 {

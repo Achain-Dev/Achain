@@ -7,6 +7,30 @@
 
 namespace thinkyoung {
     namespace blockchain {
+        enum TrxTypeEnum {
+            trx_type_undefined = 10,
+            trx_type_asset_transfer = 11,
+            trx_type_agent_get_pay = 12,
+            trx_type_register_account = 13,
+            trx_type_update_account = 14,
+            trx_type_create_asset = 15,
+            trx_type_update_asset = 16,
+
+            trx_type_register_contract = 21,
+            trx_type_upgrade_contract = 22,
+            trx_type_contract_recharge = 23,
+            trx_type_destroy_contract = 24,
+            trx_type_call_contract = 25,
+            trx_type_contract_transfer = 26,
+
+            trx_type_register_contract_result = 31,
+            trx_type_upgrade_contract_result = 32,
+            trx_type_contract_recharge_result = 33,
+            trx_type_destroy_contract_result = 34,
+            trx_type_call_contract_result = 35,
+            trx_type_contract_result = 36
+
+        };
 
         class PendingChainState;
 
@@ -91,8 +115,34 @@ namespace thinkyoung {
             bool is_contract_op(const thinkyoung::blockchain::OperationTypeEnum& op_type)const;
             bool origin_trx_basic_verify(const SignedTransaction& trx)const;
 
+            void set_trx_type();
+            void set_trx_amount();
+            void clear_afer_store();
+
+
+            TransactionIdType                             trx_id;
+            fc::enum_type<fc::unsigned_int, TrxTypeEnum>  trx_type;
+            TrxTypeEnum                                   trx_typeenum;
             SignedTransaction                             trx;
+            BalanceIdType                                 deposit_balance_id;
+            BalanceIdType                                 withdraw_balance_id;
+            //Address                                       initiator;
+            //Address                                       recipient;
+            double                                        trx_amount;
+            AssetIdType                                   asset_id;
+            vector<Operation>                             operations;
+            uint32_t                                      op_count;
+            Asset                                         transaction_fee;
+            ContractIdType                                contract_id; //contract address
+            fc::string                                    contract_method;
+            fc::string                                    contract_args;
+            fc::string                                    event_type;
+            fc::string                                    event_args;
+            fc::string                                    memo_message;
+
+
             set<Address>                                   signed_keys;
+
 
             // increases with funds are withdrawn, decreases when funds are deposited or fees paid
             optional<fc::exception>                        validation_error;
@@ -162,6 +212,27 @@ namespace thinkyoung {
 
     }
 } // thinkyoung::blockchain
+FC_REFLECT_ENUM(thinkyoung::blockchain::TrxTypeEnum,
+    (trx_type_undefined)
+    (trx_type_asset_transfer)
+    (trx_type_agent_get_pay)
+    (trx_type_register_account)
+    (trx_type_update_account)
+    (trx_type_create_asset)
+    (trx_type_update_asset)
+    (trx_type_register_contract)
+    (trx_type_upgrade_contract)
+    (trx_type_contract_recharge)
+    (trx_type_destroy_contract)
+    (trx_type_call_contract)
+    (trx_type_contract_transfer)
+    (trx_type_register_contract_result)
+    (trx_type_upgrade_contract_result)
+    (trx_type_contract_recharge_result)
+    (trx_type_destroy_contract_result)
+    (trx_type_call_contract_result)
+    (trx_type_contract_result)
+    )
 
 FC_REFLECT(thinkyoung::blockchain::TransactionEvaluationState,
     (trx)

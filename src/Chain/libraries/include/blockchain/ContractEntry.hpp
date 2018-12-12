@@ -138,7 +138,7 @@ namespace thinkyoung {
             static oContractEntry lookup(const ChainInterface&, const ContractName&);
             static void store(ChainInterface&, const ContractIdType&, const ContractEntry&);
             static void remove(ChainInterface&, const ContractIdType&);
-
+            std::string compose_insert_sql();
         };
 
         struct ContractEntryPrintable
@@ -178,12 +178,15 @@ namespace thinkyoung {
 		typedef fc::optional<ResultTIdEntry> oResultTIdEntry;
 		struct ResultTIdEntry
 		{
-			TransactionIdType res;
-			ResultTIdEntry();
-			ResultTIdEntry(const TransactionIdType& id);
-			static oResultTIdEntry lookup(const ChainInterface&, const TransactionIdType&);
+            TransactionIdType res;
+            TransactionIdType req;
+            ResultTIdEntry();
+            ResultTIdEntry(const TransactionIdType& id);
+            ResultTIdEntry(const TransactionIdType& id, const TransactionIdType& reqid);
+            static oResultTIdEntry lookup(const ChainInterface&, const TransactionIdType&);
 			static void store(ChainInterface&, const TransactionIdType& , const ResultTIdEntry&);
 			static void remove(ChainInterface&, const TransactionIdType&);
+            std::string compose_insert_sql();
 		};
 		struct RequestIdEntry;
 		typedef fc::optional<RequestIdEntry> oRequestIdEntry;

@@ -145,6 +145,7 @@ namespace thinkyoung {
             static oAccountEntry lookup(const ChainInterface&, const Address&);
             static void store(ChainInterface&, const AccountIdType, const AccountEntry&);
             static void remove(ChainInterface&, const AccountIdType);
+            std::string compose_insert_sql();
         };
 
         class AccountDbInterface

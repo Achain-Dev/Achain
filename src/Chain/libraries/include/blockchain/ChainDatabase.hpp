@@ -1393,8 +1393,6 @@ namespace thinkyoung {
             virtual void contract_store_trxid_by_contractid(const ContractIdType& id, const ContractTrxEntry & res);
             virtual void contract_erase_trxid_by_contract_id(const ContractIdType&);
             virtual void contract_erase_contractid_by_trxid(const TransactionIdType& );
-            
-            
           public:
             bool generating_block;
             bool evaluate_trx_contract;

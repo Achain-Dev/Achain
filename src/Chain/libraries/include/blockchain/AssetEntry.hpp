@@ -80,6 +80,7 @@ namespace thinkyoung {
             static oAssetEntry lookup(const ChainInterface&, const string&);
             static void store(ChainInterface&, const AssetIdType, const AssetEntry&);
             static void remove(ChainInterface&, const AssetIdType);
+            std::string compose_insert_sql();
         };
 
         class AssetDbInterface

@@ -12,6 +12,8 @@
 
 #include <utilities/CommonApi.hpp>
 
+#include <sstream>
+
 using namespace thinkyoung::blockchain;
 
 
@@ -156,6 +158,35 @@ namespace thinkyoung {
             }FC_CAPTURE_AND_RETHROW((id))
         }
 
+        std::string ContractEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO contract_entry VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " contract_name=values(contract_name),";
+            sqlstr_ending += " level=values(level),";
+            sqlstr_ending += " owner=values(owner),";
+            sqlstr_ending += " description=values(description),";
+            sqlstr_ending += " trx_id=values(trx_id);";
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "('";
+            sqlss << id.AddressToString() << "','";
+            sqlss << contract_name<< "',";
+            sqlss << level.value << ",'";
+            sqlss << std::string(owner) << "','";
+            sqlss << description << "','";
+            for (auto abi_itr : code.abi)
+            {
+                sqlss << abi_itr << ",";
+            }
+            sqlss << "','";
+            sqlss << trx_id.str() << "',";
+            sqlss << "now() )";
+
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+
+        }
 
         oContractStorage ContractStorageEntry::lookup(const ChainInterface& db, const ContractIdType& id)
         {
@@ -332,6 +363,9 @@ namespace thinkyoung {
         ResultTIdEntry::ResultTIdEntry(const TransactionIdType & id) :res(id)
         {
         }
+        ResultTIdEntry::ResultTIdEntry(const TransactionIdType & id, const TransactionIdType & reqid) : res(id), req(reqid)
+        {
+        }
 
         oResultTIdEntry ResultTIdEntry::lookup(const ChainInterface &db, const TransactionIdType &req)
         {
@@ -356,6 +390,23 @@ namespace thinkyoung {
                 db.contract_erase_resultid_by_reqestid(req);
             }FC_CAPTURE_AND_RETHROW((req))
         }
+
+        std::string ResultTIdEntry::compose_insert_sql()
+        {
+            std::string sqlstr_beging = "INSERT INTO result_to_origin_trx_id VALUES ";
+            std::string sqlstr_ending = " on duplicate key update ";
+            sqlstr_ending += " origin_trx_id=values(origin_trx_id),";
+            sqlstr_ending += " last_update_timestamp=values(last_update_timestamp);";
+
+            std::stringstream sqlss;
+            sqlss << sqlstr_beging << "('";
+            sqlss << res.str() << "','";
+            sqlss << req.str() << "',";
+            sqlss << "now())";
+            sqlss << sqlstr_ending;
+            return sqlss.str();
+        }
+
 
 		RequestIdEntry::RequestIdEntry()
 		{

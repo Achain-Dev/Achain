@@ -321,6 +321,13 @@ namespace thinkyoung {
                     const PendingChainStatePtr& pending_state,
                     oBlockEntry& block_entry)const;
 
+				/**  write the leveldb entry to mysql
+				* @param  a leveldb entry
+				* @return void
+				*/
+				template<class T>  	void                   write_to_mysqls(T en);
+                template<class T >  void                   batch_write_to_mysqls(std::vector<T> & ety_cache);
+                void                                       batch_write_to_mysqls();
 
                 //void                                        update_active_delegate_list_v1( const uint32_t block_num,
                 //                                                                          const pending_chain_state_ptr& pending_state )const;
@@ -344,6 +351,10 @@ namespace thinkyoung {
 
                 /* Block processing */
                 uint32_t /* Only used to skip undo states when possible during replay */    _min_undo_block = 0;
+
+                std::vector<BlockEntry>                                                     _blockety_cache;
+                std::vector<SlotEntry>                                                      _slotety_cache;
+
 
                 fc::mutex                                                                   _push_block_mutex;
                 ShareType															_block_per_account_reword_amount = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
