@@ -175,7 +175,7 @@ namespace thinkyoung {
                                         memo_message,
                                         memo_pub_key,
                                         memo_type,
-                                        use_stealth_address);
+                                        false);
             DepositOperation op;
             op.amount = amount.amount;
             op.condition = WithdrawCondition(by_account, amount.asset_id);

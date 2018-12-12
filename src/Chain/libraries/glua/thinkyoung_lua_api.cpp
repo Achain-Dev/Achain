@@ -94,8 +94,8 @@ namespace thinkyoung {
 
                 lua_set_compile_error(L, msg);
 
-                //Èç¹ûÉÏ´ÎµÄexception codeÎªTHINKYOUNG_API_LVM_LIMIT_OVER_ERROR, ²»ÄÜ±»ÆäËûÒì³£¸²¸Ç
-                //Ö»ÓĞµ÷ÓÃclearÇåÀíºó£¬²ÅÄÜ¼ÌĞø¼ÇÂ¼Òì³£
+                //å¦‚æœä¸Šæ¬¡çš„exception codeä¸ºTHINKYOUNG_API_LVM_LIMIT_OVER_ERROR, ä¸èƒ½è¢«å…¶ä»–å¼‚å¸¸è¦†ç›–
+                //åªæœ‰è°ƒç”¨clearæ¸…ç†åï¼Œæ‰èƒ½ç»§ç»­è®°å½•å¼‚å¸¸
                 int last_code = lua::lib::get_lua_state_value(L, "exception_code").int_value;
                 if (last_code == THINKYOUNG_API_LVM_LIMIT_OVER_ERROR
                     && code != THINKYOUNG_API_LVM_LIMIT_OVER_ERROR)
@@ -155,11 +155,6 @@ namespace thinkyoung {
 
             void GluaChainApi::get_contract_address_by_name(lua_State *L, const char *name, char *address, size_t *address_size)
             {
-                /*
-                std::string addr_str = std::string("id_") + std::string(name);
-                strcpy(address, addr_str.c_str());
-                *address_size = addr_str.size() + 1;
-                */
                 thinkyoung::blockchain::TransactionEvaluationState* eval_state_ptr =
                     (thinkyoung::blockchain::TransactionEvaluationState*)
                     (thinkyoung::lua::lib::get_lua_state_value(L, "evaluate_state").pointer_value);
@@ -200,19 +195,6 @@ namespace thinkyoung {
 
             bool GluaChainApi::check_contract_exist(lua_State *L, const char *name)
             {
-                /*
-                char *filename = lutil_concat_str4("thinkyoung_lua_modules", file_separator_str(), "thinkyoung_contract_", name);
-                FILE *f = fopen(filename, "rb");
-                bool exist = false;
-                if (NULL != f)
-                {
-                exist = true;
-                fclose(f);
-                }
-                free(filename);
-                return exist;
-                */
-
                 thinkyoung::blockchain::TransactionEvaluationState* eval_state_ptr =
                     (thinkyoung::blockchain::TransactionEvaluationState*)
                     (thinkyoung::lua::lib::get_lua_state_value(L, "evaluate_state").pointer_value);
@@ -257,31 +239,6 @@ namespace thinkyoung {
             std::shared_ptr<GluaModuleByteStream> GluaChainApi::open_contract(lua_State *L, const char *name)
             {
                 // FXIME
-                /*
-                bool is_bytes = true;
-                char *filename = lutil_concat_str4("thinkyoung_lua_modules", file_separator_str(), "thinkyoung_contract_", name);
-                FILE *f = fopen(filename, "rb");
-                if (NULL == f)
-                {
-                filename = lutil_concat_str(filename, ".lua");
-                f = fopen(filename, "rb");
-                if (NULL == f)
-                {
-                return NULL;
-                }
-                is_bytes = false;
-                }
-                GluaModuleByteStream *stream = (GluaModuleByteStream*)malloc(sizeof(GluaModuleByteStream));
-                stream->len = fread(stream->buff, 1024 * 1024, 1, f);
-                fseek(f, 0, SEEK_END); // seek to end of file
-                stream->len = ftell(f); // get current file pointer
-                stream->is_bytes = is_bytes;
-                fclose(f);
-                if (!is_bytes)
-                stream->buff[stream->len] = '\0';
-                free(filename);
-                return stream;
-                */
               thinkyoung::lua::lib::increment_lvm_instructions_executed_count(L, CHAIN_GLUA_API_EACH_INSTRUCTIONS_COUNT - 1);
 
                 thinkyoung::blockchain::TransactionEvaluationState* eval_state_ptr =
@@ -322,64 +279,6 @@ namespace thinkyoung {
 
                 return NULL;
             }
-
-            /**
-            * store contract lua module byte stream to thinkyoung api
-            */
-            //need to delete
-            /*
-            int save_contract(const char *name, GluaModuleByteStream *stream)
-            {
-            return 0;
-            }
-            */
-
-            /*
-            void free_contract_storage(lua_State *L, GluaStorageValue* storage)
-            {
-            if (storage)
-            {
-            if (storage->type == GluaStorageValueType::LVALUE_INTEGER ||
-            storage->type == GluaStorageValueType::LVALUE_NUMBER ||
-            storage->type == GluaStorageValueType::LVALUE_BOOLEAN)
-            {
-            ;
-            }
-            else if (storage->type == GluaStorageValueType::LVALUE_STRING)
-            {
-            if (storage->value.string_value)
-            free(storage->value.string_value);
-            }
-            else if (storage->type == GluaStorageValueType::LVALUE_TABLE)
-            {
-            GluaTableMap* p_lua_table = storage->value.table_value;
-
-            if (p_lua_table && !p_lua_table->empty())
-            {
-            GluaStorageValue first_base_storage = p_lua_table->begin()->second;
-            if (first_base_storage.type == GluaStorageValueType::LVALUE_INTEGER ||
-            first_base_storage.type == GluaStorageValueType::LVALUE_NUMBER ||
-            first_base_storage.type == GluaStorageValueType::LVALUE_BOOLEAN)
-            {
-            ;
-            }
-            else if (first_base_storage.type == GluaStorageValueType::LVALUE_STRING)
-            {
-            for (const auto& item: *p_lua_table)
-            {
-            if (item.second.value.string_value)
-            free(item.second.value.string_value);
-
-            }
-            }
-            delete p_lua_table;
-            }
-
-            }
-            free(storage);
-            }
-            }
-            */
 
             GluaStorageValue GluaChainApi::get_storage_value_from_thinkyoung(lua_State *L, const char *contract_name, std::string name)
             {
@@ -529,7 +428,7 @@ namespace thinkyoung {
 					return;
 				}
 				object_pools = (std::map<GluaOutsideObjectTypes, std::shared_ptr<std::map<intptr_t, intptr_t>>> *) node.value.pointer_value;
-				// TODO: ¶ÔÓÚobject_poolsÖĞ²»Í¬ÀàĞÍµÄ¶ÔÏó£¬·Ö±ğÊÍ·Å
+				// TODO: å¯¹äºobject_poolsä¸­ä¸åŒç±»å‹çš„å¯¹è±¡ï¼Œåˆ†åˆ«é‡Šæ”¾
 				for (const auto &p : *object_pools)
 				{
 					auto type = p.first;
@@ -832,9 +731,9 @@ namespace thinkyoung {
                     return 0;
                 }
             }
-            //»ñÈ¡Ö¸¶¨¿éÓëÖ®Ç°50¿éµÄpre_secret hash³öµÄ½á¹û£¬¸ÃÖµÔÚÖ¸¶¨¿é±»²ú³öµÄÉÏÒ»ÂÖ³ö¿éÊ±¾ÍÒÑ¾­È·¶¨£¬¶øÎŞÈË¿ÉÖª£¬ÎŞ·¨²Ù¿Ø
-            //Èç¹ûÏ£ÍûÊ¹ÓÃ¸ÃÖµ×÷ÎªËæ»úÖµ£¬ÒÔËæ»úÖµ×÷ÎªÆäËûÊı¾İµÄÑ¡È¡ÒÀ¾İÊ±£¬ĞèÒªÔÚÄ¿±ê¿é±»²ú³öÇ°È·¶¨Òª±»É¸Ñ¡µÄÊı¾İ
-            //ÈçÍ¶×¢²ÊÆ±£¬Ö»ÔÊĞíÔÚÄ¿±ê¿é±»²ú³öÇ°Í¶×¢
+            //è·å–æŒ‡å®šå—ä¸ä¹‹å‰50å—çš„pre_secret hashå‡ºçš„ç»“æœï¼Œè¯¥å€¼åœ¨æŒ‡å®šå—è¢«äº§å‡ºçš„ä¸Šä¸€è½®å‡ºå—æ—¶å°±å·²ç»ç¡®å®šï¼Œè€Œæ— äººå¯çŸ¥ï¼Œæ— æ³•æ“æ§
+            //å¦‚æœå¸Œæœ›ä½¿ç”¨è¯¥å€¼ä½œä¸ºéšæœºå€¼ï¼Œä»¥éšæœºå€¼ä½œä¸ºå…¶ä»–æ•°æ®çš„é€‰å–ä¾æ®æ—¶ï¼Œéœ€è¦åœ¨ç›®æ ‡å—è¢«äº§å‡ºå‰ç¡®å®šè¦è¢«ç­›é€‰çš„æ•°æ®
+            //å¦‚æŠ•æ³¨å½©ç¥¨ï¼Œåªå…è®¸åœ¨ç›®æ ‡å—è¢«äº§å‡ºå‰æŠ•æ³¨
             int32_t GluaChainApi::get_waited(lua_State *L, uint32_t num)
             {
               thinkyoung::lua::lib::increment_lvm_instructions_executed_count(L, CHAIN_GLUA_API_EACH_INSTRUCTIONS_COUNT - 1);

@@ -21,9 +21,6 @@
 #include <rpc/RpcClient.hpp>
 #include <rpc/RpcServer.hpp>
 
-//#include <thinkyoung/mail/server.hpp>
-
-
 #include <fc/log/file_appender.hpp>
 #include <fc/log/logger.hpp>
 #include <fc/log/logger_config.hpp>
@@ -356,6 +353,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         fc::path get_wallet_dir(const program_options::variables_map& option_variables, const fc::path& default_path) {
             try {
                 fc::path wallet_dir;
@@ -372,6 +370,7 @@ namespace thinkyoung {
             
             FC_RETHROW_EXCEPTIONS(warn, "error loading config")
         }
+
         void load_and_configure_chain_database(const fc::path& datadir,
                                                const program_options::variables_map& option_variables) {
             try {
@@ -500,13 +499,11 @@ namespace thinkyoung {
         }
         
         namespace detail {
-            //should this function be moved to rpc server eventually? probably...
             void ClientImpl::configure_rpc_server(Config& cfg,
                                                   const program_options::variables_map& option_variables) {
                 if (option_variables.count("server") || option_variables.count("daemon") || cfg.rpc.enable) {
                     // the user wants us to launch the RPC server.
-                    // First, override any config parameters they
-                    // thinkyoung::rpc::rpc_server::config rpc_config(cfg.rpc);
+                    // First, override any config parameters they // thinkyoung::rpc::rpc_server::config rpc_config(cfg.rpc);
                     if (option_variables.count("rpcuser"))
                         cfg.rpc.rpc_user = option_variables["rpcuser"].as<string>();
                         
@@ -1636,19 +1633,7 @@ namespace thinkyoung {
                 if (network_started_callback) network_started_callback();
             }
         }
-        
-        //RPC server and CLI configuration rules:
-        //if daemon mode requested
-        //  start RPC server only (no CLI input)
-        //else
-        //  start RPC server if requested
-        //  start CLI
-        //  if input log
-        //    cli.processs_commands in input log
-        //    wait till finished
-        //  set input stream to cin
-        //  cli.process_commands from cin
-        //  wait till finished
+
         void Client::configure_from_command_line(int argc, char** argv) {
             if (argc == 0 && argv == nullptr) {
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
@@ -1686,7 +1671,6 @@ namespace thinkyoung {
             }
             
             // this just clears the database if the command line says
-            // TODO: rename it to smething better
             load_and_configure_chain_database(datadir, option_variables);
             fc::optional<fc::path> genesis_file_path;
             
@@ -1731,22 +1715,20 @@ namespace thinkyoung {
             
             accept_incoming_p2p_connections(option_variables["accept-incoming-connections"].as<bool>());
             
-            // else we use the default set in thinkyoung::net::node
-            
             //initialize cli
             if (option_variables.count("daemon") || my->_config.ignore_console) {
                 std::cout << "Running in daemon mode, ignoring console\n";
                 my->_cli = new thinkyoung::cli::Cli(this, nullptr, &std::cout);
                 my->_cli->set_daemon_mode(true);
                 
-            } else { //we will accept input from the console
-                //if user wants us to execute a command script log for the CLI,
-                //  extract the commands and put them in a temporary input stream to pass to the CLI
+            } else { 
+                //we will accept input from the console
                 if (option_variables.count("input-log")) {
                     std::vector<string> input_logs = option_variables["input-log"].as< std::vector<string> >();
                     string input_commands;
                     
                     for (const auto& input_log : input_logs)
+                        //extract the commands and put them in a temporary input stream to pass to the CLI
                         input_commands += extract_commands_from_log_file(input_log);
                         
                     my->_command_script_holder.reset(new std::stringstream(input_commands));
@@ -1755,13 +1737,10 @@ namespace thinkyoung {
                 const fc::path console_log_file = datadir / "console.log";
                 
                 if (option_variables.count("log-commands") <= 0) {
-                    /* Remove any console logs for security */
                     fc::remove_all(console_log_file);
-                    /* Don't create a log file, just output to console */
                     my->_cli = new thinkyoung::cli::Cli(this, my->_command_script_holder.get(), &std::cout);
                     
                 } else {
-                    /* Tee cli output to the console and a log file */
                     ulog("Logging commands to: ${file}", ("file", console_log_file.string()));
                     my->_console_log.open(console_log_file.string());
                     my->_tee_device.reset(new TeeDevice(std::cout, my->_console_log));;
@@ -1775,8 +1754,7 @@ namespace thinkyoung {
             if (option_variables.count("stop-before-block"))
                 my->_debug_stop_before_block_num = option_variables["stop-before-block"].as<uint32_t>();
                 
-            // start listening.  this just finds a port and binds it, it doesn't start
-            // accepting connections until connect_to_p2p_network()
+            // start listening.  this just finds a port and binds it, it doesn't start ,accepting connections until connect_to_p2p_network()
             listen_to_p2p_network();
             
             if (option_variables["upnp"].as<bool>()) {
@@ -1935,11 +1913,13 @@ namespace thinkyoung {
             return my->_data_dir;
         }
         
-        fc::ip::endpoint Client::string_to_endpoint(const std::string& remote_endpoint) {
+		std::vector<fc::ip::endpoint> Client::string_to_endpoint(const std::string& remote_endpoint) {
             try {
                 ASSERT_TASK_NOT_PREEMPTED(); // make sure no cancel gets swallowed by catch(...)
                 // first, try and parse the endpoint as a numeric_ipv4_address:port that doesn't need DNS lookup
-                return fc::ip::endpoint::from_string(remote_endpoint);
+				std::vector<fc::ip::endpoint> endpoints;
+				endpoints.push_back(fc::ip::endpoint::from_string(remote_endpoint));
+				return endpoints;
                 
             } catch (...) {
             }
@@ -1955,8 +1935,10 @@ namespace thinkyoung {
                 
                 if (endpoints.empty())
                     FC_THROW_EXCEPTION(fc::unknown_host_exception, "The host name can not be resolved: ${hostname}", ("hostname", hostname));
-                    
-                return endpoints.back();
+
+				std::random_shuffle(endpoints.begin(), endpoints.end());
+
+                return endpoints;
                 
             } catch (const boost::bad_lexical_cast&) {
                 FC_THROW("Bad port: ${port}", ("port", remote_endpoint.substr(colon_pos + 1, remote_endpoint.size())));
@@ -1964,51 +1946,42 @@ namespace thinkyoung {
         }
         
         void Client::add_node(const string& remote_endpoint, int32_t oper_flag) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to add peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
-                my->_p2p_node->add_node(endpoint, oper_flag);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
-            }
+				auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Adding peer ${peer} to peer database", ("peer", endpoint));
+						my->_p2p_node->add_node(endpoint, oper_flag);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to add peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
+			}
         }
+
         void Client::connect_to_peer(const string& remote_endpoint) {
-            fc::ip::endpoint endpoint;
-            fc::oexception string_to_endpoint_error;
-            
+
             try {
-                endpoint = string_to_endpoint(remote_endpoint);
-                
-            } catch (const fc::exception& e) {
-                string_to_endpoint_error = e;
-            }
-            
-            if (string_to_endpoint_error) {
-                ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
-                     ("remote_endpoint", remote_endpoint)("error", string_to_endpoint_error->to_string()));
-                return;
-            }
-            
-            try {
-                ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
-                my->_p2p_node->connect_to_endpoint(endpoint);
-                
-            } catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+                auto endpoints = string_to_endpoint(remote_endpoint);
+				for (auto endpoint : endpoints)
+				{
+					try {
+						ulog("Attempting to connect to peer ${peer}", ("peer", endpoint));
+						my->_p2p_node->connect_to_endpoint(endpoint);
+					}
+					catch (const thinkyoung::net::already_connected_to_requested_peer&) {
+					}
+				}
+			}
+			catch (const fc::exception& e) {
+				ulog("Unable to initiate connection to peer ${remote_endpoint}: ${error}",
+					("remote_endpoint", remote_endpoint)("error", e.to_string()));
             }
         }
         
