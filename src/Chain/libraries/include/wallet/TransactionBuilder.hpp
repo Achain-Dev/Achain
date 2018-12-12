@@ -155,7 +155,8 @@ namespace thinkyoung {
                 optional<variant> public_data,
                 optional<PublicKeyType> active_key,
                 optional<uint8_t> delegate_pay,
-                optional<WalletAccountEntry> paying_account);
+                optional<WalletAccountEntry> paying_account,
+                optional<uint8_t> delegate_mode);
             /**
              * @brief Transfer funds from payer to recipient
              * @param payer The account to charge

@@ -53,7 +53,7 @@ namespace thinkyoung {
                 const static short                               _login_lifetime_seconds = 300;
                 db::fast_level_map<ScriptIdType, ScriptEntry>      script_id_to_script_entry_db;
                 db::fast_level_map<ScriptRelationKey, std::vector<ScriptIdType>>	   contract_id_event_to_script_id_vector_db;
-
+                db::fast_level_map<BlockIdType, bool>                    block_sign_db;
                 vector<function<void(void)>>                   _unlocked_upgrade_tasks;
                 boost::shared_mutex                                        m_mutex_for_wallet;   //???ио12?ик??
                 boost::shared_mutex                                        m_mutex_for_alp;   //???ио12?ик??

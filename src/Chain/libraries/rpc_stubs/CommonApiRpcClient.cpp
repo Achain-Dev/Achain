@@ -428,8 +428,8 @@ namespace thinkyoung {
         void CommonApiRpcClient::wallet_account_update_private_data(const std::string& account_name, const fc::variant& private_data /* = fc::json::from_string("null").as<fc::variant>() */) {
             fc::variant result = get_json_connection()->async_call("wallet_account_update_private_data", std::vector<fc::variant> {fc::variant(account_name), fc::variant(private_data)}).wait();
         }
-        thinkyoung::wallet::WalletTransactionEntry CommonApiRpcClient::wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data /* = fc::json::from_string("null").as<fc::variant>() */, uint8_t delegate_pay_rate /* = fc::json::from_string("-1").as<uint8_t>() */) {
-            fc::variant result = get_json_connection()->async_call("wallet_account_update_registration", std::vector<fc::variant> {fc::variant(account_name), fc::variant(pay_from_account), fc::variant(public_data), fc::variant(delegate_pay_rate)}).wait();
+        thinkyoung::wallet::WalletTransactionEntry CommonApiRpcClient::wallet_account_update_registration(const std::string& account_name, const std::string& pay_from_account, const fc::variant& public_data, uint8_t delegate_pay_rate, uint8_t delegate_mode) {
+            fc::variant result = get_json_connection()->async_call("wallet_account_update_registration", std::vector<fc::variant> {fc::variant(account_name), fc::variant(pay_from_account), fc::variant(public_data), fc::variant(delegate_pay_rate), fc::variant(delegate_mode)}).wait();
             return result.as<thinkyoung::wallet::WalletTransactionEntry>();
         }
         thinkyoung::wallet::WalletTransactionEntry CommonApiRpcClient::wallet_account_update_active_key(const std::string& account_to_update, const std::string& pay_from_account, const std::string& new_active_key /* = fc::json::from_string("\"\"").as<std::string>() */) {
