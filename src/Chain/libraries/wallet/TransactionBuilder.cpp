@@ -218,7 +218,7 @@ TransactionBuilder& TransactionBuilder::deposit_asset_to_address(const WalletAcc
             FC_THROW_EXCEPTION(invalid_asset_amount, "Cannot deposit a negative amount!");
             
         trx.deposit(to_addr, amount);
-        deduct_balance(payer.owner_key, amount);
+        //deduct_balance(payer.owner_key, amount);
         LedgerEntry entry;
         entry.from_account = payer.owner_key;
         entry.amount = amount;
@@ -246,7 +246,7 @@ TransactionBuilder& TransactionBuilder::deposit_asset_to_multisig(
         info.required = m;
         info.owners = set<Address>(addresses.begin(), addresses.end());
         trx.deposit_multisig(info, amount);
-        deduct_balance(payer->owner_key, amount + fee);
+        //deduct_balance(payer->owner_key, amount + fee);
         LedgerEntry entry;
         entry.from_account = payer->owner_key;
         entry.amount = amount;

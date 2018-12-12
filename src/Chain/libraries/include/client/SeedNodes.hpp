@@ -1,3 +1,4 @@
+
 #pragma once
 namespace thinkyoung {
     namespace client {
@@ -11,5 +12,5 @@ namespace thinkyoung {
             "52.78.47.183:61696"
         };
 #endif
-    }
-} // thinkyoung::client
+} 
+} // thinkyoung::client 
