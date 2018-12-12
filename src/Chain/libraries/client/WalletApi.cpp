@@ -448,9 +448,9 @@ namespace thinkyoung {
             //     return entry;
             //
             // }
-            
-            
-            
+
+
+
             WalletTransactionEntry detail::ClientImpl::wallet_transfer_to_address(
                 const string& amount_to_transfer,
                 const string& asset_symbol,
@@ -461,31 +461,179 @@ namespace thinkyoung {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())
                     FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
-                    
+
                 string strToAccount;
                 string strSubAccount;
                 _wallet->accountsplit(to_address, strToAccount, strSubAccount);
                 Address effective_address;
-                
+
                 if (Address::is_valid(strToAccount))
                     effective_address = Address(strToAccount);
-                    
+
                 else
                     effective_address = Address(PublicKeyType(strToAccount));
-                    
+
                 auto entry = _wallet->transfer_asset_to_address(amount_to_transfer,
-                             asset_symbol,
-                             from_account_name,
-                             effective_address,
-                             memo_message,
-                             strategy,
-                             true,
-                             strSubAccount);
+                    asset_symbol,
+                    from_account_name,
+                    effective_address,
+                    memo_message,
+                    strategy,
+                    true,
+                    strSubAccount);
                 _wallet->cache_transaction(entry);
                 network_broadcast_transaction(entry.trx);
                 return entry;
             }
-            
+
+            //     auto entry =  _wallet->transfer_asset_to_address( amount_to_transfer,
+            //                                                        asset_symbol,
+            //                                                        from_account_name,
+            //                                                        address( to_address ),
+            //                                                        memo_message,
+            //                                                        strategy,
+            //                                                        true );
+            //     _wallet->cache_transaction( entry );
+            //     network_broadcast_transaction( entry.trx );
+            //     return entry;
+            //
+            // }
+
+
+
+            WalletTransactionEntry detail::ClientImpl::wallet_transfer_to_mutisig(
+                const string& amount_to_transfer,
+                const string& asset_symbol,
+                const string& from_account_name,
+                const string& to_address,
+                const string& address_for_signature1,
+                const string& address_for_signature2,
+                const string& memo_message,
+                const VoteStrategy& strategy) {
+                // set limit in  sandbox state
+                if (_chain_db->get_is_in_sandbox())
+                    FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
+
+                string strToAccount;
+                string strSubAccount;
+                _wallet->accountsplit(to_address, strToAccount, strSubAccount);
+                Address effective_address;
+
+                if (Address::is_valid(strToAccount))
+                    effective_address = Address(strToAccount);
+                else
+                    effective_address = Address(PublicKeyType(strToAccount));
+
+                if (!Address::is_valid(address_for_signature1))
+                    FC_THROW_EXCEPTION(invalid_address, "the signature address is invalid!");
+                if (!Address::is_valid(address_for_signature2))
+                    FC_THROW_EXCEPTION(invalid_address, "the signature address is invalid!");
+
+                auto builder = _wallet->create_transaction_builder();
+
+                auto owner_address = Address(_wallet->get_active_public_key(from_account_name));
+                //fc::enum_type<uint8_t, WithdrawBalanceTypes> balance_type_arg = withdraw_common_type;
+                auto cond = WithdrawCondition(WithdrawWithSignature(owner_address), 0, 0, withdraw_common_type);
+                auto from_bal_id = cond.get_address();
+
+                Asset ugly_asset = _chain_db->to_ugly_asset(amount_to_transfer, asset_symbol);
+                Asset trx_fee = _wallet->get_transaction_fee();
+
+                builder->withdraw_from_balance(from_bal_id, ugly_asset.amount + trx_fee.amount);
+
+                fc_ilog(fc::logger::get("test"), "withdraw from balance id : ${id}", ("id", from_bal_id.AddressToString()) );
+
+                vector<Address> vec_address;
+                vec_address.push_back(Address(to_address));
+                vec_address.push_back(Address(address_for_signature1));
+                vec_address.push_back(Address(address_for_signature2));
+
+                builder->deposit_asset_to_multisig(ugly_asset, from_account_name,vec_address.size()-1,vec_address);
+
+                builder->finalize(false, strategy);
+
+                if (!builder->is_signed())
+                    builder->sign();// sign at last
+
+                _wallet->cache_transaction(builder->transaction_entry, true);
+                network_broadcast_transaction(builder->transaction_entry.trx);
+                return builder->transaction_entry;
+            }
+
+            //     auto entry =  _wallet->transfer_asset_to_address( amount_to_transfer,
+            //                                                        asset_symbol,
+            //                                                        from_account_name,
+            //                                                        address( to_address ),
+            //                                                        memo_message,
+            //                                                        strategy,
+            //                                                        true );
+            //     _wallet->cache_transaction( entry );
+            //     network_broadcast_transaction( entry.trx );
+            //     return entry;
+            //
+            // }
+
+            WalletTransactionEntry detail::ClientImpl::wallet_transfer_from_mutisig(
+                const string& amount_to_transfer,
+                const string& asset_symbol,
+                const string& from_account_name,
+                const string& address_for_signature1,
+                const string& address_for_signature2,
+                const string& to_address,
+                const string& memo_message,
+                const VoteStrategy& strategy) {
+
+                // set limit in  sandbox state
+                if (_chain_db->get_is_in_sandbox())
+                    FC_THROW_EXCEPTION(sandbox_command_forbidden, "in sandbox, this command is forbidden, you cannot call it!");
+
+                string strToAccount;
+                string strSubAccount;
+                _wallet->accountsplit(to_address, strToAccount, strSubAccount);
+                Address effective_address;
+
+                if (Address::is_valid(strToAccount))
+                    effective_address = Address(strToAccount);
+
+                else
+                    effective_address = Address(PublicKeyType(strToAccount));
+                if (!Address::is_valid(address_for_signature1))
+                    FC_THROW_EXCEPTION(invalid_address, "the signature address is invalid!");
+                if (!Address::is_valid(address_for_signature2))
+                    FC_THROW_EXCEPTION(invalid_address, "the signature address is invalid!");
+
+                auto builder = _wallet->create_transaction_builder();
+
+                vector<Address> vec_address;
+                vec_address.push_back(Address(_wallet->get_active_public_key(from_account_name)));
+                vec_address.push_back(Address(address_for_signature1));
+                vec_address.push_back(Address(address_for_signature2));
+                MultisigMetaInfo mutisit_info;
+                mutisit_info.required = vec_address.size() - 1;
+                mutisit_info.owners = set<Address>(vec_address.begin(), vec_address.end());
+                auto cond = WithdrawCondition(WithdrawWithMultisig{mutisit_info.required,mutisit_info.owners}, 0);
+                auto from_bal_id = cond.get_address();
+
+                Asset ugly_asset = _chain_db->to_ugly_asset(amount_to_transfer, asset_symbol);
+                auto trx_fee = _wallet->get_transaction_fee();
+
+                builder->withdraw_from_balance(from_bal_id, ugly_asset.amount + trx_fee.amount);
+                fc_ilog(fc::logger::get("test"), "withdraw2 from balance id : ${id}", ("id", from_bal_id.AddressToString()));
+
+                auto payer = _wallet->get_account(from_account_name);  //
+                builder->deposit_asset_to_address(payer, Address(to_address), ugly_asset, memo_message); //
+
+                builder->finalize(false, strategy);
+
+                if (!builder->is_signed())
+                    builder->sign();
+
+                _wallet->cache_transaction(builder->transaction_entry, true);
+                network_broadcast_transaction(builder->transaction_entry.trx);
+
+                return builder->transaction_entry;
+            }
+
             thinkyoung::blockchain::SignedTransaction ClientImpl::create_transfer_transaction(const std::string& amount_to_transfer, const std::string& asset_symbol, const std::string& from_account_name, const std::string& to_address, const thinkyoung::blockchain::Imessage& memo_message /* = fc::json::from_string("").as<thinkyoung::blockchain::Imessage>() */, const thinkyoung::wallet::VoteStrategy& strategy) {
                 // set limit in  sandbox state
                 if (_chain_db->get_is_in_sandbox())

@@ -239,6 +239,10 @@ namespace thinkyoung {
             fc::variant wallet_address_create_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant wallet_transfer_to_address_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant wallet_transfer_to_address_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant wallet_transfer_to_mutisig_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant wallet_transfer_to_mutisig_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
+            fc::variant wallet_transfer_from_mutisig_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
+            fc::variant wallet_transfer_from_mutisig_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant wallet_transfer_to_public_account_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant wallet_transfer_to_public_account_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant wallet_withdraw_from_address_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
@@ -503,7 +507,6 @@ namespace thinkyoung {
             fc::variant add_event_handler_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
             fc::variant delete_event_handler_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
             fc::variant delete_event_handler_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters);
-            fc::variant set_local_pending_num_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters);
         };
 
     }

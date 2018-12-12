@@ -2810,6 +2810,150 @@ namespace thinkyoung {
             return fc::variant(result);
         }
 
+        fc::variant CommonApiRpcServer::wallet_transfer_to_mutisig_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (amount_to_transfer)");
+            std::string amount_to_transfer = parameters[0].as<std::string>();
+            if (parameters.size() <= 1)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 2 (asset_symbol)");
+            std::string asset_symbol = parameters[1].as<std::string>();
+            if (parameters.size() <= 2)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 3 (from_account_name)");
+            std::string from_account_name = parameters[2].as<std::string>();
+            if (parameters.size() <= 3)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 4 (to_address)");
+            std::string to_address = parameters[3].as<std::string>();
+            if (parameters.size() <= 4)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 5 (address_for_signature1)");
+            std::string address_for_signature1 = parameters[4].as<std::string>();
+            if (parameters.size() <= 5)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 6 (address_for_signature2)");
+            std::string address_for_signature2 = parameters[5].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = (parameters.size() <= 6) ?
+            (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+            parameters[6].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 7) ?
+            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            parameters[7].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_mutisig(amount_to_transfer, asset_symbol, from_account_name, to_address, address_for_signature1, address_for_signature2, memo_message, strategy);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::wallet_transfer_to_mutisig_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (!parameters.contains("amount_to_transfer"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'amount_to_transfer'");
+            std::string amount_to_transfer = parameters["amount_to_transfer"].as<std::string>();
+            if (!parameters.contains("asset_symbol"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'asset_symbol'");
+            std::string asset_symbol = parameters["asset_symbol"].as<std::string>();
+            if (!parameters.contains("from_account_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'from_account_name'");
+            std::string from_account_name = parameters["from_account_name"].as<std::string>();
+            if (!parameters.contains("to_address"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'to_address'");
+            std::string to_address = parameters["to_address"].as<std::string>();
+            if (!parameters.contains("address_for_signature1"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'address_for_signature1'");
+            std::string address_for_signature1 = parameters["address_for_signature1"].as<std::string>();
+            if (!parameters.contains("address_for_signature2"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'address_for_signature2'");
+            std::string address_for_signature2 = parameters["address_for_signature2"].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = parameters.contains("memo_message") ?
+                (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+                parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
+                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_to_mutisig(amount_to_transfer, asset_symbol, from_account_name, to_address, address_for_signature1, address_for_signature2, memo_message, strategy);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::wallet_transfer_from_mutisig_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (parameters.size() <= 0)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (amount_to_transfer)");
+            std::string amount_to_transfer = parameters[0].as<std::string>();
+            if (parameters.size() <= 1)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 2 (asset_symbol)");
+            std::string asset_symbol = parameters[1].as<std::string>();
+            if (parameters.size() <= 2)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 3 (from_account_name)");
+            std::string from_account_name = parameters[2].as<std::string>();
+            if (parameters.size() <= 3)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 4 (address_for_signature1)");
+            std::string address_for_signature1 = parameters[3].as<std::string>();
+            if (parameters.size() <= 4)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 5 (address_for_signature2)");
+            std::string address_for_signature2 = parameters[4].as<std::string>();
+            if (parameters.size() <= 5)
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 6 (to_address)");
+            std::string to_address = parameters[5].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = (parameters.size() <= 6) ?
+            (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+            parameters[6].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = (parameters.size() <= 7) ?
+            (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+            parameters[7].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_from_mutisig(amount_to_transfer, asset_symbol, from_account_name, address_for_signature1, address_for_signature2, to_address, memo_message, strategy);
+            return fc::variant(result);
+        }
+
+        fc::variant CommonApiRpcServer::wallet_transfer_from_mutisig_named(fc::rpc::json_connection* json_connection, const fc::variant_object& parameters)
+        {
+            // check all of this method's prerequisites
+            verify_json_connection_is_authenticated(json_connection);
+            verify_wallet_is_open();
+            // done checking prerequisites
+
+            if (!parameters.contains("amount_to_transfer"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'amount_to_transfer'");
+            std::string amount_to_transfer = parameters["amount_to_transfer"].as<std::string>();
+            if (!parameters.contains("asset_symbol"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'asset_symbol'");
+            std::string asset_symbol = parameters["asset_symbol"].as<std::string>();
+            if (!parameters.contains("from_account_name"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'from_account_name'");
+            std::string from_account_name = parameters["from_account_name"].as<std::string>();
+            if (!parameters.contains("address_for_signature1"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'address_for_signature1'");
+            std::string address_for_signature1 = parameters["address_for_signature1"].as<std::string>();
+            if (!parameters.contains("address_for_signature2"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'address_for_signature2'");
+            std::string address_for_signature2 = parameters["address_for_signature2"].as<std::string>();
+            if (!parameters.contains("to_address"))
+                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 'to_address'");
+            std::string to_address = parameters["to_address"].as<std::string>();
+            thinkyoung::blockchain::Imessage memo_message = parameters.contains("memo_message") ?
+                (fc::json::from_string("\"\"").as<thinkyoung::blockchain::Imessage>()) :
+                parameters["memo_message"].as<thinkyoung::blockchain::Imessage>();
+            thinkyoung::wallet::VoteStrategy strategy = parameters.contains("strategy") ?
+                (fc::json::from_string("\"vote_recommended\"").as<thinkyoung::wallet::VoteStrategy>()) :
+                parameters["strategy"].as<thinkyoung::wallet::VoteStrategy>();
+
+            thinkyoung::wallet::WalletTransactionEntry result = get_client()->wallet_transfer_from_mutisig(amount_to_transfer, asset_symbol, from_account_name, address_for_signature1, address_for_signature2, to_address, memo_message, strategy);
+            return fc::variant(result);
+        }
+
         fc::variant CommonApiRpcServer::wallet_transfer_to_public_account_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters)
         {
             // check all of this method's prerequisites
@@ -7601,24 +7745,9 @@ namespace thinkyoung {
             get_client()->delete_event_handler(contract_id_str, event_type, script_id);
             return fc::variant();
         }
-        
-        fc::variant CommonApiRpcServer::set_local_pending_num_positional(fc::rpc::json_connection* json_connection, const fc::variants& parameters) {
-            // check all of this method's prerequisites
-            verify_json_connection_is_authenticated(json_connection);
-            verify_wallet_is_open();
-            verify_wallet_is_unlocked();
-            
-            // done checking prerequisites
-            if(parameters.size() <= 0)
-                FC_THROW_EXCEPTION(fc::invalid_arg_exception, "missing required parameter 1 (event_type)");
-                
-            uint32_t local_pending_num = parameters[0].as<uint32_t>();
-            get_client()->set_local_pending_num(local_pending_num);
-            return fc::variant();
-        }
-        
-        void CommonApiRpcServer::register_common_api_methods(const fc::rpc::json_connection_ptr& json_connection) 
-		{
+
+        void CommonApiRpcServer::register_common_api_methods(const fc::rpc::json_connection_ptr& json_connection)
+        {
             fc::rpc::json_connection::method bound_positional_method;
             fc::rpc::json_connection::named_param_method bound_named_method;
             auto capture_con = json_connection.get();
@@ -8565,6 +8694,22 @@ namespace thinkyoung {
             bound_named_method = boost::bind(&CommonApiRpcServer::wallet_transfer_to_address_named, 
                 this, capture_con, _1);
             json_connection->add_named_param_method("wallet_transfer_to_address", bound_named_method);
+
+           // register method wallet_transfer_to_mutisig
+            bound_positional_method = boost::bind(&CommonApiRpcServer::wallet_transfer_to_mutisig_positional,
+                this, capture_con, _1);
+            json_connection->add_method("wallet_transfer_to_mutisig", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::wallet_transfer_to_mutisig_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("wallet_transfer_to_mutisig", bound_named_method);
+
+           // register method wallet_transfer_from_mutisig
+            bound_positional_method = boost::bind(&CommonApiRpcServer::wallet_transfer_from_mutisig_positional,
+                this, capture_con, _1);
+            json_connection->add_method("wallet_transfer_from_mutisig", bound_positional_method);
+            bound_named_method = boost::bind(&CommonApiRpcServer::wallet_transfer_from_mutisig_named, 
+                this, capture_con, _1);
+            json_connection->add_named_param_method("wallet_transfer_from_mutisig", bound_named_method);
 
            // register method wallet_transfer_to_public_account
             bound_positional_method = boost::bind(&CommonApiRpcServer::wallet_transfer_to_public_account_positional,
@@ -11132,6 +11277,48 @@ namespace thinkyoung {
             }
 
             {
+                // register method wallet_transfer_to_mutisig
+                thinkyoung::api::MethodData wallet_transfer_to_mutisig_method_metadata{ "wallet_transfer_to_mutisig", nullptr,
+                    /* description */ "transfer to an address with mutisig",
+                    /* returns */ "transaction_entry",
+                    /* params: */{
+                        {"amount_to_transfer", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"asset_symbol", "asset_symbol", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"address_for_signature1", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"address_for_signature2", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
+                    /* detailed description */ "transfer to an address with mutisig\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  address_for_signature1 (string, required): the address or pubkey to sign\n  address_for_signature2 (string, required): the address or pubkey to sign\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  transaction_entry\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(wallet_transfer_to_mutisig_method_metadata);
+            }
+
+            {
+                // register method wallet_transfer_from_mutisig
+                thinkyoung::api::MethodData wallet_transfer_from_mutisig_method_metadata{ "wallet_transfer_from_mutisig", nullptr,
+                    /* description */ "Do a simple (non-TITAN) transfer to an address",
+                    /* returns */ "transaction_entry",
+                    /* params: */{
+                        {"amount_to_transfer", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"asset_symbol", "asset_symbol", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"from_account_name", "account_name", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"address_for_signature1", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"address_for_signature2", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"to_address", "string", thinkyoung::api::required_positional, fc::ovariant()},
+                        {"memo_message", "information", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"\""))},
+                        {"strategy", "vote_strategy", thinkyoung::api::optional_positional, fc::variant(fc::json::from_string("\"vote_recommended\""))}
+                          },
+                    /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 2,
+                    /* detailed description */ "Do a simple (non-TITAN) transfer to an address\n\nParameters:\n  amount_to_transfer (string, required): the amount of shares to transfer\n  asset_symbol (asset_symbol, required): the asset to transfer\n  from_account_name (account_name, required): the source account to draw the shares from\n  address_for_signature1 (string, required): the source account to draw the shares from\n  address_for_signature2 (string, required): the source account to draw the shares from\n  to_address (string, required): the address or pubkey to transfer to\n  memo_message (information, optional, defaults to \"\"): a memo to store with the transaction\n  strategy (vote_strategy, optional, defaults to \"vote_recommended\"): enumeration [vote_none | vote_all | vote_random | vote_recommended] \n\nReturns:\n  transaction_entry\n",
+                    /* aliases */ {}, false};
+                store_method_metadata(wallet_transfer_from_mutisig_method_metadata);
+            }
+
+            {
                 // register method wallet_transfer_to_public_account
                 thinkyoung::api::MethodData wallet_transfer_to_public_account_method_metadata{ "wallet_transfer_to_public_account", nullptr,
                     /* description */ "Sends given amount to the given account",
@@ -13088,19 +13275,7 @@ namespace thinkyoung {
                     /* aliases */ {}, false};
                 store_method_metadata(delete_event_handler_method_metadata);
             }
-            {
-                // register method set_local_pending_num
-                thinkyoung::api::MethodData set_local_pending_num_method_metadata{ "set_local_pending_num", nullptr,
-                        /* description */ "drop the relation with a script to the specified contract id and event type",
-                        /* returns */ "void",
-                /* params: */{
-                    {"local_pending_num", "uint32_t", thinkyoung::api::required_positional, fc::ovariant()}
-                },
-                /* prerequisites */ (thinkyoung::api::MethodPrerequisites) 1,
-                /* detailed description */ "set the local pending num\n\nReturns:\n  void\n",
-                /* aliases */ {}, false};
-                store_method_metadata(set_local_pending_num_method_metadata);
-            }
+
         }
 
         fc::variant CommonApiRpcServer::direct_invoke_positional_method(const std::string& method_name, const fc::variants& parameters)
@@ -13307,6 +13482,10 @@ namespace thinkyoung {
                 return wallet_address_create_positional(nullptr, parameters);
             if (method_name == "wallet_transfer_to_address")
                 return wallet_transfer_to_address_positional(nullptr, parameters);
+            if (method_name == "wallet_transfer_to_mutisig")
+                return wallet_transfer_to_mutisig_positional(nullptr, parameters);
+            if (method_name == "wallet_transfer_from_mutisig")
+                return wallet_transfer_from_mutisig_positional(nullptr, parameters);
             if (method_name == "wallet_transfer_to_public_account")
                 return wallet_transfer_to_public_account_positional(nullptr, parameters);
             if (method_name == "wallet_withdraw_from_address")
@@ -13571,10 +13750,6 @@ namespace thinkyoung {
                 return add_event_handler_positional(nullptr, parameters);
             if (method_name == "delete_event_handler")
                 return delete_event_handler_positional(nullptr, parameters);
-                
-            if(method_name == "set_local_pending_num")
-                return set_local_pending_num_positional(nullptr, parameters);
-                
             FC_ASSERT(false, "shouldn't happen");
         }
 
