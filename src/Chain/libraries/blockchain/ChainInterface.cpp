@@ -85,18 +85,24 @@ namespace thinkyoung {
         // just like in Bitcoin
         ShareType ChainInterface::get_max_delegate_pay_issued_per_block()const
         {
+            static const ShareType delegate_pay_inc[] = { 1500000, 1650000, 1815000, 1996000, 2196000,
+				2415000, 2657000, 2923000, 3215000, 3536000, 4000000};
+            static const uint32_t delegate_pay_inc_times = 11;
+			
             ShareType pay_per_block = ALP_MAX_DELEGATE_PAY_PER_BLOCK;
-            //        static const time_point_sec start_timestamp = get_genesis_timestamp();
-            //        static const uint32_t seconds_per_period = fc::days( 4 * 365 ).to_seconds(); // Ignore leap years, leap seconds, etc.
-            // 
-            //        const time_point_sec now = this->now();
-            //        if( now >= start_timestamp )
-            //        {
-            //            const uint32_t elapsed_time = (now - start_timestamp).to_seconds();
-            //            const uint32_t num_full_periods = elapsed_time / seconds_per_period;
-            //            for( uint32_t i = 0; i < num_full_periods; ++i )
-            //                pay_per_block /= 2;
-            //        }
+            uint32_t head_block_num = get_head_block_num();
+            uint32_t inc_times = 0;
+
+            //if head_block_num is ALP_DELEGATE_PAY_BLOCK_NUM, switch to new pay
+            if (head_block_num >= ALP_DELEGATE_PAY_BLOCK_NUM)
+            {
+                inc_times = (head_block_num - ALP_DELEGATE_PAY_BLOCK_NUM) / ALP_DELEGATE_PAY_INC_NUM;
+                //get the pos of delegate_pay_inc
+                uint32_t pos = inc_times >= delegate_pay_inc_times ? (delegate_pay_inc_times - 1):inc_times;
+
+                //set the value
+                pay_per_block = delegate_pay_inc[pos];
+            }
 
             return pay_per_block;
         }
